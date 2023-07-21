@@ -123,7 +123,7 @@ mvnegloglik=function(logparams,vecchia.approx,y,param.seq,P){
 ##############################################################################
 ### Flexible Spatiotemporal Multivariate Matern Negative Loglikelihood Function ###########
 
-mvnegloglik_ST =function(logparams,vecchia.approx,y,param.seq,P){
+mvnegloglik_ST =function(logparams,vecchia.approx,y,param.seq,P,scaling,nscale){
   #  Input-
   #  logparams: A numeric vector of length (4*P)+(4*choose(P,2)).
   #             To construct these parameters we unlist a list of the 7 covariance
@@ -154,12 +154,11 @@ mvnegloglik_ST =function(logparams,vecchia.approx,y,param.seq,P){
   }
     locs.scaled <- vecchia.approx$locsord
     for (i in 1:P) {
-        locs.scaled[vecchia.approx$ondx==i,1:2] <-
-            locs.scaled[vecchia.approx$ondx==i,1:2] /
-            params[param.seq[2,1]+2*i-2]
-        locs.scaled[vecchia.approx$ondx==i,3] <-
-            locs.scaled[vecchia.approx$ondx==i,3] /
-            params[param.seq[2,1]+2*i-1]
+        for (j in 1:nscale) {
+            locs.scaled[vecchia.approx$ondx==i,scaling==j] <-
+                locs.scaled[vecchia.approx$ondx==i,scaling==j] /
+                params[param.seq[2,1]+nscale*(i-1)+j-1] 
+        }
     }
     vecchia.approx$locsord <- locs.scaled
 

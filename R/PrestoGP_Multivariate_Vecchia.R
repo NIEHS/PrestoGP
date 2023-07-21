@@ -2,12 +2,12 @@
 #'
 #' @slot model PrestoGPModel.
 #'
-#' @export MultivariateSpatiotemporalModel
+#' @export MultivariateVecchiaModel
 #'
 #' @examples
 #' @include PrestoGP_Model.R
 #' @noRd
-MultivariateSpatiotemporalModel <- setClass("MultivariateSpatiotemporalModel",
+MultivariateVecchiaModel <- setClass("MultivariateVecchiaModel",
                                     contains = "PrestoGPModel",
                                     slots = c(
                                       model = "PrestoGPModel",
@@ -15,13 +15,13 @@ MultivariateSpatiotemporalModel <- setClass("MultivariateSpatiotemporalModel",
                                       logparams = "numeric"
                                     ))
 
-validityMultivariateSpatiotemporalModel<-function(object){
+validityMultivariateVecchiaModel<-function(object){
   TRUE
 }
-setValidity("MultivariateSpatiotemporalModel",
-            validityMultivariateSpatiotemporalModel)
+setValidity("MultivariateVecchiaModel",
+            validityMultivariateVecchiaModel)
 
-setMethod("initialize", "MultivariateSpatiotemporalModel", function(.Object, ...) {
+setMethod("initialize", "MultivariateVecchiaModel", function(.Object, ...) {
   .Object@n_neighbors <- 0#25
   .Object@min_m <- 0
   .Object <- callNextMethod()
@@ -47,7 +47,7 @@ setMethod("initialize", "MultivariateSpatiotemporalModel", function(.Object, ...
 #' prediction <- prestogp_predict(model, X.test, locs.test)
 #' Vec.mean <- prediction[[1]]
 #' Vec.sds <- prediction[[2]]
-setMethod("prestogp_predict", "MultivariateSpatiotemporalModel", function(model, X, locs, m=NULL) {
+setMethod("prestogp_predict", "MultivariateVecchiaModel", function(model, X, locs, m=NULL) {
   #validate parameters
   if(!is.matrix(X)){
     stop("X parameter must be a matrix.")
@@ -90,24 +90,23 @@ setMethod("prestogp_predict", "MultivariateSpatiotemporalModel", function(model,
   return(list("means" = Vec.mean, "standard deviations" = Vec.sds))
 })
 
-setMethod("calc_covparams", "MultivariateSpatiotemporalModel", function(model, locs, Y) {
+setMethod("calc_covparams", "MultivariateVecchiaModel", function(model, locs, Y) {
   #cor.matrix <- cor(Y)
   #P <- ncol(Y)
   #col.vars <- apply(Y, 2, var)
   #N <- length(Y)
     P <- length(Y)
     col.vars <- rep(NA, P)
-    D.sample.bar <- rep(NA, 2*P)
+    D.sample.bar <- rep(NA, model@nscale*P)
     for (i in 1:P) {
         col.vars[i] <- var(Y[[i]])
         N <- length(Y[[i]])
         #TODO find a better way to compute initial spatial range
-        d.sample <- sample(1:N,max(2, ceiling(N/50)),replace = FALSE)
-        D.sample = rdist(locs[[i]][d.sample,1:2])
-        D.sample.bar[2*i-1] <- mean(D.sample)/4
-        d.sample <- sample(1:N,max(2, ceiling(N/50)),replace = FALSE)
-        D.sample = rdist(locs[[i]][d.sample,1:2])
-        D.sample.bar[2*i] <- mean(D.sample)/4
+        for (j in 1:model@nscale) {
+            d.sample <- sample(1:N,max(2, ceiling(N/50)),replace = FALSE)
+            D.sample = rdist(locs[[i]][d.sample,1:2])
+            D.sample.bar[(i-1)*model@nscale+j] <- mean(D.sample)/4
+        }
     }
   model@logparams <- create.initial.values.flex(c(0.9*col.vars), #marginal variance
                                                D.sample.bar, #range
@@ -115,45 +114,54 @@ setMethod("calc_covparams", "MultivariateSpatiotemporalModel", function(model, l
                                                c(.1*col.vars), #nuggets
                                                rep(0, choose(P,2)),
                                                P)
-  model@param_sequence <- create.param.sequence(P, 2)
+  model@param_sequence <- create.param.sequence(P, model@nscale)
   model <- transform_covariance_parameters(model)
   invisible(model)
 })
 
-setMethod("specify", "MultivariateSpatiotemporalModel", function(model, locs, m) {
+setMethod("specify", "MultivariateVecchiaModel", function(model, locs, m) {
   locs.scaled = scale_locs(model, locs)
   model@vecchia_approx=vecchia_Mspecify(locs.scaled,m)
-  olocs.scaled <- model@vecchia_approx$locsord
-  for (i in 1:length(locs)) {
-      olocs.scaled[model@vecchia_approx$ondx==i,1:2] <-
-          olocs.scaled[model@vecchia_approx$ondx==i,1:2] *
-          model@covparams[model@param_sequence[2,1]+2*i-2]
-      olocs.scaled[model@vecchia_approx$ondx==i,3] <-
-          olocs.scaled[model@vecchia_approx$ondx==i,3] *
-          model@covparams[model@param_sequence[2,1]+2*i-1]
+  if (!model@apanasovich) {
+      olocs.scaled <- model@vecchia_approx$locsord
+      for (i in 1:length(locs)) {
+          for (j in 1:model@nscale) {
+              olocs.scaled[model@vecchia_approx$ondx==i,model@scaling==j] <-
+                  olocs.scaled[model@vecchia_approx$ondx==i,model@scaling==j] *
+                  model@covparams[model@param_sequence[2,1]+
+                                  model@nscale*(i-1)+j-1]
+          }
+      }
+      model@vecchia_approx$locsord <- olocs.scaled
   }
-  model@vecchia_approx$locsord <- olocs.scaled
   invisible(model)
 })
 
-setMethod("scale_locs", "MultivariateSpatiotemporalModel", function(model, locs) {
-    locs.out <- locs
-    for (i in 1:length(locs)) {
-        locs.out[[i]][,1:2] <- locs[[i]][,1:2] /
-            model@covparams[model@param_sequence[2,1]+2*i-2]
-        locs.out[[i]][,3] <- locs[[i]][,3] /
-            model@covparams[model@param_sequence[2,1]+2*i-1]
+setMethod("scale_locs", "MultivariateVecchiaModel", function(model, locs) {
+    if (model@apanasovich) {
+        return(locs)
     }
-    return(locs.out)
+    else {
+        locs.out <- locs
+        for (i in 1:length(locs)) {
+            for (j in 1:model@nscale) {
+                locs.out[[i]][,model@scaling==j] <-
+                    locs[[i]][,model@scaling==j] /
+                    model@covparams[model@param_sequence[2,1]+
+                                    model@nscale*(i-1)+j-1]   
+            }
+        }
+        return(locs.out)
+    }
 })
 
-setMethod("compute_residuals", "MultivariateSpatiotemporalModel", function(model, Y, Y.hat) {
+setMethod("compute_residuals", "MultivariateVecchiaModel", function(model, Y, Y.hat) {
   model@res = as.double(Y-Y.hat)
   model@vecchia_approx$zord = model@res[model@vecchia_approx$ord]
   invisible(model)
 })
 
-setMethod("estimate_theta", "MultivariateSpatiotemporalModel", function(model, locs, optim.control, method) {
+setMethod("estimate_theta", "MultivariateVecchiaModel", function(model, locs, optim.control, method) {
   P <- length(locs)
 #  locs_list <- list()
 #  y <- list()
@@ -164,14 +172,28 @@ setMethod("estimate_theta", "MultivariateSpatiotemporalModel", function(model, l
 #  show(model@covparams)
 #  show(model@param_sequence)
 #  show(model@logparams)
-  vecchia.result<- optim(par = model@logparams,
-                  fn = mvnegloglik_ST,
-                  vecchia.approx=model@vecchia_approx,
-                  y = model@res,
-                  P = P,
-                  param.seq = model@param_sequence,
-                  method = method,
-                  control=optim.control)
+  if (model@apanasovich) {
+      vecchia.result<- optim(par = model@logparams,
+                             fn = mvnegloglik,
+                             vecchia.approx=model@vecchia_approx,
+                             y = model@res,
+                             P = P,
+                             param.seq = model@param_sequence,
+                             method = method,
+                             control=optim.control)
+  }
+  else {
+      vecchia.result<- optim(par = model@logparams,
+                             fn = mvnegloglik_ST,
+                             vecchia.approx=model@vecchia_approx,
+                             y = model@res,
+                             P = P,
+                             param.seq = model@param_sequence,
+                             scaling = model@scaling,
+                             nscale = model@nscale,
+                             method = method,
+                             control=optim.control)
+  }
 
   model@LL_Vecchia_krig <- vecchia.result$value
   model@logparams <- vecchia.result$par
@@ -179,7 +201,7 @@ setMethod("estimate_theta", "MultivariateSpatiotemporalModel", function(model, l
   invisible(model)
 })
 
-setMethod("transform_covariance_parameters", "MultivariateSpatiotemporalModel", function(model) {
+setMethod("transform_covariance_parameters", "MultivariateVecchiaModel", function(model) {
   P <- length(model@Y_train)
   if(P > 1){
       model@covparams <- c(exp(model@logparams[1:model@param_sequence[2,2]]),
@@ -201,26 +223,35 @@ setMethod("transform_covariance_parameters", "MultivariateSpatiotemporalModel", 
   invisible(model)
 })
 
-setMethod("transform_data", "MultivariateSpatiotemporalModel", function(model, Y, X) {
+setMethod("transform_data", "MultivariateVecchiaModel", function(model, Y, X) {
     vecchia.approx <- model@vecchia_approx
-    params <- model@covparams
-    param.seq <- model@param_sequence
-    locs.scaled <- vecchia.approx$locsord
-    for (i in 1:vecchia.approx$P) {
-        locs.scaled[vecchia.approx$ondx==i,1:2] <-
-            locs.scaled[vecchia.approx$ondx==i,1:2] /
-            params[param.seq[2,1]+2*i-2]
-        locs.scaled[vecchia.approx$ondx==i,3] <-
-            locs.scaled[vecchia.approx$ondx==i,3] /
-            params[param.seq[2,1]+2*i-1]
+    if (!model@apanasovich) {
+        params <- model@covparams
+        param.seq <- model@param_sequence
+        olocs.scaled <- vecchia.approx$locsord
+        for (i in 1:vecchia.approx$P) {
+            for (j in 1:model@nscale) {
+                olocs.scaled[model@vecchia_approx$ondx==i,model@scaling==j] <-
+                    olocs.scaled[model@vecchia_approx$ondx==i,
+                                 model@scaling==j] *
+                    model@covparams[param.seq[2,1]+model@nscale*(i-1)+j-1]
+            }
+        }
+        vecchia.approx$locsord <- olocs.scaled
+        transformed.data=transform_miid(cbind(Y,as.matrix(X)),
+                                        vecchia.approx = vecchia.approx,
+                                        c(params[1:param.seq[1,2]],
+                                          rep(1,
+                                              param.seq[2,2]-param.seq[2,1]+1),
+                                          params[param.seq[3,1]:
+                                                 param.seq[5,2]]))
     }
-    vecchia.approx$locsord <- locs.scaled
+    else {
+        transformed.data=transform_miid(cbind(Y,as.matrix(X)),
+                                        vecchia.approx = vecchia.approx,
+                                        model@covparams)
+    }
 
-   transformed.data=transform_miid(cbind(Y,as.matrix(X)),
-                                   vecchia.approx = vecchia.approx,
-                                   c(params[1:param.seq[1,2]],
-                                   rep(1, param.seq[2,2]-param.seq[2,1]+1),
-                                   params[param.seq[3,1]:param.seq[5,2]]))
    xcols <- ncol(model@X_train)
    ycols <- ncol(model@Y_train)
    tcols <- ncol(transformed.data)
@@ -229,6 +260,6 @@ setMethod("transform_data", "MultivariateSpatiotemporalModel", function(model, Y
    invisible(model)
 })
 
-setMethod("theta_names", "MultivariateSpatiotemporalModel", function(model) {
+setMethod("theta_names", "MultivariateVecchiaModel", function(model) {
   c("Marginal Variance", "Range", "Smoothness", "Nugget")
 })

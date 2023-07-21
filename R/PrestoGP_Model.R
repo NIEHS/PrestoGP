@@ -40,7 +40,10 @@ PrestoGPModel <- setClass("PrestoGPModel",
                                 error = "numeric", #negative log likelihood + SCAD penalty likelihood
                                 n_neighbors = "numeric", #the number of neighbors to condition on for the Vecchia approximation
                                 min_m = "numeric", #the minimum m required by the specific model type (full vs Vecchia)
-                                alpha = "numeric") #the alpha ratio of ridge to lasso penalty
+                                alpha = "numeric", #the alpha ratio of ridge to lasso penalty
+                                scaling = "numeric", #the indices of the scale parameters,
+                                nscale = "numeric", #the number of scale parameters
+                                apanasovich = "logical") #should the Apanasovich model be used
                       )
 
 validityPrestoGPModel<-function(object){
@@ -57,7 +60,7 @@ setMethod("initialize", "PrestoGPModel", function(.Object, ...) {
 })
 
 setGeneric("show_theta", function(object, Y_names)standardGeneric("show_theta") )
-setGeneric("prestogp_fit", function(model, Y, X, locs, covparams = NULL, beta.hat = rep(0,ncol(X)), tol = 0.999999, max_iters = 100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-4, maxit=5000)) standardGeneric("prestogp_fit") )
+setGeneric("prestogp_fit", function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = rep(0,ncol(X)), tol = 0.999999, max_iters = 100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-4, maxit=5000)) standardGeneric("prestogp_fit") )
 setGeneric("prestogp_predict", function(model, X="matrix", locs="matrix", m="numeric") standardGeneric("prestogp_predict") )
 setGeneric("calc_covparams", function(model, locs, Y) standardGeneric("calc_covparams") )
 setGeneric("specify", function(model, locs, m)standardGeneric("specify") )
@@ -178,7 +181,7 @@ setMethod("show_theta", "PrestoGPModel",
 #' model <- prestogp_fit(model, logNO2, X, locs)
 #' ...
 setMethod("prestogp_fit", "PrestoGPModel",
-          function(model, Y, X, locs, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters=100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-4, maxit=5000)) {
+          function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters=100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-4, maxit=5000)) {
             #parameter validation
             #TODO: This method should check for input errors in the
             #multivariate case (where Y, X, and locs are lists)
@@ -193,9 +196,27 @@ setMethod("prestogp_fit", "PrestoGPModel",
                 if(ncol(Y) < 1){ stop("Y must have at least 1 column.") }
                 if(nrow(Y) != nrow(locs)){ stop("Y must have the same number of rows as locs.") }
             }
-            if (is.matrix(locs)) {
-                if(ncol(locs) != 2 && ncol(locs) != 3){ stop("Locs must have either 2 or 3 columns.") }
+            if (is.null(scaling)) {
+                if (is.matrix(locs)) {
+                    scaling <- rep(1, ncols(locs))
+                }
+                else {
+                    scaling <- rep(1, ncols(locs[[1]]))
+                }
             }
+            nscale <- length(unique(scaling))
+            if (sum(sort(unique(scaling))==1:nscale)<nscale) {
+                stop("scaling must consist of sequential integers between 1 and ncol(locs)")
+            }
+            if (apanasovich & nscale>1) {
+                stop("Apanasovich models require a common scale parameter")
+            }
+            model@scaling <- scaling
+            model@nscale <- nscale
+            model@apanasovich <- apanasovich
+#            if (is.matrix(locs)) {
+#                if(ncol(locs) != 2 && ncol(locs) != 3){ stop("Locs must have either 2 or 3 columns.") }
+#            }
             if(is.null(covparams)){
               model <- calc_covparams(model, locs, Y)
             }

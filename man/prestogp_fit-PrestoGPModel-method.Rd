@@ -9,12 +9,15 @@
   Y,
   X,
   locs,
+  scaling = NULL,
+  apanasovich = FALSE,
   covparams = NULL,
   beta.hat = NULL,
   tol = 0.999999,
   max_iters = 100,
   verbose = FALSE,
-  optim.control = list(trace = 0, maxit = 5000)
+  optim.method = "Nelder-Mead",
+  optim.control = list(trace = 0, reltol = 1e-04, maxit = 5000)
 )
 }
 \arguments{

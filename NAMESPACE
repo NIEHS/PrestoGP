@@ -2,8 +2,7 @@
 
 export(FullSpatialModel)
 export(Kr_pred)
-export(MultivariateSpatialModel)
-export(MultivariateSpatiotemporalModel)
+export(MultivariateVecchiaModel)
 export(PrestoGPModel)
 export(ST_Krig_Param_Avg)
 export(SpatialModel)
