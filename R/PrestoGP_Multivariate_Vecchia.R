@@ -104,7 +104,7 @@ setMethod("calc_covparams", "MultivariateVecchiaModel", function(model, locs, Y)
         #TODO find a better way to compute initial spatial range
         for (j in 1:model@nscale) {
             d.sample <- sample(1:N,max(2, ceiling(N/50)),replace = FALSE)
-            D.sample = rdist(locs[[i]][d.sample,1:2])
+            D.sample = rdist(locs[[i]][d.sample,model@scaling==j])
             D.sample.bar[(i-1)*model@nscale+j] <- mean(D.sample)/4
         }
     }
