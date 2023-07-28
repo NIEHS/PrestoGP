@@ -49,27 +49,26 @@ setMethod("initialize", "MultivariateVecchiaModel", function(.Object, ...) {
 #' Vec.sds <- prediction[[2]]
 setMethod("prestogp_predict", "MultivariateVecchiaModel", function(model, X, locs, m=NULL) {
   #validate parameters
-  if(!is.matrix(X)){
-    stop("X parameter must be a matrix.")
-  }
-  if(!is.matrix(locs)){
-    stop("The locs parameter must be a matrix.")
-  }
-  if(nrow(X) != nrow(locs)){
-    stop("The number of locations must match the number of X observations.")
-  }
-  if(ncol(locs) != 3){
-    stop("The locs parameter must have 3 columns.")
-  }
+    if(!is.list(X)){
+        stop("X parameter must be a list.")
+    }
+    if(!is.list(locs)){
+        stop("locs parameter must be a list.")
+    }
+    for (i in 1:length(locs)) {
+        if (nrow(X[[i]])!=nrow(locs[[i]])) {
+            stop("The number of locations must match the number of X observations.")
+        }
+    }
   if(is.null(m)){ #m defaults to the value used for training
     m <- model@m
   }
   stopifnot((m > 0)) #FIXME m is not required by full model
 
   # Vecchia prediction at new locations
-  Vecchia.Pred <- predict(model@Vecchia_SCAD_fit, X = X, which = model@lambda_1se_idx)
+  Vecchia.Pred <- predict(model@linear_model, X = X, which = model@lambda_1se_idx)
   # Vecchia trend prediction at observed data
-  Vecchia.hat <- predict(model@Vecchia_SCAD_fit, X = model@X_train, which = model@lambda_1se_idx)
+  Vecchia.hat <- predict(model@linear_model, X = model@X_train, which = model@lambda_1se_idx)
 
   # Test set prediction
   res = model@Y_train - Vecchia.hat
