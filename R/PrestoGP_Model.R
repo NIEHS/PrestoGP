@@ -269,9 +269,9 @@ setMethod("prestogp_fit", "PrestoGPModel",
               model <- specify(model, locs, m)
 
               if (is.null(beta.hat)) {
-                  beta.hat <- matrix(0.0, nrow = ncol(model@X_train), ncol=1)
+                  beta.hat <- matrix(0.0, nrow = (ncol(model@X_train)+1), ncol=1)
               }
-              Y.hat <- model@X_train %*% beta.hat
+              Y.hat <- beta.hat[1,1] + model@X_train %*% beta.hat[-1,]
 #              dim(Y.hat) <- c(nrow(model@Y_train), ncol(model@Y_train))
 
             # Begining algorithm (Algorithm 1 from Messier and Katzfuss 2020)
