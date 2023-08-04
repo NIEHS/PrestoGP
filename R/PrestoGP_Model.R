@@ -60,7 +60,7 @@ setMethod("initialize", "PrestoGPModel", function(.Object, ...) {
 })
 
 setGeneric("show_theta", function(object, Y_names)standardGeneric("show_theta") )
-setGeneric("prestogp_fit", function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = rep(0,ncol(X)), tol = 0.999999, max_iters = 100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-4, maxit=5000), parallel=FALSE) standardGeneric("prestogp_fit") )
+setGeneric("prestogp_fit", function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-4, maxit=5000), parallel=FALSE) standardGeneric("prestogp_fit") )
 setGeneric("prestogp_predict", function(model, X="matrix", locs="matrix", m="numeric") standardGeneric("prestogp_predict") )
 setGeneric("calc_covparams", function(model, locs, Y) standardGeneric("calc_covparams") )
 setGeneric("specify", function(model, locs, m)standardGeneric("specify") )
@@ -269,7 +269,10 @@ setMethod("prestogp_fit", "PrestoGPModel",
               model <- specify(model, locs, m)
 
               if (is.null(beta.hat)) {
-                  beta.hat <- matrix(0.0, nrow = (ncol(model@X_train)+1), ncol=1)
+                  beta0.glmnet <- cv.glmnet(model@X_train, model@Y_train)
+                  beta.hat <- as.matrix(predict(beta0.glmnet,
+                                                type="coefficients",
+                                                s=beta0.glmnet$lambda.1se))
               }
               Y.hat <- beta.hat[1,1] + model@X_train %*% beta.hat[-1,]
 #              dim(Y.hat) <- c(nrow(model@Y_train), ncol(model@Y_train))
