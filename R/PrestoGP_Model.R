@@ -34,7 +34,7 @@ PrestoGPModel <- setClass("PrestoGPModel",
                                 linear_model = "cv.glmnet", #the linear model
                                 X_train = "matrix", #the original independent variable matrix
                                 Y_train = "matrix", #the original dependent variable matrix
-                                locs_train = "matrix", #the location / temporal matrix
+                                locs_train = "list", #the location / temporal matrix
                                 converged = "logical", #a logical variable that is true if the model fitting process has converged
                                 LL_Vecchia_krig = "numeric", #the value of the negative log likelihood function after optimization
                                 error = "numeric", #negative log likelihood + SCAD penalty likelihood
@@ -61,7 +61,7 @@ setMethod("initialize", "PrestoGPModel", function(.Object, ...) {
 
 setGeneric("show_theta", function(object, Y_names)standardGeneric("show_theta") )
 setGeneric("prestogp_fit", function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-4, maxit=5000), parallel=FALSE) standardGeneric("prestogp_fit") )
-setGeneric("prestogp_predict", function(model, X="matrix", locs="matrix", m="numeric") standardGeneric("prestogp_predict") )
+setGeneric("prestogp_predict", function(model, X="matrix", locs="matrix", m="numeric", ordering.pred=c("obspred", "general"), pred.cond=c("independent", "general"), return.values=c("mean", "meanvar")) standardGeneric("prestogp_predict") )
 setGeneric("calc_covparams", function(model, locs, Y) standardGeneric("calc_covparams") )
 setGeneric("specify", function(model, locs, m)standardGeneric("specify") )
 setGeneric("compute_residuals", function(model, Y, Y.hat) standardGeneric("compute_residuals") )
@@ -255,12 +255,8 @@ setMethod("prestogp_fit", "PrestoGPModel",
                   model@X_train <- X
                   model@Y_train <- Y
               }
-              if (is.list(locs)) {
-                  junk <- NULL
-                  for (i in 1:length(locs)) {
-                      junk <- rbind(junk, locs[[i]])
-                  }
-                  model@locs_train <- junk
+              if (!is.list(locs)) {
+                  model@locs_train <- list(locs)
               }
               else {
                   model@locs_train <- locs

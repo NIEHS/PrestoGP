@@ -47,46 +47,83 @@ setMethod("initialize", "MultivariateVecchiaModel", function(.Object, ...) {
 #' prediction <- prestogp_predict(model, X.test, locs.test)
 #' Vec.mean <- prediction[[1]]
 #' Vec.sds <- prediction[[2]]
-setMethod("prestogp_predict", "MultivariateVecchiaModel", function(model, X, locs, m=NULL) {
+setMethod("prestogp_predict", "MultivariateVecchiaModel", function(model, X, locs, m=NULL, ordering.pred=c("obspred", "general"), pred.cond=c("independent", "general"), return.values=c("mean", "meanvar")) {
   #validate parameters
+    ordering.pred <- match.arg(ordering.pred)
+    pred.cond <- match.arg(pred.cond)
+    return.values <- match.arg(return.values)
     if(!is.list(X)){
         stop("X parameter must be a list.")
     }
     if(!is.list(locs)){
         stop("locs parameter must be a list.")
     }
+    ndx.out <- NULL
     for (i in 1:length(locs)) {
         if (nrow(X[[i]])!=nrow(locs[[i]])) {
             stop("The number of locations must match the number of X observations.")
         }
+        ndx.out <- c(ndx.out, rep(i, nrow(locs[[i]])))
+    }
+    X <- psych::superMatrix(X)
+    if (ncol(X)!=ncol(model@X_train)) {
+        stop("The number of predictors in X must match the training data")
     }
   if(is.null(m)){ #m defaults to the value used for training
-    m <- model@m
+    m <- model@n_neighbors
   }
   stopifnot((m > 0)) #FIXME m is not required by full model
 
   # Vecchia prediction at new locations
-  Vecchia.Pred <- predict(model@linear_model, X = X, which = model@lambda_1se_idx)
+  Vecchia.Pred <- predict(model@linear_model, newx=X, s=model@linear_model$lambda[model@lambda_1se_idx])
   # Vecchia trend prediction at observed data
-  Vecchia.hat <- predict(model@linear_model, X = model@X_train, which = model@lambda_1se_idx)
+  Vecchia.hat <- predict(model@linear_model, newx=model@X_train, s=model@linear_model$lambda[model@lambda_1se_idx])
 
   # Test set prediction
   res = model@Y_train - Vecchia.hat
 
   locs.train.scaled = scale_locs(model, model@locs_train)
   locs.scaled = scale_locs(model, locs)
-  vec.approx.test = vecchia_specify(locs.train.scaled, m, locs.pred=locs.scaled)
+    vec.approx.test = vecchia_Mspecify(locs.train.scaled, m,
+                                       locs.list.pred=locs.scaled,
+                                       ordering.pred=ordering.pred,
+                                       pred.cond=pred.cond)
 
   ## carry out prediction
-  pred = vecchia_prediction(res, vec.approx.test, c(model@covparams[1], 1, 0.5), model@covparams[4])
+    if (!model@apanasovich) {
+        params <- model@covparams
+        param.seq <- model@param_sequence
+        pred = vecchia_Mprediction(res, vec.approx.test,
+                                   c(params[1:param.seq[1,2]],
+                                     rep(1, param.seq[2,2]-param.seq[2,1]+1),
+                                     params[param.seq[3,1]:
+                                            param.seq[5,2]]),
+                                   return.values=return.values)
+    }
+    else {
+        pred = vecchia_Mprediction(res, vec.approx.test, model@covparams,
+                                   return.values=return.values)
+    }
 
   #prediction function can return both mean and sds
   # returns a list with elements mu.pred,mu.obs,var.pred,var.obs,V.ord
-  Vec.mean = pred$mu.pred + Vecchia.Pred #residual + mean trend
+    Vec.mean = pred$mu.pred + Vecchia.Pred #residual + mean trend
+    if (return.values=="mean") {
+        return.list <- list(means=Vec.mean)
+    }
+    else {
+        warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
+        vec.sds <- sqrt(pred$var.pred)
+        for (i in 1:length(locs)) {
+            vec.sds[ndx.out==i] <- sqrt(vec.sds[ndx.out==i] +
+                                        model@covparams[model@param_sequence[4,i]])
+        }
+        return.list$sds <- vec.sds
+    }
   #option to include or exclude theta below
-  Vec.sds = sqrt(pred$var.pred + model@covparams[4]) #standard deviation
+#  Vec.sds = sqrt(pred$var.pred + model@covparams[4]) #standard deviation
 
-  return(list("means" = Vec.mean, "standard deviations" = Vec.sds))
+  return(return.list)
 })
 
 setMethod("calc_covparams", "MultivariateVecchiaModel", function(model, locs, Y) {
@@ -147,7 +184,7 @@ setMethod("scale_locs", "MultivariateVecchiaModel", function(model, locs) {
                 locs.out[[i]][,model@scaling==j] <-
                     locs[[i]][,model@scaling==j] /
                     model@covparams[model@param_sequence[2,1]+
-                                    model@nscale*(i-1)+j-1]   
+                                    model@nscale*(i-1)+j-1]
             }
         }
         return(locs.out)
@@ -232,7 +269,7 @@ setMethod("transform_data", "MultivariateVecchiaModel", function(model, Y, X) {
             for (j in 1:model@nscale) {
                 olocs.scaled[model@vecchia_approx$ondx==i,model@scaling==j] <-
                     olocs.scaled[model@vecchia_approx$ondx==i,
-                                 model@scaling==j] *
+                                 model@scaling==j] /
                     model@covparams[param.seq[2,1]+model@nscale*(i-1)+j-1]
             }
         }

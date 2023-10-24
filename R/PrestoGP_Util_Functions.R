@@ -216,7 +216,7 @@ U2V=function(U.obj){
     zeromat.sparse=Matrix::sparseMatrix(c(),c(),dims=c(latents.after,latents.before))
     V.or=rbind(zeromat.sparse,V.oor)
 
-    V.ord=methods::as(cbind(V.pr,V.or),'dtCMatrix')
+    V.ord=methods::as(cbind(V.pr,V.or),'triangularMatrix')
 
   }
 
@@ -227,7 +227,28 @@ U2V=function(U.obj){
 ## Reverse order of matrix rows,cols
 revMat=function(mat) mat[nrow(mat):1,ncol(mat):1,drop=FALSE]
 
-
-
-
-
+#' @export
+vecchia_Mprediction <- function (z, vecchia.approx, covparms, var.exact=NULL,
+                                 return.values = "mean")
+{
+    GPvecchia:::removeNAs()
+    U.obj = createUMultivariate(vecchia.approx, covparms)
+    V.ord = U2V(U.obj)
+#    if (length(U.obj$zero.nugg) > 0)
+#        warning("Rows/cols of V have been removed for data with zero noise")
+    vecchia.mean = GPvecchia:::vecchia_mean(z, U.obj, V.ord)
+    return.list = list(mu.pred = vecchia.mean$mu.pred, mu.obs = vecchia.mean$mu.obs,
+        var.pred = NULL, var.obs = NULL, V.ord = NULL, U.obj = NULL)
+    if (return.values == "meanmat" | return.values == "all") {
+        return.list$V.ord = V.ord
+        return.list$U.obj = U.obj
+    }
+    if (return.values == "meanvar" | return.values == "all") {
+        if (is.null(var.exact))
+            var.exact = (sum(!vecchia.approx$obs) < 4 * 10000)
+        vars.vecchia = GPvecchia:::vecchia_var(U.obj, V.ord, exact = var.exact)
+        return.list$var.pred = vars.vecchia$vars.pred
+        return.list$var.obs = vars.vecchia$vars.obs
+    }
+    return(return.list)
+}

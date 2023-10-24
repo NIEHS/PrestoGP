@@ -166,7 +166,7 @@ knn_indices <- function(ordered_locs, query, n_neighbors, dist_func){
 #' @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
 #'
 #' @return A list containing two matrices, each with one row per location: an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
-sparseNN <- function(ordered_locs, n_neighbors, dist_func){
+sparseNN <- function(ordered_locs, n_neighbors, dist_func, ordered_locs_pred=NULL){
   indices_matrix = matrix(data=NA, nrow=nrow(ordered_locs), ncol=n_neighbors)
   distances_matrix = matrix(data=NA, nrow=nrow(ordered_locs), ncol=n_neighbors)
   for(row in 1:n_neighbors){
@@ -181,13 +181,28 @@ sparseNN <- function(ordered_locs, n_neighbors, dist_func){
     indices_matrix[row,1:n_neighbors] = nn$indices[1:n_neighbors]
     distances_matrix[row,1:n_neighbors] = nn$distances[1:n_neighbors]
   }
+  if (!is.null(ordered_locs_pred)) {
+      indices_matrix_pred = matrix(data=NA, nrow=nrow(ordered_locs_pred),
+                                   ncol=n_neighbors)
+      distances_matrix_pred = matrix(data=NA, nrow=nrow(ordered_locs_pred),
+                                     ncol=n_neighbors)
+      for (row in 1:nrow(ordered_locs_pred)) {
+          nn <- knn_indices(ordered_locs,
+                            ordered_locs_pred[row,,drop=FALSE], n_neighbors,
+                            dist_func)
+          indices_matrix_pred[row,1:n_neighbors] = nn$indices[1:n_neighbors]
+          distances_matrix_pred[row,1:n_neighbors] = nn$distances[1:n_neighbors]
+      }
+      indices_matrix <- rbind(indices_matrix, indices_matrix_pred)
+      distances_matrix <- rbind(distances_matrix, distances_matrix_pred)
+  }
   list("indices"=indices_matrix, "distances"=distances_matrix)
 }
 
 # This partitions the vector q(i) of nearest neighbors into the subsets
 # q_y(i) and q_z(i) as described in the second full paragraph on page
 # 17 of Kyle's technical report.
-calc.q <- function(nn.obj) {
+calc.q <- function(nn.obj, firstind.pred) {
     m <- ncol(nn.obj)
     n <- nrow(nn.obj)
 
@@ -208,19 +223,30 @@ calc.q <- function(nn.obj) {
         for (j in 2:m) {
             cur.k <- cur.q[j]
             cur.qy <- intersect(q.y[[cur.k]], cur.q)
-            if (length(cur.qy)>length(best.qy)) {
+            if (length(cur.qy)>length(best.qy) & cur.k<firstind.pred) {
                 best.k <- cur.k
                 best.qy <- cur.qy
             }
         }
         q.y[[i]] <- union(best.k, best.qy)
         q.z[[i]] <- setdiff(cur.q, q.y[[i]])
+        latent.pred <- q.z[[i]][q.z[[i]]>=firstind.pred]
+        if (length(latent.pred)>0) {
+            q.y[[i]] <- union(q.y[[i]], latent.pred)
+            q.z[[i]] <- setdiff(q.z[[i]], latent.pred)
+        }
     }
     return(list(q.y=q.y, q.z=q.z))
 }
 
 #' @export
-vecchia_Mspecify <- function(locs.list, m, dist.func=NULL) {
+vecchia_Mspecify <- function(locs.list, m, locs.list.pred=NULL,
+                             dist.func=NULL,
+                             ordering.pred=c("obspred", "general"),
+                             pred.cond=c("independent", "general")) {
+
+    ordering.pred <- match.arg(ordering.pred)
+    pred.cond <- match.arg(pred.cond)
 
     dist.func.code <- "custom"
     if(is.null(dist.func)){
@@ -241,33 +267,79 @@ vecchia_Mspecify <- function(locs.list, m, dist.func=NULL) {
     }
     n <- nrow(locs)
 
+    if (!is.null(locs.list.pred)) {
+        if (length(locs.list.pred)!=P) {
+            stop("locs.list and locs.list.pred must have the same length")
+        }
+        locs.pred <- NULL
+        ndx.pred <- NULL
+        for (i in 1:P) {
+            if (!is.null(locs.list.pred[[i]])) {
+                if (!is.matrix(locs.list.pred[[i]])) {
+                    stop("Each element of locs.list.pred must be a matrix or NULL")
+                }
+                locs.pred <- rbind(locs.pred, locs.list.pred[[i]])
+                ndx.pred <- c(ndx.pred, rep(i, nrow(locs.list.pred[[i]])))
+            }
+        }
+        locs.all <- rbind(locs, locs.pred)
+        ndx.all <- c(ndx, ndx.pred)
+        observed.obspred <- c(rep(TRUE, n), rep(FALSE, nrow(locs.pred)))
+    }
+    else {
+        locs.all <- locs
+        ndx.all <- ndx
+        observed.obspred <- rep(TRUE, n)
+        ordering.pred <- "general"
+    }
+
     if (dist.func.code=="custom") {
-        loc.order <- max_min_ordering(locs, dist.func)
+        if (!is.null(locs.list.pred)) {
+            stop("Only Euclidean distance currently supported for prediction")
+        }
+        loc.order <- max_min_ordering(locs.all, dist.func)
         loc.order <- c(unique(loc.order), setdiff(1:n, loc.order))
     }
     else {
-        loc.order <- GPvecchia::order_maxmin_exact(locs)
-    }
+        if (is.null(locs.list.pred) | ordering.pred=="general") {
+            loc.order <- GPvecchia::order_maxmin_exact(locs.all)
   # I am not sure why the next two lines are here. I added them because
   # similar code exists in the GPvecchia package. But I don't know why
   # they did this. Uncomment these two lines to reproduce the output
   # from the createU function in the GPvecchia package.
-  #cutoff <- min(n, 9)
-  #loc.order <- c(loc.order[1], loc.order[-seq(1, cutoff)], loc.order[2:cutoff])
-
-    olocs <- locs[loc.order,,drop=FALSE]
-    ondx <- ndx[loc.order]
+            cutoff <- min(n, 9)
+            loc.order <- c(loc.order[1], loc.order[-seq(1, cutoff)],
+                           loc.order[2:cutoff])
+            ord <- loc.order
+            ord.z <- loc.order[loc.order<=n]
+        }
+        else {
+            loc.order <- GPvecchia::order_maxmin_exact_obs_pred(locs,
+                                                                locs.pred)
+            ord.z <- loc.order$ord
+            ord <- c(ord.z, loc.order$ord_pred+nrow(locs))
+        }
+        olocs <- locs.all[ord,,drop=FALSE]
+        ondx <- ndx.all[ord]
+        obs <- observed.obspred[ord]
+    }
 
   # Note that the corresponding function in the GPvecchia package
   # is non-deterministic, so there may be some slight differences
   # between the output of this function and the output of createU
   # in the GPvecchia package.
-    nn.mat <- sparseNN(olocs, m, dist.func)
-    q.list <- calc.q(nn.mat$indices)
+    if (is.null(locs.list.pred) | pred.cond=="general") {
+        nn.mat <- sparseNN(olocs, m, dist.func)
+    }
+    else {
+        nn.mat <- sparseNN(olocs[1:n,,drop=FALSE], m, dist.func,
+                           olocs[-(1:n),,drop=FALSE])
+    }
+    last.obs <- max((1:length(obs))[obs])
+    q.list <- calc.q(nn.mat$indices, last.obs+1)
 
-    obs <- rep(TRUE, n)
-    return(list(locsord=olocs, obs=obs, ord=loc.order, ord.z=loc.order,
-                ord.pred="general", cond.yz="SGV", conditioning="NN",
+    return(list(locsord=olocs, obs=obs, ord=ord, ord.z=ord.z,
+                ord.pred=ordering.pred, cond.yz="SGV", conditioning="NN",
                 P=P, ondx=ondx, dist.func=dist.func,
                 dist.func.code=dist.func.code, q.list=q.list,
                 n.neighbors=m))
@@ -479,9 +551,20 @@ createUMultivariate <- function(vec.approx, params, cov_func=NULL) {
   U <- sparseMatrix(i = U[,1], j = U[,2], x = U[,3], dims = c(2*n, 2*n),
                     triangular = TRUE)
   }
+  # I think the code below only works for obspred ordering. This probably
+  # needs to be fixed when (if) we support other orderings.
+  if (sum(!vec.approx$obs)>0) {
+      if (vec.approx$ord.pred!="obspred") {
+          stop("Currently only obspred ordering is supported")
+      }
+      else {
+          drop.seq <- seq(from=(2*sum(vec.approx$obs)+2), to=ncol(U), by=2)
+          U <- U[-drop.seq,-drop.seq]
+      }
+  }
   latent <- rep(TRUE, nrow(U))
-  latent[seq(from=2,to=nrow(U),by=2)] <- FALSE
+  latent[seq(from=2, to=(2*sum(vec.approx$obs)), by=2)] <- FALSE
   return(list(U=U, latent=latent, ord=vec.approx$ord, obs=vec.approx$obs,
-              ord.pred=vec.approx$ord.pred, ord.z=vec.approx$ord,
+              ord.pred=vec.approx$ord.pred, ord.z=vec.approx$ord.z,
               cond.yz=vec.approx$cond.yz, ic0=FALSE))
 }
