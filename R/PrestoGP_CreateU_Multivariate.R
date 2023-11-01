@@ -167,6 +167,11 @@ knn_indices <- function(ordered_locs, query, n_neighbors, dist_func){
 #'
 #' @return A list containing two matrices, each with one row per location: an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
 sparseNN <- function(ordered_locs, n_neighbors, dist_func, ordered_locs_pred=NULL){
+    ee <- min(apply(ordered_locs, 2, stats::sd))
+    n <- nrow(ordered_locs)
+    ordered_locs <- ordered_locs + matrix(ee*1e-04*
+                                          stats::rnorm(n*ncol(ordered_locs)),
+                                          n, ncol(ordered_locs))
   indices_matrix = matrix(data=NA, nrow=nrow(ordered_locs), ncol=n_neighbors)
   distances_matrix = matrix(data=NA, nrow=nrow(ordered_locs), ncol=n_neighbors)
   for(row in 1:n_neighbors){
