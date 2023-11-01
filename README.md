@@ -1,11 +1,8 @@
-<<<<<<< HEAD
 ## PrestoGP: Penalized Regression on Spatiotemporal Outcomes using Gaussian Process
 
 [![R-CMD-check](https://github.com/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/actions/workflows/check-standard.yaml)
 [![test-coverage](https://github.com/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/actions/workflows/test-coverage.yaml)
     
-=======
->>>>>>> 544a290d7440f0a44abe518dc3e9733140695f98
 # LURK-Vecchia
 
 Simultaneous variable seletion and estimation of LUR models with spatiotemporally correlated errors that is scalable for big data
