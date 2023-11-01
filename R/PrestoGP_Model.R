@@ -60,14 +60,14 @@ setMethod("initialize", "PrestoGPModel", function(.Object, ...) {
 })
 
 setGeneric("show_theta", function(object, Y_names)standardGeneric("show_theta") )
-setGeneric("prestogp_fit", function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-4, maxit=5000), parallel=FALSE) standardGeneric("prestogp_fit") )
+setGeneric("prestogp_fit", function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-4, maxit=5000), parallel=FALSE, foldid=NULL) standardGeneric("prestogp_fit") )
 setGeneric("prestogp_predict", function(model, X="matrix", locs="matrix", m="numeric", ordering.pred=c("obspred", "general"), pred.cond=c("independent", "general"), return.values=c("mean", "meanvar")) standardGeneric("prestogp_predict") )
 setGeneric("calc_covparams", function(model, locs, Y) standardGeneric("calc_covparams") )
 setGeneric("specify", function(model, locs, m)standardGeneric("specify") )
 setGeneric("compute_residuals", function(model, Y, Y.hat) standardGeneric("compute_residuals") )
 setGeneric("transform_data", function(model, Y, X) standardGeneric("transform_data") )
 setGeneric("estimate_theta", function(model, locs, optim.control, method) standardGeneric("estimate_theta") )
-setGeneric("estimate_betas", function(model, parallel) standardGeneric("estimate_betas") )
+setGeneric("estimate_betas", function(model, parallel, foldid) standardGeneric("estimate_betas") )
 setGeneric("compute_error", function(model, y, X) standardGeneric("compute_error") )
 setGeneric("scale_locs", function(model, locs) standardGeneric("scale_locs") )
 setGeneric("theta_names", function(model) standardGeneric("theta_names") )
@@ -181,7 +181,7 @@ setMethod("show_theta", "PrestoGPModel",
 #' model <- prestogp_fit(model, logNO2, X, locs)
 #' ...
 setMethod("prestogp_fit", "PrestoGPModel",
-          function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters=100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-4, maxit=5000), parallel=FALSE) {
+          function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters=100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-4, maxit=5000), parallel=FALSE, foldid=NULL) {
             #parameter validation
             #TODO: This method should check for input errors in the
             #multivariate case (where Y, X, and locs are lists)
@@ -193,7 +193,7 @@ setMethod("prestogp_fit", "PrestoGPModel",
             if(!is.double(tol)){ stop("The tol parameter must be floating point number.") }
             if (is.matrix(Y)) {
                 if(nrow(Y) != nrow(X)){ stop("Y must have the same number of rows as X.") }
-                if(ncol(Y) < 1){ stop("Y must have at least 1 column.") }
+                if(ncol(Y) != 1){ stop("Y must have only 1 column.") }
                 if(nrow(Y) != nrow(locs)){ stop("Y must have the same number of rows as locs.") }
             }
             if (is.null(scaling)) {
@@ -265,7 +265,9 @@ setMethod("prestogp_fit", "PrestoGPModel",
               model <- specify(model, locs, m)
 
               if (is.null(beta.hat)) {
-                  beta0.glmnet <- cv.glmnet(model@X_train, model@Y_train)
+                  beta0.glmnet <- cv.glmnet(model@X_train, model@Y_train,
+                                            parallel=parallel,
+                                            foldid=foldid)
                   beta.hat <- as.matrix(predict(beta0.glmnet,
                                                 type="coefficients",
                                                 s=beta0.glmnet$lambda.1se))
@@ -288,7 +290,7 @@ setMethod("prestogp_fit", "PrestoGPModel",
                   model <- specify(model, locs, m)
               }
               model <- transform_data(model, model@Y_train, model@X_train)
-              model <- estimate_betas(model, parallel)
+              model <- estimate_betas(model, parallel, foldid)
               min.error <- compute_error(model)
               ### Check min-error against the previous error and tolerance
               if(min.error<prev.error*tol) {
@@ -325,11 +327,11 @@ setMethod("prestogp_fit", "PrestoGPModel",
 #' @param model the model to estimate coeffients for
 #'
 #' @return A model with updated coefficients
-setMethod("estimate_betas", "PrestoGPModel", function(model, parallel) {
+setMethod("estimate_betas", "PrestoGPModel", function(model, parallel, foldid) {
   if(ncol(model@Y_train) > 1){
-    model@linear_model <- cv.glmnet(as.matrix(model@X_tilde), as.matrix(model@y_tilde), family="mgaussian", alpha = model@alpha, parallel=parallel)
+    model@linear_model <- cv.glmnet(as.matrix(model@X_tilde), as.matrix(model@y_tilde), family="mgaussian", alpha = model@alpha, parallel=parallel, foldid=foldid)
   } else {
-    model@linear_model <- cv.glmnet(as.matrix(model@X_tilde), as.matrix(model@y_tilde), alpha = model@alpha, parallel=parallel)
+    model@linear_model <- cv.glmnet(as.matrix(model@X_tilde), as.matrix(model@y_tilde), alpha = model@alpha, parallel=parallel, foldid=foldid)
   }
   idmin <- which(model@linear_model$lambda == model@linear_model$lambda.min)
   semin <- model@linear_model$cvm[idmin] + model@linear_model$cvsd[idmin]
