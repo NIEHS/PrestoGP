@@ -4,7 +4,7 @@
 \alias{prestogp_predict,SpatiotemporalModel-method}
 \title{Make predictions using a previously fit spatiotemporal model.}
 \usage{
-\S4method{prestogp_predict}{SpatiotemporalModel}(model, X = "matrix", locs = "matrix", m = NULL)
+\S4method{prestogp_predict}{SpatiotemporalModel}(model, X, locs, m = NULL)
 }
 \arguments{
 \item{model}{A model object returned by prestogp_fit.}
