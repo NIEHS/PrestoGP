@@ -4,7 +4,7 @@
 \alias{prestogp_predict,SpatialModel-method}
 \title{Make predictions using a previously fit spatial model.}
 \usage{
-\S4method{prestogp_predict}{SpatialModel}(model, X = "matrix", locs = "matrix", m = NULL)
+\S4method{prestogp_predict}{SpatialModel}(model, X, locs, m = NULL)
 }
 \arguments{
 \item{model}{A model object returned by prestogp_fit.}
