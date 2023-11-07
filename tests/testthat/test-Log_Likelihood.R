@@ -22,7 +22,7 @@ test_that("negloglik_vecchia_ST", {
                          control=list(trace=0))
   params_optim <- exp(vecchia.result$par)
   result_optim <- negloglik_vecchia_ST(log(params_optim),locs_mat,res,vecchia_approx)
-  expect_equal(-6861.65048095, result_optim, tolerance=10e-5)
+  expect_equal(-6861.65048095, result_optim, tolerance=1e-5)
 })
 
 test_that("create.param.sequence", {
@@ -35,7 +35,7 @@ test_that("create.param.sequence", {
   expect_equal(c(3,3), seq[3,])
   expect_equal(c(4,4), seq[4,])
   expect_equal(c(5,5), seq[5,])
-  
+
   seq = create.param.sequence(3)
   colnames(seq) <- NULL
   expect_equal(2, ncol(seq))
@@ -45,6 +45,16 @@ test_that("create.param.sequence", {
   expect_equal(c(7,9), seq[3,])
   expect_equal(c(10,12), seq[4,])
   expect_equal(c(13,15), seq[5,])
+
+  seq = create.param.sequence(3, 2)
+  colnames(seq) <- NULL
+  expect_equal(2, ncol(seq))
+  expect_equal(5, nrow(seq))
+  expect_equal(c(1,3), seq[1,])
+  expect_equal(c(4,9), seq[2,])
+  expect_equal(c(10,12), seq[3,])
+  expect_equal(c(13,15), seq[4,])
+  expect_equal(c(16,18), seq[5,])
 })
 
 test_that("create.initial.values.flex", {
@@ -56,8 +66,8 @@ test_that("create.initial.values.flex", {
                                           rep(0.1,P), #nuggets
                                           NULL,
                                           P)
-  expect_equal(c(-0.105, -0.693, -0.693, -2.303), logparams, tolerance=10e-2)
-  
+  expect_equal(c(-0.105, -0.693, -1.386, -2.303, 0), logparams, tolerance=1e-2)
+
   P <- 2
   Y <- cbind(runif(10),runif(10))
   cor.matrix <- cor(Y)
@@ -68,34 +78,26 @@ test_that("create.initial.values.flex", {
                                           rep(0.1,P), #nuggets
                                           cov_mat,
                                           P)
-  expect_equal(c(-0.105, -0.105, -0.693, -0.693, -0.693, -0.693, -2.303, -2.303, 0.221), logparams, tolerance=10e-2)
+  expect_equal(c(-0.105, -0.105, -0.693, -0.693, -1.386, -1.386, -2.303, -2.303, 0.584), logparams, tolerance=1e-2)
 })
 
 test_that("mvnegloglik", {
-  set.seed(7919)
-  load("sim_spatial.Rdata")
-  P <- 2
-  Y <- cbind(runif(10),runif(10))
-  cor.matrix <- cor(Y)
-  cov_mat <- c(cor.matrix[upper.tri(cor.matrix)])
-  logparams <- create.initial.values.flex(rep(0.9,P), #marginal variance
-                                          rep(0.5,P), #range
-                                          rep(0.5,P), #smoothness
-                                          rep(0.1,P), #nuggets
-                                          cov_mat,
-                                          P)
-  seq = create.param.sequence(P)
-  neg_likelihood <- mvnegloglik(logparams, list(locs_train, locs_train), list(Y_train, Y_train), seq, P)
-  expect_equal(15416, neg_likelihood, tolerance=10e-2)
-  
-  logparams <- create.initial.values.flex(rep(9.5,P), #marginal variance
-                                          rep(15.0,P), #range
-                                          rep(0.5,P), #smoothness
-                                          rep(0.9,P), #nuggets
-                                          cov_mat,
-                                          P)
-  neg_likelihood <- mvnegloglik(logparams, list(locs_train, locs_train), list(Y_train, Y_train), seq, P)
-  expect_equal(5905, neg_likelihood, tolerance=10e-2)
+    source("sim_multivariate_big.R")
+    P <- 3
+    Y <- cbind(runif(10),runif(10), runif(10))
+    cor.matrix <- cor(Y)
+    cov_mat <- c(cor.matrix[upper.tri(cor.matrix)])
+    logparams <- create.initial.values.flex(rep(0.9,P), #marginal variance
+                                            rep(0.5,P), #range
+                                            rep(0.5,P), #smoothness
+                                            rep(0.1,P), #nuggets
+                                            cov_mat,
+                                            P)
+    pseq = create.param.sequence(P)
+    vec.approx <- vecchia_Mspecify(locs.list, 25)
+    neg_likelihood <- mvnegloglik(logparams, vec.approx,
+                                  unlist(y.list), pseq, P)
+    expect_equal(34474.4, neg_likelihood, tolerance=1e-2)
 })
 
 #TODO implement this test

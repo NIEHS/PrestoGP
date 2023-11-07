@@ -1,2 +1,2 @@
 library(testthat)
-test_check("LURKVecchia")
+test_check("PrestoGP")
