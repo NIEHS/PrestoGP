@@ -3,3 +3,5 @@
 ^R/scratch.R$
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^doc$
+^Meta$
