@@ -26,8 +26,8 @@ jobs:
           needs: lint
 
       - name: Lint
-        run: lintr::lint_package(linters = lintr::with_defaults(
-                                  linters = lintr::exclude(c("object_name_linter", "trailing_whitespace_linter"))
+        run: lintr::lint_package(linters = lintr::linters_with_defaults(object_name_linter = NULL,
+              trailing_whitespace_linter = NULL))
                                 ))
         shell: Rscript {0}
         env:
