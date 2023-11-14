@@ -60,7 +60,7 @@ negloglik_full_ST=function(logparms,locs,y,N){
   -mvtnorm::dmvnorm(y, rep(0,N), cov.mat, log=TRUE)
 }
 
-#' negloglik_full_spatial
+#' negloglik.full
 #'
 #' Spatial Full Kriging negative loglikelihood
 #'
@@ -74,12 +74,15 @@ negloglik_full_ST=function(logparms,locs,y,N){
 #'
 #' @examples
 #' @noRd
-negloglik_full_spatial=function(logparms,locs,y,N){
-  parms = exp(logparms)
-  d <- fields::rdist(locs)
-  cov.mat=parms[1]*fields::Exponential(d,range=parms[2])+
-    parms[3]*diag(N)
-  -mvtnorm::dmvnorm(y,rep(0,N),cov.mat,log=TRUE)
+negloglik.full=function(logparams,locs,y){
+    params <- c(exp(logparams[1:2]),
+                gtools::inv.logit(logparams[3], 0, 2.5),
+                exp(logparams[4]))
+    d <- fields::rdist(locs)
+    N <- nrow(d)
+    cov.mat=params[1]*fields::Matern(d,range=params[2], smoothness=params[3])+
+        params[4]*diag(N)
+    return(-1*mvtnorm::dmvnorm(y,rep(0,N),cov.mat,log=TRUE))
 }
 
 
@@ -157,7 +160,7 @@ mvnegloglik_ST =function(logparams,vecchia.approx,y,param.seq,P,scaling,nscale){
         for (j in 1:nscale) {
             locs.scaled[vecchia.approx$ondx==i,scaling==j] <-
                 locs.scaled[vecchia.approx$ondx==i,scaling==j] /
-                params[param.seq[2,1]+nscale*(i-1)+j-1] 
+                params[param.seq[2,1]+nscale*(i-1)+j-1]
         }
     }
     vecchia.approx$locsord <- locs.scaled
@@ -171,7 +174,7 @@ mvnegloglik_ST =function(logparams,vecchia.approx,y,param.seq,P,scaling,nscale){
 ##############################################################################
 ### Full Multivariate Matern Negative Loglikelihood Function ###########
 
-mvnegloglik.full=function(logparams,locs,y,param.seq,P){
+mvnegloglik.full=function(logparams,locs,y,param.seq){
   #  Input-
   #  logparams: A numeric vector of length (4*P)+(4*choose(P,2)).
   #             To construct these parameters we unlist a list of the 7 covariance
@@ -191,6 +194,7 @@ mvnegloglik.full=function(logparams,locs,y,param.seq,P){
 
   #P <- length(y)
   # transform the postively constrained parameters from log-space to normal-space
+  P <- length(locs)
   params <- c(exp(logparams[1:param.seq[2,2]]),
               gtools::inv.logit(logparams[param.seq[3,1]:param.seq[3,2]], 0, 2.5),
               exp(logparams[param.seq[4,1]:param.seq[4,2]]))
@@ -279,12 +283,17 @@ cat.covariances <- function(locs.list,sig2,range,smoothness,nugget){
   for (iter in 1:nrow(combs)){
     i <- combs[iter,1]
     j <- combs[iter,2]
-    d <- fields::rdist.earth(locs.list[[i]],locs.list[[j]],miles = FALSE)
-
+    # d <- fields::rdist.earth(locs.list[[i]],locs.list[[j]],miles = FALSE)
+    d <- fields::rdist(locs.list[[i]],locs.list[[j]])
     # Calculate the covariance matrix - if/then based on its location in the super-matrix
-    N <- nrow(d)
-    cov.mat.ij <- sig2[i,j]*geoR::matern(d,phi = range[i,j],kappa = smoothness[i,j])+
-      nugget[i,j]*diag(N)
+      N <- nrow(d)
+      if (i==j){ # To accomodate varying size outcomes- the nugget is not included on cross-covariances
+        cov.mat.ij <- sig2[i,j]*geoR::matern(d,phi = range[i,j],kappa = smoothness[i,j])+
+          nugget[i,j]*diag(N)
+      }else{
+        cov.mat.ij <- sig2[i,j]*geoR::matern(d,phi = range[i,j],kappa = smoothness[i,j])
+      }
+
 
     if (combs[iter,1]==1){
       row.idx <- 1:dims[1]
@@ -306,6 +315,7 @@ cat.covariances <- function(locs.list,sig2,range,smoothness,nugget){
     }
 
   }
+
 
   return(cov.mat.out)
 }
