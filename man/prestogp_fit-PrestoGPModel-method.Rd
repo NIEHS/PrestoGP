@@ -18,7 +18,8 @@
   verbose = FALSE,
   optim.method = "Nelder-Mead",
   optim.control = list(trace = 0, reltol = 1e-04, maxit = 5000),
-  parallel = FALSE
+  parallel = FALSE,
+  foldid = NULL
 )
 }
 \arguments{
