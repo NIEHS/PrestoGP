@@ -85,3 +85,5 @@ data
 # Rcpp compiled binary files
 src/*.so
 src/*.o
+/doc/
+/Meta/

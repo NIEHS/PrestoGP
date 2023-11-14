@@ -60,7 +60,7 @@ setMethod("initialize", "PrestoGPModel", function(.Object, ...) {
 })
 
 setGeneric("show_theta", function(object, Y_names)standardGeneric("show_theta") )
-setGeneric("prestogp_fit", function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-4, maxit=5000), parallel=FALSE, foldid=NULL) standardGeneric("prestogp_fit") )
+setGeneric("prestogp_fit", function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-3, maxit=5000), parallel=FALSE, foldid=NULL) standardGeneric("prestogp_fit") )
 setGeneric("prestogp_predict", function(model, X="matrix", locs="matrix", m="numeric", ordering.pred=c("obspred", "general"), pred.cond=c("independent", "general"), return.values=c("mean", "meanvar")) standardGeneric("prestogp_predict") )
 setGeneric("calc_covparams", function(model, locs, Y) standardGeneric("calc_covparams") )
 setGeneric("specify", function(model, locs, m)standardGeneric("specify") )
@@ -181,7 +181,7 @@ setMethod("show_theta", "PrestoGPModel",
 #' model <- prestogp_fit(model, logNO2, X, locs)
 #' ...
 setMethod("prestogp_fit", "PrestoGPModel",
-          function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters=100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-4, maxit=5000), parallel=FALSE, foldid=NULL) {
+          function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters=100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-3, maxit=5000), parallel=FALSE, foldid=NULL) {
             #parameter validation
             #TODO: This method should check for input errors in the
             #multivariate case (where Y, X, and locs are lists)
