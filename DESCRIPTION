@@ -1,8 +1,7 @@
 Package: PrestoGP
 Type: Package
-Title: Penalized Regression for Spatio-Temporal Outcomes via Gaussian
-        Processes
-Version: 0.2.0.9015
+Title: Penalized Regression for Spatio-Temporal Outcomes via Gaussian Processes 
+Version: 0.2.0.9018
 Authors@R: c(
     person(given = "Eric",
            family = "Bair",
@@ -21,26 +20,41 @@ Authors@R: c(
            family = "Messier",
 	   role = "aut"))
 Description: Simultaneous variable seletion and estimation of LUR models with spatiotemporally correlated errors that is scalable for big data.
-Depends: R (>= 3.5.0)
-LinkingTo: Rcpp, RcppArmadillo
-Imports: GPvecchia, Matrix, fields, ncvreg, readxl, scoringRules, MASS,
-        aod, knitr, dplyr, glmnet, rmarkdown, markdown, gtools, geoR,
-        doParallel
+Depends:
+    R (>= 3.5.0)
+LinkingTo:
+    Rcpp, RcppArmadillo
+Imports:
+    GPvecchia,
+    Matrix,
+    fields,
+    ncvreg,
+    readxl,
+    scoringRules,
+    MASS,
+    aod,
+    knitr,
+    dplyr,
+    glmnet,
+    rmarkdown,
+    markdown,
+    gtools,
+    geoR,
+    doParallel
 License: GPL-3
 Encoding: UTF-8
-VignetteBuilder: knitr
+VignetteBuilder: knitr 
 RoxygenNote: 7.2.3
-Collate: 'Log_Likelihood.R' 'PrestoGP_CreateU_Multivariate.R'
-        'PrestoGP_Model.R' 'PrestoGP_Vecchia_Spatiotemporal.R'
-        'PrestoGP_Full.R' 'PrestoGP_Vecchia_Spatial.R'
-        'PrestoGP_Full_Spatial.R' 'PrestoGP_Multivariate_Vecchia.R'
-        'PrestoGP_Util_Functions.R' 'RcppExports.R' 'Visualization.R'
-        'package.R'
-NeedsCompilation: yes
-Packaged: 2023-10-23 09:07:48 UTC; root
-Author: Eric Bair [aut, cre],
-  Brian Kidd [aut],
-  Eric Wimberley [aut],
-  Deepak Mav [aut],
-  Kyle Messier [aut]
-Maintainer: Eric Bair <eric.bair@sciome.com>
+Collate: 
+    'Log_Likelihood.R'
+    'PrestoGP_CreateU_Multivariate.R'
+    'PrestoGP_Model.R'
+    'PrestoGP_Vecchia_Spatiotemporal.R'
+    'PrestoGP_Full.R'
+    'PrestoGP_Vecchia_Spatial.R'
+    'PrestoGP_Full_Spatial.R'
+    'PrestoGP_Multivariate_Vecchia.R'
+    'PrestoGP_Util_Functions.R'
+    'RcppExports.R'
+    'Visualization.R'
+    'package.R'

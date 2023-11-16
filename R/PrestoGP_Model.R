@@ -145,6 +145,7 @@ setGeneric("transform_covariance_parameters", function(model) {
   standardGeneric("transform_covariance_parameters")
 })
 
+
 #' show
 #'
 #' Print a summary of the model and its parameters
@@ -405,16 +406,17 @@ setMethod("prestogp_fit", "PrestoGPModel",
 
             model <- specify(model, locs, m)
 
-            if (is.null(beta.hat)) {
-              beta0.glmnet <- cv.glmnet(model@X_train, model@Y_train)
-              beta.hat <- as.matrix(predict(beta0.glmnet,
-                                            type = "coefficients",
-                                            s = beta0.glmnet$lambda.1se))
-            }
-            Y.hat <-
-              beta.hat[1, 1] + model@X_train %*% beta.hat[-1, ]
-            #              dim(Y.hat) <- c(nrow(model@Y_train),
-            #ncol(model@Y_train))
+
+              if (is.null(beta.hat)) {
+                  beta0.glmnet <- cv.glmnet(model@X_train, model@Y_train,
+                                            parallel=parallel,
+                                            foldid=foldid)
+                  beta.hat <- as.matrix(predict(beta0.glmnet,
+                                                type="coefficients",
+                                                s=beta0.glmnet$lambda.1se))
+              }
+              Y.hat <- beta.hat[1,1] + model@X_train %*% beta.hat[-1,]
+#              dim(Y.hat) <- c(nrow(model@Y_train), ncol(model@Y_train))
 
             # Begining algorithm (Algorithm 1 from Messier and Katzfuss 2020)
             model@converged <- FALSE
@@ -438,9 +440,9 @@ setMethod("prestogp_fit", "PrestoGPModel",
               if (!model@apanasovich) {
                 model <- specify(model, locs, m)
               }
-              model <-
-                transform_data(model, model@Y_train, model@X_train)
-              model <- estimate_betas(model, parallel)
+
+              model <- transform_data(model, model@Y_train, model@X_train)
+              model <- estimate_betas(model, parallel, foldid)
               min.error <- compute_error(model)
               ### Check min-error against the previous error and tolerance
               if (min.error < prev.error * tol) {
@@ -500,6 +502,7 @@ setMethod("estimate_betas", "PrestoGPModel", function(model, parallel) {
         alpha = model@alpha,
         parallel = parallel
       )
+
   }
   idmin <-
     which(model@linear_model$lambda == model@linear_model$lambda.min)
