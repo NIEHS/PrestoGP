@@ -310,8 +310,7 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred=NULL,
             loc.order <- GPvecchia::order_maxmin_exact(locs.all)
   # I am not sure why the next two lines are here. I added them because
   # similar code exists in the GPvecchia package. But I don't know why
-  # they did this. Uncomment these two lines to reproduce the output
-  # from the createU function in the GPvecchia package.
+  # they did this.
             cutoff <- min(n, 9)
             loc.order <- c(loc.order[1], loc.order[-seq(1, cutoff)],
                            loc.order[2:cutoff])

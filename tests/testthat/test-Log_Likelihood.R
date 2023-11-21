@@ -25,62 +25,6 @@ test_that("negloglik_vecchia_ST", {
   expect_equal(-6861.65048095, result_optim, tolerance=1e-5)
 })
 
-test_that("create.param.sequence", {
-  seq = create.param.sequence(1)
-  colnames(seq) <- NULL
-  expect_equal(2, ncol(seq))
-  expect_equal(5, nrow(seq))
-  expect_equal(c(1,1), seq[1,])
-  expect_equal(c(2,2), seq[2,])
-  expect_equal(c(3,3), seq[3,])
-  expect_equal(c(4,4), seq[4,])
-  expect_equal(c(5,5), seq[5,])
-
-  seq = create.param.sequence(3)
-  colnames(seq) <- NULL
-  expect_equal(2, ncol(seq))
-  expect_equal(5, nrow(seq))
-  expect_equal(c(1,3), seq[1,])
-  expect_equal(c(4,6), seq[2,])
-  expect_equal(c(7,9), seq[3,])
-  expect_equal(c(10,12), seq[4,])
-  expect_equal(c(13,15), seq[5,])
-
-  seq = create.param.sequence(3, 2)
-  colnames(seq) <- NULL
-  expect_equal(2, ncol(seq))
-  expect_equal(5, nrow(seq))
-  expect_equal(c(1,3), seq[1,])
-  expect_equal(c(4,9), seq[2,])
-  expect_equal(c(10,12), seq[3,])
-  expect_equal(c(13,15), seq[4,])
-  expect_equal(c(16,18), seq[5,])
-})
-
-test_that("create.initial.values.flex", {
-  set.seed(7919)
-  P <- 1
-  logparams <- create.initial.values.flex(rep(0.9,P), #marginal variance
-                                          rep(0.5,P), #range
-                                          rep(0.5,P), #smoothness
-                                          rep(0.1,P), #nuggets
-                                          NULL,
-                                          P)
-  expect_equal(c(-0.105, -0.693, -1.386, -2.303, 0), logparams, tolerance=1e-2)
-
-  P <- 2
-  Y <- cbind(runif(10),runif(10))
-  cor.matrix <- cor(Y)
-  cov_mat <- c(cor.matrix[upper.tri(cor.matrix)])
-  logparams <- create.initial.values.flex(rep(0.9,P), #marginal variance
-                                          rep(0.5,P), #range
-                                          rep(0.5,P), #smoothness
-                                          rep(0.1,P), #nuggets
-                                          cov_mat,
-                                          P)
-  expect_equal(c(-0.105, -0.105, -0.693, -0.693, -1.386, -1.386, -2.303, -2.303, 0.584), logparams, tolerance=1e-2)
-})
-
 test_that("negloglik.full", {
     set.seed(1234)
 
@@ -117,11 +61,11 @@ test_that("negloglik.full", {
                       gtools::inv.logit(res.optim.NM$par[3], 0, 2.5),
                       exp(res.optim.NM$par[4]))
 
-    pgp.params <- PrestoGP:::create.initial.values.flex(params.final[1],
-                                                    params.final[2],
-                                                    params.final[3],
-                                                    params.final[4],
-                                                    1, 1)
+    pgp.params <- create.initial.values.flex(params.final[1],
+                                             params.final[2],
+                                             params.final[3],
+                                             params.final[4],
+                                             1, 1)
     pseq <- create.param.sequence(1)
 
     LL.full.pgp <- mvnegloglik.full(pgp.params, list(locs), y, pseq)
@@ -164,6 +108,64 @@ test_that("mvnegloglik", {
     expect_equal(34474.4, neg_likelihood, tolerance=1e-2)
 })
 
+test_that("mvnegloglik_ST", {
+    source("sim_multivariate_big_st.R")
+    P <- 3
+    Y <- cbind(runif(10),runif(10), runif(10))
+    cor.matrix <- cor(Y)
+    cov_mat <- c(cor.matrix[upper.tri(cor.matrix)])
+    logparams <- create.initial.values.flex(rep(0.9,P), #marginal variance
+                                            rep(c(2,3),P), #range
+                                            rep(0.5,P), #smoothness
+                                            rep(0.1,P), #nuggets
+                                            cov_mat,
+                                            P)
+    pseq = create.param.sequence(P, 2)
+    vec.approx <- vecchia_Mspecify(locs.list, 25)
+    neg_likelihood <- mvnegloglik_ST(logparams, vec.approx,
+                                     unlist(y.list), pseq, P, c(1,1,2), 2)
+    expect_equal(34571.64, neg_likelihood, tolerance=1e-2)
+
+    vec.approx2 <- vec.approx
+    for (i in 1:P) {
+        vec.approx2$locsord[,1:2] <- vec.approx$locsord[,1:2] / 2
+        vec.approx2$locsord[,3] <- vec.approx$locsord[,3] / 3
+    }
+    logparams2 <- logparams
+    logparams2[pseq[2,1]:pseq[2,2]] <- 0
+    neg_likelihood2 <- mvnegloglik_ST(logparams2, vec.approx2,
+                                      unlist(y.list), pseq, P, c(1,1,2), 2)
+    expect_equal(neg_likelihood, neg_likelihood2, tolerance=1e-3)
+
+    logparams <- create.initial.values.flex(rep(0.9,P), #marginal variance
+                                            2:7, #range
+                                            rep(0.5,P), #smoothness
+                                            rep(0.1,P), #nuggets
+                                            cov_mat,
+                                            P)
+    neg_likelihood <- mvnegloglik_ST(logparams, vec.approx,
+                                     unlist(y.list), pseq, P, c(1,1,2), 2)
+    expect_equal(35451.73, neg_likelihood, tolerance=1e-2)
+
+    vec.approx2 <- vec.approx
+    vec.approx2$locsord[vec.approx$ondx==1,1:2] <-
+        vec.approx$locsord[vec.approx$ondx==1,1:2] / 2
+    vec.approx2$locsord[vec.approx$ondx==1,3] <-
+        vec.approx$locsord[vec.approx$ondx==1,3] / 3
+    vec.approx2$locsord[vec.approx$ondx==2,1:2] <-
+        vec.approx$locsord[vec.approx$ondx==2,1:2] / 4
+    vec.approx2$locsord[vec.approx$ondx==2,3] <-
+        vec.approx$locsord[vec.approx$ondx==2,3] / 5
+    vec.approx2$locsord[vec.approx$ondx==3,1:2] <-
+        vec.approx$locsord[vec.approx$ondx==3,1:2] / 6
+    vec.approx2$locsord[vec.approx$ondx==3,3] <-
+        vec.approx$locsord[vec.approx$ondx==3,3] / 7
+
+    neg_likelihood2 <- mvnegloglik_ST(logparams2, vec.approx2,
+                                      unlist(y.list), pseq, P, c(1,1,2), 2)
+    expect_equal(neg_likelihood, neg_likelihood2, tolerance=1e-3)
+})
+
 test_that("mvnegloglik.full", {
     source("sim_multivariate_lik.R")
 
@@ -202,47 +204,47 @@ test_that("mvnegloglik.full", {
                              tanh(params.init.final[
                                  param.seq.begin[5]:param.seq.end[5]]))
 
+    params.final.flex.test <- create.initial.values.flex(
+        params.init.final.t[param.seq.begin[1]:param.seq.end[1]],
+        params.init.final.t[param.seq.begin[2]:param.seq.end[2]],
+        params.init.final.t[param.seq.begin[3]:param.seq.end[3]],
+        params.init.final.t[param.seq.begin[4]:param.seq.end[4]],
+        params.init.final.t[param.seq.begin[5]:param.seq.end[5]], 3)
+
+    cov.list <- create.cov.upper.flex(
+        3,
+        params.init.final.t[param.seq.begin[1]:param.seq.end[1]],
+        params.init.final.t[param.seq.begin[2]:param.seq.end[2]],
+        params.init.final.t[param.seq.begin[3]:param.seq.end[3]],
+        params.init.final.t[param.seq.begin[4]:param.seq.end[4]],
+        params.init.final.t[param.seq.begin[5]:param.seq.end[5]])
+
+    cov.mat <- cat.covariances(locs.list,cov.list$variance,
+                               cov.list$range,
+                               cov.list$smoothness,cov.list$nugget)
+
+    LL.full.calc <- -1*mvtnorm::dmvnorm(unlist(y.list),
+                                        rep(0, length(unlist(y.list))),
+                                        cov.mat, log=TRUE)
+
     vec.mapprox <- vecchia_Mspecify(locs.list, length(unlist(y.list))-1)
     U.mobj <- createUMultivariate(vec.mapprox, params.init.final.t)
 
     LL.vecchia.mv <- -1*GPvecchia:::vecchia_likelihood_U(unlist(y.list), U.mobj)
 
     expect_equal(541.31, LL.full.mv, tolerance=1e-3)
+    expect_equal(LL.full.calc, LL.full.mv, tolerance=1e-3)
 # Full likelihood should equal the Vecchia likelihood
     expect_equal(LL.full.mv, LL.vecchia.mv, tolerance=1e-3)
+# Check create.initial.values.flex:
+    expect_equal(params.init.final, params.final.flex.test, tolerance=1e-3)
+# Check create.cov.upper.flex:
+    cov.list.true <- readRDS("covlist.rds")
+    expect_equal(cov.list$variance, cov.list.true$variance, tolerance=1e-3)
+    expect_equal(cov.list$range, cov.list.true$range, tolerance=1e-3)
+    expect_equal(cov.list$smoothness, cov.list.true$smoothness, tolerance=1e-3)
+    expect_equal(cov.list$nugget, cov.list.true$nugget, tolerance=1e-3)
+# Check cat.covariances:
+    cov.mat.true <- readRDS("covmat.rds")
+    expect_equal(cov.mat, cov.mat.true, tolerance=1e-3)
 })
-
-#TODO implement this test
-test_that("cat.covariances", {
-  set.seed(7919)
-  load("sim_spatial.Rdata")
-  P <- 2
-  Y <- cbind(runif(10),runif(10))
-  cor.matrix <- cor(Y)
-  cov_mat <- c(cor.matrix[upper.tri(cor.matrix)])
-  param.sequence <- create.param.sequence(P)
-  param.sequence.begin <- param.sequence[,1]
-  param.sequence.end   <- param.sequence[,2]
-  params <- create.initial.values.flex(rep(9.5,P), #marginal variance
-                                          rep(15.0,P), #range
-                                          rep(0.5,P), #smoothness
-                                          rep(0.9,P), #nuggets
-                                          cov_mat,
-                                          P)
-  params <- c(exp(params[1:param.sequence[4,2]]),
-              tanh(params[param.sequence[5,1]:param.sequence[5,2]]))
-  sig2 <- params[param.sequence.begin[1]:param.sequence.end[1]]
-  range <- params[param.sequence.begin[2]:param.sequence.end[2]]
-  smoothness <- params[param.sequence.begin[3]:param.sequence.end[3]]
-  nugget <- params[param.sequence.begin[4]:param.sequence.end[4]]
-  rho <- params[param.sequence.begin[5]:param.sequence.end[5]]
-
-  cov.list  <- create.cov.upper.flex(P,sig2,range,smoothness,nugget,rho)
-  cov.mat <- cat.covariances(list(locs_train, locs_train),cov.list$variance,cov.list$range,
-                             cov.list$smoothness,cov.list$nugget)
-  Y <- unlist(list(Y_train, Y_train))
-  N <- length(Y)
-  neg_likelihood <- -mvtnorm::dmvnorm(Y,rep(0,N),cov.mat,log=TRUE)
-  expect_equal(5905, neg_likelihood, tolerance=10e-2)
-})
-
