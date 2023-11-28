@@ -56,76 +56,6 @@ max_min_ordering <- function(locs, dist_func){
   order
 }
 
-#' make_kd_tree
-#'
-#' Create a KD tree to help approximate nearest neighbors
-#'
-#' @param ordered_locs A matrix with one row per location, where locations are ordered using max_min ordering.
-#' @param indices A range of indices that should be split into a tree (used for recursion, not by the user)
-#' @param column_idx The column currently being used to split locations into two branches (used for recursion, not by the user)
-#'
-#' @return A vector containing the index of locations from sparse to dense
-make_kd_tree <- function(ordered_locs, indices=1:nrow(ordered_locs), column_idx=1){
-  #TODO split by columns in order of most variance to least variance
-  if(column_idx <= ncol(ordered_locs)){
-    cur.dat <- ordered_locs[indices,column_idx]
-    pivot <- median(cur.dat)
-    if (sum(cur.dat!=pivot)==0) {
-        cur.cut <- median(indices)
-        left <- which(indices<=cur.cut)
-        right <- which(indices>cur.cut)
-    }
-    else if (sum(cur.dat>pivot)==0){
-        right <- indices[which(cur.dat==pivot)]
-        min.right <- min(right)
-        right <- setdiff(right, min.right)
-        left <- indices[which(cur.dat < pivot)]
-        left <- c(left, min.right)
-    }
-    else {
-        left <- indices[which(cur.dat <= pivot)]
-        right <- indices[which(cur.dat > pivot)]
-    }
-    left_tree <- make_kd_tree(ordered_locs, left, column_idx + 1)
-    right_tree <- make_kd_tree(ordered_locs, right, column_idx + 1)
-    if(column_idx == ncol(ordered_locs)){ #last column doesn't require aditional pivot
-      list("pivot"=list(pivot), "subtree"=list(left_tree[["subtree"]], right_tree[["subtree"]]))
-    } else {
-      list("pivot"=list(pivot, list(left_tree[["pivot"]], right_tree[["pivot"]])),
-           "subtree"=list(left_tree[["subtree"]], right_tree[["subtree"]]))
-    }
-  } else { #base case: just return indices
-    list("subtree"=indices)
-  }
-}
-
-#' get_kd_tree_node
-#'
-#' Given a KD tree and a location, determine which node of the KD tree has the nearest neighbors to that location.
-#'
-#' @param kd_tree A KD tree from the make_kd_tree function
-#' @param location a location vector with the same number of dimensions as the KD tree
-#'
-#' @return A vector with the path to the KD tree node (e.g. if the tree pivots are c(0.5, 0.5) and the location is c(0.2, 0.7) this function returns c(1,2) )
-get_kd_tree_node <- function(kd_tree, location){
-  tree_path <- c()
-  pivot_tree <- kd_tree[["pivot"]]
-  for(i in 1:ncol(location)){
-    if(location[,i] < pivot_tree[[1]]){
-      tree_path <- c(tree_path, 1)
-      if(i < ncol(location)){
-        pivot_tree <- pivot_tree[[2]][[1]]
-      }
-    } else{
-      tree_path <- c(tree_path, 2)
-      if(i < ncol(location)){
-        pivot_tree <- pivot_tree[[2]][[2]]
-      }
-    }
-  }
-  tree_path
-}
-
 #' knn_indices
 #'
 #' Find the index of K nearest neighbors within a set of locations for a given query and distance function
@@ -136,25 +66,18 @@ get_kd_tree_node <- function(kd_tree, location){
 #' @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
 #'
 #' @return A vector containing the indices of the neighbors
-knn_indices <- function(ordered_locs, query, n_neighbors, dist_func){
-  kd_tree <- make_kd_tree(ordered_locs)
-  path <- get_kd_tree_node(kd_tree, query)
-  kd_node <- kd_tree$subtree
-  for(branch_level in 1:length(path)){
-    kd_node <- kd_node[[path[branch_level]]]
-  }
-  if(n_neighbors >= length(kd_node)){ #not enough neighbors in kd_node
-    dists <- dist_func(query, ordered_locs)
-    dists_order <- order(dists)
-    nearest_neighbors <- dists_order[1:(n_neighbors+1)]
-    list("indices"=nearest_neighbors, "distances"=dists[nearest_neighbors])
-  } else {
-    loc_neighbor_candidates <- ordered_locs[kd_node,,drop=FALSE]
-    dists <- dist_func(query, loc_neighbor_candidates)
-    dists_order <- order(dists)
-    closest_in_kd_node <- dists_order[1:(n_neighbors+1)]
-    list("indices"=kd_node[closest_in_kd_node], "distances"=dists[closest_in_kd_node])
-  }
+knn_indices <- function(ordered_locs, query, n_neighbors, dist_func, dist_func_code){
+    if (dist_func_code=="custom") {
+        dists <- dist_func(query, ordered_locs)
+        dists_order <- order(dists)
+        nearest_neighbors <- dists_order[1:(n_neighbors+1)]
+        return(list("indices"=nearest_neighbors,
+                    "distances"=dists[nearest_neighbors]))
+    }
+    else {
+        cur.nn <- RANN::nn2(ordered_locs, query, n_neighbors+1)
+        return(list("indices"=cur.nn$nn.idx, "distances"=cur.nn$nn.dists))
+    }
 }
 
 #' sparseNN
@@ -166,7 +89,7 @@ knn_indices <- function(ordered_locs, query, n_neighbors, dist_func){
 #' @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
 #'
 #' @return A list containing two matrices, each with one row per location: an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
-sparseNN <- function(ordered_locs, n_neighbors, dist_func, ordered_locs_pred=NULL){
+sparseNN <- function(ordered_locs, n_neighbors, dist_func, dist_func_code, ordered_locs_pred=NULL){
     ee <- min(apply(ordered_locs, 2, stats::sd))
     n <- nrow(ordered_locs)
     ordered_locs <- ordered_locs + matrix(ee*1e-04*
@@ -174,15 +97,15 @@ sparseNN <- function(ordered_locs, n_neighbors, dist_func, ordered_locs_pred=NUL
                                           n, ncol(ordered_locs))
   indices_matrix = matrix(data=NA, nrow=nrow(ordered_locs), ncol=n_neighbors)
   distances_matrix = matrix(data=NA, nrow=nrow(ordered_locs), ncol=n_neighbors)
-  for(row in 1:n_neighbors){
+  for(row in 1:(n_neighbors+1)){
     #for the locations from 1 to n_neighbors, use the entire locs list to find the neighbors
-    nn <- knn_indices(ordered_locs[1:(n_neighbors+1),,drop=FALSE], ordered_locs[row,,drop=FALSE], n_neighbors, dist_func)
+    nn <- knn_indices(ordered_locs[1:(n_neighbors+1),,drop=FALSE], ordered_locs[row,,drop=FALSE], n_neighbors, dist_func, dist_func_code)
     indices_matrix[row,1:n_neighbors] = nn$indices[2:(n_neighbors+1)]
     distances_matrix[row,1:n_neighbors] = nn$distances[2:(n_neighbors+1)]
   }
-  for(row in (n_neighbors+1):nrow(ordered_locs)){
+  for(row in (n_neighbors+2):nrow(ordered_locs)){
     #get the m nearest neighbors from the locs before this one in the max-min order
-    nn <- knn_indices(ordered_locs[1:(row-1),,drop=FALSE], ordered_locs[row,,drop=FALSE], n_neighbors, dist_func)
+    nn <- knn_indices(ordered_locs[1:(row-1),,drop=FALSE], ordered_locs[row,,drop=FALSE], n_neighbors, dist_func, dist_func_code)
     indices_matrix[row,1:n_neighbors] = nn$indices[1:n_neighbors]
     distances_matrix[row,1:n_neighbors] = nn$distances[1:n_neighbors]
   }
@@ -194,7 +117,7 @@ sparseNN <- function(ordered_locs, n_neighbors, dist_func, ordered_locs_pred=NUL
       for (row in 1:nrow(ordered_locs_pred)) {
           nn <- knn_indices(ordered_locs,
                             ordered_locs_pred[row,,drop=FALSE], n_neighbors,
-                            dist_func)
+                            dist_func, dist_func_code)
           indices_matrix_pred[row,1:n_neighbors] = nn$indices[1:n_neighbors]
           distances_matrix_pred[row,1:n_neighbors] = nn$distances[1:n_neighbors]
       }
@@ -333,10 +256,10 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred=NULL,
   # between the output of this function and the output of createU
   # in the GPvecchia package.
     if (is.null(locs.list.pred) | pred.cond=="general") {
-        nn.mat <- sparseNN(olocs, m, dist.func)
+        nn.mat <- sparseNN(olocs, m, dist.func, dist.func.code)
     }
     else {
-        nn.mat <- sparseNN(olocs[1:n,,drop=FALSE], m, dist.func,
+        nn.mat <- sparseNN(olocs[1:n,,drop=FALSE], m, dist.func, dist.func.code,
                            olocs[-(1:n),,drop=FALSE])
     }
     last.obs <- max((1:length(obs))[obs])
