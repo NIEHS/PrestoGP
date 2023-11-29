@@ -1,4 +1,4 @@
-context("CreateU Multivariate")
+context("createUMultivariate")
 
 test_that("create.param.sequence", {
   seq = create.param.sequence(1)
@@ -47,21 +47,41 @@ test_that("max_min_ordering", {
   expect_equal(order, order.gpv)
 })
 
-test_that("knn_indices", {
-  set.seed(7919)
-  load("multivariate_sim_spatial3.Rdata")
-  order <- max_min_ordering(locs_train, fields::rdist)
-  ordered_locs <- locs_train[order,,drop=FALSE]
-  indices <- knn_indices(ordered_locs, ordered_locs[2,,drop=FALSE], 5, fields::rdist, "rdist")
-  expect_equal(c(0.00, 0.00148, 0.0127, 0.243, 0.252, 0.254), indices$distances, tolerance=10e-2)
-  expect_equal(c(2, 87, 28, 32, 17, 33), indices$indices)
-})
+test_that("sparseNN", {
+    set.seed(1212)
 
-test_that("knn_indices_small_kd_node", {
-  set.seed(7919)
-  load("multivariate_sim_spatial3.Rdata")
-  ordered_locs <- c(c(0.1,0.1), c(0.9,0.9), c(0.9,0.1), c(0.1,0.9))
-  ordered_locs <- matrix(data=ordered_locs, ncol=2, nrow=4)
-  indices <- knn_indices(ordered_locs, ordered_locs[2,,drop=FALSE], 3, fields::rdist, "rdist")
-  expect_equal(c(2, 1, 3, 4), indices$indices)
+    locs <- matrix(nrow=100, ncol=2)
+    locs[1,] <- rep(0, 2)
+    for (i in 2:nrow(locs)) {
+        cur.r <- rnorm(1, 5)
+        cur.t <- runif(1, 0, 2*pi)
+        locs[i,] <- locs[i-1,]+c(cur.r*cos(cur.t), cur.r*sin(cur.t))
+    }
+
+    mm.order <- order_maxmin_exact(locs)
+    olocs <- locs[mm.order,]
+    pgp.nn <- sparseNN(olocs, 5, fields::rdist, "rdist")
+    gpv.nn <- GpGp:::find_ordered_nn(olocs, 5)
+
+    indices <- matrix(nrow=nrow(olocs), ncol=5)
+    distances <- indices
+    for (i in 1:nrow(olocs)) {
+        if (i<=5) {
+            cur.dist <- fields::rdist(olocs[(1:(5+1)),][-i,],
+                                      olocs[i,,drop=FALSE])
+            indices[i,] <- order(cur.dist)
+        }
+        else {
+            cur.dist <- fields::rdist(olocs[(1:(i-1)),], olocs[i,,drop=FALSE])
+            indices[i,] <- order(cur.dist)[1:5]
+        }
+        distances[i,] <- cur.dist[indices[i,]]
+    }
+
+# Should produce the same nearest neighbors as GPvecchia
+    expect_equal(pgp.nn$indices[-(1:5),], gpv.nn[-(1:5),-1])
+# Should obtain the same nearest neighbors and distances when we calculate
+# the neighbors by brute force.
+    expect_equal(pgp.nn$indices[-(1:5),], indices[-(1:5),])
+    expect_equal(pgp.nn$distances[-(1:5),], distances[-(1:5),], tolerance=1e-2)
 })

@@ -70,12 +70,12 @@ knn_indices <- function(ordered_locs, query, n_neighbors, dist_func, dist_func_c
     if (dist_func_code=="custom") {
         dists <- dist_func(query, ordered_locs)
         dists_order <- order(dists)
-        nearest_neighbors <- dists_order[1:(n_neighbors+1)]
+        nearest_neighbors <- dists_order[1:n_neighbors]
         return(list("indices"=nearest_neighbors,
                     "distances"=dists[nearest_neighbors]))
     }
     else {
-        cur.nn <- RANN::nn2(ordered_locs, query, n_neighbors+1)
+        cur.nn <- RANN::nn2(ordered_locs, query, n_neighbors)
         return(list("indices"=cur.nn$nn.idx, "distances"=cur.nn$nn.dists))
     }
 }
@@ -97,13 +97,13 @@ sparseNN <- function(ordered_locs, n_neighbors, dist_func, dist_func_code, order
                                           n, ncol(ordered_locs))
   indices_matrix = matrix(data=NA, nrow=nrow(ordered_locs), ncol=n_neighbors)
   distances_matrix = matrix(data=NA, nrow=nrow(ordered_locs), ncol=n_neighbors)
-  for(row in 1:(n_neighbors+1)){
+  for(row in 1:n_neighbors){
     #for the locations from 1 to n_neighbors, use the entire locs list to find the neighbors
-    nn <- knn_indices(ordered_locs[1:(n_neighbors+1),,drop=FALSE], ordered_locs[row,,drop=FALSE], n_neighbors, dist_func, dist_func_code)
-    indices_matrix[row,1:n_neighbors] = nn$indices[2:(n_neighbors+1)]
-    distances_matrix[row,1:n_neighbors] = nn$distances[2:(n_neighbors+1)]
+    nn <- knn_indices(ordered_locs[1:(n_neighbors+1),,drop=FALSE][-row,,drop=FALSE], ordered_locs[row,,drop=FALSE], n_neighbors, dist_func, dist_func_code)
+    indices_matrix[row,1:n_neighbors] = nn$indices[1:n_neighbors]
+    distances_matrix[row,1:n_neighbors] = nn$distances[1:n_neighbors]
   }
-  for(row in (n_neighbors+2):nrow(ordered_locs)){
+  for(row in (n_neighbors+1):nrow(ordered_locs)){
     #get the m nearest neighbors from the locs before this one in the max-min order
     nn <- knn_indices(ordered_locs[1:(row-1),,drop=FALSE], ordered_locs[row,,drop=FALSE], n_neighbors, dist_func, dist_func_code)
     indices_matrix[row,1:n_neighbors] = nn$indices[1:n_neighbors]

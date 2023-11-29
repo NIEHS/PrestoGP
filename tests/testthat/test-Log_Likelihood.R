@@ -105,7 +105,7 @@ test_that("mvnegloglik", {
     vec.approx <- vecchia_Mspecify(locs.list, 25)
     neg_likelihood <- mvnegloglik(logparams, vec.approx,
                                   unlist(y.list), pseq, P)
-    expect_equal(34474.4, neg_likelihood, tolerance=1e-2)
+    expect_equal(34870.57, neg_likelihood, tolerance=1e-2)
 })
 
 test_that("mvnegloglik_ST", {
@@ -124,7 +124,7 @@ test_that("mvnegloglik_ST", {
     vec.approx <- vecchia_Mspecify(locs.list, 25)
     neg_likelihood <- mvnegloglik_ST(logparams, vec.approx,
                                      unlist(y.list), pseq, P, c(1,1,2), 2)
-    expect_equal(34571.64, neg_likelihood, tolerance=1e-2)
+    expect_equal(35106.73, neg_likelihood, tolerance=1e-2)
 
     vec.approx2 <- vec.approx
     for (i in 1:P) {
@@ -145,7 +145,7 @@ test_that("mvnegloglik_ST", {
                                             P)
     neg_likelihood <- mvnegloglik_ST(logparams, vec.approx,
                                      unlist(y.list), pseq, P, c(1,1,2), 2)
-    expect_equal(35451.73, neg_likelihood, tolerance=1e-2)
+    expect_equal(36354.9, neg_likelihood, tolerance=1e-2)
 
     vec.approx2 <- vec.approx
     vec.approx2$locsord[vec.approx$ondx==1,1:2] <-
