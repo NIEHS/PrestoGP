@@ -1,7 +1,7 @@
 Package: PrestoGP
 Type: Package
 Title: Penalized Regression for Spatio-Temporal Outcomes via Gaussian Processes 
-Version: 0.2.0.9018
+Version: 0.2.0.9020
 Authors@R: c(
     person(given = "Eric",
            family = "Bair",
@@ -40,7 +40,8 @@ Imports:
     markdown,
     gtools,
     geoR,
-    doParallel
+    doParallel,
+    RANN
 License: GPL-3
 Encoding: UTF-8
 VignetteBuilder: knitr 
