@@ -63,6 +63,8 @@ Collate:
     'RcppExports.R'
     'Visualization.R'
     'package.R'
+    'utils-tidy-eval.R'
+    'PrestoGP-package.R'
 Suggests: 
     roxygen2,
     testthat (>= 3.0.0)
