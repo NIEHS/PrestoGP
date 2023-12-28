@@ -41,7 +41,11 @@ Imports:
     gtools,
     geoR,
     doParallel,
-    RANN
+    RANN,
+    rlang (>= 0.4.11),
+    foreach,
+    stats,
+    methods
 License: GPL-3
 Encoding: UTF-8
 VignetteBuilder: knitr 
@@ -59,3 +63,7 @@ Collate:
     'RcppExports.R'
     'Visualization.R'
     'package.R'
+Suggests: 
+    roxygen2,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
