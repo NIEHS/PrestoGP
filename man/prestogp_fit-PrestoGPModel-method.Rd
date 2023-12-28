@@ -17,7 +17,7 @@
   max_iters = 100,
   verbose = FALSE,
   optim.method = "Nelder-Mead",
-  optim.control = list(trace = 0, reltol = 1e-04, maxit = 5000),
+  optim.control = list(trace = 0, reltol = 0.001, maxit = 5000),
   parallel = FALSE,
   foldid = NULL
 )
