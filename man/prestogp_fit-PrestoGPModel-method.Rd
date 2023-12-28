@@ -10,7 +10,7 @@
   X,
   locs,
   scaling = NULL,
-  apanasovich = FALSE,
+  apanasovich = NULL,
   covparams = NULL,
   beta.hat = NULL,
   tol = 0.999999,

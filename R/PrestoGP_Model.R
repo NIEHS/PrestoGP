@@ -43,10 +43,16 @@ PrestoGPModel <- setClass("PrestoGPModel",
                                 alpha = "numeric", #the alpha ratio of ridge to lasso penalty
                                 scaling = "numeric", #the indices of the scale parameters,
                                 nscale = "numeric", #the number of scale parameters
-                                apanasovich = "logical") #should the Apanasovich model be used
-                      )
+                                apanasovich = "logical", #should the Apanasovich model be used
+                                param_sequence = "matrix", #maps the indices of the various Matern parameters
+                                logparams = "numeric") # transformed version of the Matern parameters
+                                )
+
 
 validityPrestoGPModel<-function(object){
+#  if(object@n_neighbors < object@min_m){
+#    stop(paste("N_neighbors must be at least ", object@min_m, ".", sep=""))
+#  }
   TRUE
 }
 setValidity("PrestoGPModel", validityPrestoGPModel)
@@ -63,7 +69,7 @@ setGeneric("show_theta", function(object, Y_names)standardGeneric("show_theta") 
 setGeneric("prestogp_fit", function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-3, maxit=5000), parallel=FALSE, foldid=NULL) standardGeneric("prestogp_fit") )
 setGeneric("prestogp_predict", function(model, X="matrix", locs="matrix", m="numeric", ordering.pred=c("obspred", "general"), pred.cond=c("independent", "general"), return.values=c("mean", "meanvar")) standardGeneric("prestogp_predict") )
 setGeneric("calc_covparams", function(model, locs, Y) standardGeneric("calc_covparams") )
-setGeneric("specify", function(model, locs, m)standardGeneric("specify") )
+setGeneric("specify", function(model, ...) standardGeneric("specify") )
 setGeneric("compute_residuals", function(model, Y, Y.hat) standardGeneric("compute_residuals") )
 setGeneric("transform_data", function(model, Y, X) standardGeneric("transform_data") )
 setGeneric("estimate_theta", function(model, locs, optim.control, method) standardGeneric("estimate_theta") )
@@ -72,6 +78,7 @@ setGeneric("compute_error", function(model, y, X) standardGeneric("compute_error
 setGeneric("scale_locs", function(model, locs) standardGeneric("scale_locs") )
 setGeneric("theta_names", function(model) standardGeneric("theta_names") )
 setGeneric("transform_covariance_parameters", function(model) standardGeneric("transform_covariance_parameters") )
+setGeneric("check_input", function(model, Y, X, locs) standardGeneric("check_input") )
 
 #' show
 #'
@@ -181,21 +188,14 @@ setMethod("show_theta", "PrestoGPModel",
 #' model <- prestogp_fit(model, logNO2, X, locs)
 #' ...
 setMethod("prestogp_fit", "PrestoGPModel",
-          function(model, Y, X, locs, scaling=NULL, apanasovich=FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters=100, verbose=FALSE, optim.method="Nelder-Mead", optim.control=list(trace=0, reltol=1e-3, maxit=5000), parallel=FALSE, foldid=NULL) {
-            #parameter validation
-            #TODO: This method should check for input errors in the
-            #multivariate case (where Y, X, and locs are lists)
-            if(!is.matrix(locs) && !is.list(locs)){ stop("locs parameter must be a matrix or a list.") }
-            if(is.double(Y) && length(Y) == nrow(locs)){ Y <- as.matrix(Y) }
-            if(!is.matrix(X) && !is.list(X)){ stop("X parameter must be a matrix or a list.") }
-            if(!is.matrix(Y) && !is.list(Y)){ stop("Y parameter must be a matrixor a list.") }
-            if(!is.double(beta.hat) && !is.null(beta.hat)){ stop("The beta.hat parameter must be floating point number.") }
+          function(model, Y, X, locs, scaling=NULL, apanasovich=NULL,
+                   covparams = NULL, beta.hat = NULL, tol = 0.999999,
+                   max_iters=100, verbose=FALSE, optim.method="Nelder-Mead",
+                   optim.control=list(trace=0, reltol=1e-3, maxit=5000),
+                   parallel=FALSE, foldid=NULL) {
+              model <- check_input(model, Y, X, locs)
+              if(!is.double(beta.hat) && !is.null(beta.hat)){ stop("The beta.hat parameter must be floating point number.") }
             if(!is.double(tol)){ stop("The tol parameter must be floating point number.") }
-            if (is.matrix(Y)) {
-                if(nrow(Y) != nrow(X)){ stop("Y must have the same number of rows as X.") }
-                if(ncol(Y) != 1){ stop("Y must have only 1 column.") }
-                if(nrow(Y) != nrow(locs)){ stop("Y must have the same number of rows as locs.") }
-            }
             if (is.null(scaling)) {
                 if (is.matrix(locs)) {
                     scaling <- rep(1, ncol(locs))
@@ -208,61 +208,31 @@ setMethod("prestogp_fit", "PrestoGPModel",
             if (sum(sort(unique(scaling))==1:nscale)<nscale) {
                 stop("scaling must consist of sequential integers between 1 and ncol(locs)")
             }
+            if (is.null(apanasovich)) {
+                if (nscale==1) {
+                    apanasovich <- TRUE
+                }
+                else {
+                    apanasovich <- FALSE
+                }
+            }
             if (apanasovich & nscale>1) {
                 stop("Apanasovich models require a common scale parameter")
             }
             model@scaling <- scaling
             model@nscale <- nscale
             model@apanasovich <- apanasovich
-#            if (is.matrix(locs)) {
-#                if(ncol(locs) != 2 && ncol(locs) != 3){ stop("Locs must have either 2 or 3 columns.") }
-#            }
             if(is.null(covparams)){
               model <- calc_covparams(model, locs, Y)
             }
-#            if(is.null(beta.hat)){
-#              if(is.null(ncol(Y))){
-#                ncol <- 1
-#              } else{
-#                ncol <- ncol(Y)
-#              }
-#              beta.hat <- matrix(0.0, nrow = ncol(X),ncol = ncol)
-#                if (is.matrix(X)) {
-#                    beta.hat <- matrix(0.0, nrow = ncol(X), ncol=1)
-#                }
-#                else {
-#                    beta.hat <- matrix(0.0, nrow = ncol(superMatrix(X)), ncol=1)
-#                }
-#            }
-            if(!is.double(model@covparams)){
+            if(!is.vector(model@covparams)){
               stop("The covparams paramter must be a numeric vector.")
             }
-            m <- model@n_neighbors
-            if(m < model@min_m){
+            if(model@n_neighbors < model@min_m){
               stop(paste("M must be at least ", model@min_m, ".", sep=""))
             }
 
-              if (is.list(Y)) {
-                  if (length(X)==1) {
-                      model@X_train <- as.matrix(X[[1]])
-                  }
-                  else {
-                      model@X_train <- psych::superMatrix(X)
-                  }
-                  model@Y_train <- as.matrix(unlist(Y))
-              }
-              else {
-                  model@X_train <- X
-                  model@Y_train <- Y
-              }
-              if (!is.list(locs)) {
-                  model@locs_train <- list(locs)
-              }
-              else {
-                  model@locs_train <- locs
-              }
-
-              model <- specify(model, locs, m)
+              model <- specify(model)
 
               if (is.null(beta.hat)) {
                   beta0.glmnet <- cv.glmnet(model@X_train, model@Y_train,
@@ -287,7 +257,7 @@ setMethod("prestogp_fit", "PrestoGPModel",
               model <- estimate_theta(model, locs, optim.control, optim.method)
               # transform data to iid
               if (!model@apanasovich) {
-                  model <- specify(model, locs, m)
+                  model <- specify(model)
               }
               model <- transform_data(model, model@Y_train, model@X_train)
               model <- estimate_betas(model, parallel, foldid)
@@ -393,4 +363,106 @@ setMethod("compute_error", "PrestoGPModel", function(model) {
   error
 })
 
-setMethod("transform_covariance_parameters", "PrestoGPModel", function(model) { })
+#' calc_covparams
+#'
+#' Set initial value of covarariance parameters.
+#'
+#' @param model The model to set the covariance parameters of
+#' @param locs the locations matrix
+#' @param Y the dependent variable matrix
+#'
+#' @return a model with initial covariance parameters
+setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y) {
+    if (!is.list(locs)) {
+        P <- 1
+        locs <- list(locs)
+        Y <- list(Y)
+    }
+    else {
+        P <- length(locs)
+    }
+    col.vars <- rep(NA, P)
+    D.sample.bar <- rep(NA, model@nscale*P)
+    for (i in 1:P) {
+        col.vars[i] <- var(Y[[i]])
+        N <- length(Y[[i]])
+        #TODO find a better way to compute initial spatial range
+        for (j in 1:model@nscale) {
+            d.sample <- sample(1:N,max(2, ceiling(N/50)),replace = FALSE)
+            D.sample = rdist(locs[[i]][d.sample,model@scaling==j])
+            D.sample.bar[(i-1)*model@nscale+j] <- mean(D.sample)/4
+        }
+    }
+  model@logparams <- create.initial.values.flex(c(0.9*col.vars), #marginal variance
+                                               D.sample.bar, #range
+                                               rep(0.5,P), #smoothness
+                                               c(.1*col.vars), #nuggets
+                                               rep(0, choose(P,2)),
+                                               P)
+  model@param_sequence <- create.param.sequence(P, model@nscale)
+  model <- transform_covariance_parameters(model)
+  invisible(model)
+})
+
+#' scale_locs
+#'
+#' Scale the locations matrix by the covariance parameters
+#'
+#' @param model The model with locations to scale
+#' @param locs the locations matrix
+#'
+#' @return a matrix with scaled locations
+setMethod("scale_locs", "PrestoGPModel", function(model, locs) {
+    if (model@apanasovich) {
+        return(locs)
+    }
+    else {
+        locs.out <- locs
+        for (i in 1:length(locs)) {
+            for (j in 1:model@nscale) {
+                locs.out[[i]][,model@scaling==j] <-
+                    locs[[i]][,model@scaling==j] /
+                    model@covparams[model@param_sequence[2,1]+
+                                    model@nscale*(i-1)+j-1]
+            }
+        }
+        return(locs.out)
+    }
+})
+
+setMethod("transform_covariance_parameters", "PrestoGPModel", function(model) {
+  P <- length(model@locs_train)
+  if(P > 1){
+      model@covparams <- c(exp(model@logparams[1:model@param_sequence[2,2]]),
+                           gtools::inv.logit(model@logparams[model@param_sequence[3,1]:
+                                                   model@param_sequence[3,2]],
+                                         0,2.5),
+                           exp(model@logparams[model@param_sequence[4,1]:
+                                               model@param_sequence[4,2]]),
+                           tanh(model@logparams[model@param_sequence[5,1]:
+                                                model@param_sequence[5,2]]))
+  } else {
+      model@covparams <- c(exp(model@logparams[1:model@param_sequence[2,2]]),
+                           gtools::inv.logit(model@logparams[model@param_sequence[3,1]:
+                                                   model@param_sequence[3,2]],
+                                         0,2.5),
+                           exp(model@logparams[model@param_sequence[4,1]:
+                                               model@param_sequence[4,2]]),1)
+  }
+  invisible(model)
+})
+
+#' compute_residuals
+#'
+#' Compute residuals based on beta parameters
+#'
+#' @param model The model to compute the residual of
+#' @param Y the training dependent variable matrix
+#' @param Y.hat the predicted training dependent variable matrix based on beta hat
+#'
+#' @return a model with computed residuals
+setMethod("compute_residuals", "PrestoGPModel", function(model, Y, Y.hat) {
+  model@res = as.double(Y-Y.hat)
+  model@vecchia_approx$zord = model@res[model@vecchia_approx$ord]
+  invisible(model)
+})
