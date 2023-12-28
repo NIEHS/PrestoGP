@@ -460,7 +460,7 @@ setMethod(
       }
 
       model <- transform_data(model, model@Y_train, model@X_train)
-      model <- estimate_betas(model, parallel, foldid)
+      model <- estimate_betas(model, parallel)
       min.error <- compute_error(model)
       ### Check min-error against the previous error and tolerance
       if (min.error < prev.error * tol) {
