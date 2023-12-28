@@ -44,7 +44,8 @@ Imports:
     RANN,
     rlang (>= 0.4.11),
     foreach,
-    stats
+    stats,
+    methods
 License: GPL-3
 Encoding: UTF-8
 VignetteBuilder: knitr 
