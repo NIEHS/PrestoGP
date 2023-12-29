@@ -8,9 +8,10 @@
 #' @include PrestoGP_Vecchia.R
 #' @noRd
 FullModel <- setClass("FullModel",
-                      contains = "VecchiaModel")
+  contains = "VecchiaModel"
+)
 
-validityFullModel <-function(object){
+validityFullModel <- function(object) {
   TRUE
 }
 setValidity("FullModel", validityFullModel)
@@ -22,8 +23,8 @@ setMethod("initialize", "FullModel", function(.Object, ...) {
   .Object
 })
 
-setMethod("prestogp_predict", "FullModel", function(model, X, locs, m=NULL) {
-    stop("Prediction is not currently supported for full models")
+setMethod("prestogp_predict", "FullModel", function(model, X, locs, m = NULL) {
+  stop("Prediction is not currently supported for full models")
 })
 
 setMethod("specify", "FullModel", function(model) {
@@ -31,7 +32,7 @@ setMethod("specify", "FullModel", function(model) {
 })
 
 setMethod("compute_residuals", "FullModel", function(model, Y, Y.hat) {
-  model@res = as.double(Y-Y.hat)
+  model@res <- as.double(Y - Y.hat)
   invisible(model)
 })
 
@@ -49,24 +50,27 @@ setMethod("estimate_theta", "FullModel", function(model, locs) {
 
 setMethod("estimate_theta", "FullModel", function(model, locs, optim.control, method) {
   if (model@apanasovich) {
-      full.result<- optim(par = model@logparams,
-                          fn = negloglik.full,
-                          d = fields::rdist(locs),
-                          y = model@res,
-                          param.seq = model@param_sequence,
-                          method = method,
-                          control=optim.control)
-  }
-  else {
-      full.result<- optim(par = model@logparams,
-                          fn = negloglik_full_ST,
-                          locs = locs,
-                          y = model@res,
-                          param.seq = model@param_sequence,
-                          scaling = model@scaling,
-                          nscale = model@nscale,
-                          method = method,
-                          control=optim.control)
+    full.result <- optim(
+      par = model@logparams,
+      fn = negloglik.full,
+      d = fields::rdist(locs),
+      y = model@res,
+      param.seq = model@param_sequence,
+      method = method,
+      control = optim.control
+    )
+  } else {
+    full.result <- optim(
+      par = model@logparams,
+      fn = negloglik_full_ST,
+      locs = locs,
+      y = model@res,
+      param.seq = model@param_sequence,
+      scaling = model@scaling,
+      nscale = model@nscale,
+      method = method,
+      control = optim.control
+    )
   }
 
   model@LL_Vecchia_krig <- full.result$value
@@ -76,23 +80,26 @@ setMethod("estimate_theta", "FullModel", function(model, locs, optim.control, me
 })
 
 setMethod("transform_data", "FullModel", function(model, Y, X) {
-    n <- nrow(model@Y_train)
-    params <- model@covparams
-    locs.scaled <- scale_locs(model, model@locs_train)[[1]]
-    if (!model@apanasovich) {
-        param.seq <- model@param_sequence
-        Omega.full <- params[1]*Matern(rdist(locs.scaled), range=1,
-                                       smoothness=params[param.seq[3,1]])+
-            params[param.seq[4,1]]*diag(n)
-    }
-    else {
-        Omega.full <- params[1]*Matern(rdist(locs.scaled), range=params[2],
-                                       smoothness=params[3])+
-            params[4]*diag(n)
-    }
+  n <- nrow(model@Y_train)
+  params <- model@covparams
+  locs.scaled <- scale_locs(model, model@locs_train)[[1]]
+  if (!model@apanasovich) {
+    param.seq <- model@param_sequence
+    Omega.full <- params[1] * Matern(rdist(locs.scaled),
+      range = 1,
+      smoothness = params[param.seq[3, 1]]
+    ) +
+      params[param.seq[4, 1]] * diag(n)
+  } else {
+    Omega.full <- params[1] * Matern(rdist(locs.scaled),
+      range = params[2],
+      smoothness = params[3]
+    ) +
+      params[4] * diag(n)
+  }
 
-    Omega.lc <- t(chol(Omega.full))
-    model@y_tilde <- Matrix(solve(Omega.lc, Y))
-    model@X_tilde <- Matrix(solve(Omega.lc, X), sparse=FALSE)
-   invisible(model)
+  Omega.lc <- t(chol(Omega.full))
+  model@y_tilde <- Matrix(solve(Omega.lc, Y))
+  model@X_tilde <- Matrix(solve(Omega.lc, X), sparse = FALSE)
+  invisible(model)
 })
