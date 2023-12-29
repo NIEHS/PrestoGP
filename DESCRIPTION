@@ -48,6 +48,7 @@ VignetteBuilder: knitr
 RoxygenNote: 7.2.3
 Collate: 
     'Log_Likelihood.R'
+    'PrestoGP-package.R'
     'PrestoGP_CreateU_Multivariate.R'
     'PrestoGP_Model.R'
     'PrestoGP_Vecchia.R'
@@ -57,3 +58,4 @@ Collate:
     'RcppExports.R'
     'Visualization.R'
     'package.R'
+    'utils-tidy-eval.R'
