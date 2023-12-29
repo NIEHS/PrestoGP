@@ -243,7 +243,6 @@ setMethod("prestogp_fit", "PrestoGPModel",
                                                 s=beta0.glmnet$lambda.1se))
               }
               Y.hat <- beta.hat[1,1] + model@X_train %*% beta.hat[-1,]
-#              dim(Y.hat) <- c(nrow(model@Y_train), ncol(model@Y_train))
 
             # Begining algorithm (Algorithm 1 from Messier and Katzfuss 2020)
             model@converged=FALSE

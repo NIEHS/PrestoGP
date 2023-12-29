@@ -37,9 +37,11 @@ setMethod("compute_residuals", "FullModel", function(model, Y, Y.hat) {
 
 setMethod("estimate_theta", "FullModel", function(model, locs) {
   n <- length(model@Y_train)
-  full.result=optim(par=log(model@covparams), fn=negloglik_full_ST,
-                    y=model@res, locs=locs, N=n, method = "Nelder-Mead",
-                    control=list(trace=0))
+  full.result <- optim(
+    par = log(model@covparams), fn = negloglik_full_ST,
+    y = model@res, locs = locs, N = n, method = "Nelder-Mead",
+    control = list(trace = 0)
+  )
   model@covparams <- exp(full.result$par)
   model@LL_Vecchia_krig <- full.result$value
   invisible(model)

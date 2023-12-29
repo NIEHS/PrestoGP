@@ -1,5 +1,3 @@
-context("Univariate Model")
-
 test_that("Invalid locs input", {
   model <- new("VecchiaModel")
   expect_error(prestogp_fit(model, as.matrix(1:3), as.matrix(1:3),
@@ -82,7 +80,7 @@ test_that("Simulated dataset spatial", {
     expect_equal(beta.out[1], beta.out2[1], tolerance=0.07)
     expect_equal(beta.out[-1], beta.out2[-1], tolerance=0.04)
     expect_equal(params.out[1], params.out2[1], tolerance=1)
-    expect_equal(params.out[2], params.out2[2], tolerance=0.2)
+    expect_equal(params.out[2]-params.out2[2], 0, tolerance=0.2)
     expect_equal(params.out[3], params.out2[3], tolerance=0.3)
     expect_equal(params.out[4], params.out2[4], tolerance=0.2)
 })
@@ -102,7 +100,7 @@ test_that("Simulated dataset spatiotemporal", {
     expect_equal(beta.out, c(0.01, 0.93, 1.01, 0.91, 0.99, rep(0, 6)),
                  tolerance=0.015)
     expect_equal(params.out[1], 1.7, tolerance=0.55)
-    expect_equal(params.out[2], 0.19, tolerance=0.05)
+    expect_equal(params.out[2]-0.19, 0, tolerance=0.05)
     expect_equal(params.out[3], 0.22, tolerance=0.05)
     expect_equal(params.out[4], 1.12, tolerance=0.3)
     expect_equal(params.out[5], 0.62, tolerance=0.05)
@@ -120,8 +118,8 @@ test_that("Simulated dataset spatiotemporal", {
     expect_equal(beta.out2, c(-0.03, 0.93, 1, 0.91, 0.98, rep(0, 6)),
                  tolerance=0.02)
     expect_equal(params.out2[1], 1.6, tolerance=0.5)
-    expect_equal(params.out2[2], 0.19, tolerance=0.05)
-    expect_equal(params.out2[3], 0.22, tolerance=0.05)
+    expect_equal(params.out2[2]-0.19, 0, tolerance=0.05)
+    expect_equal(params.out2[3]-0.22, 0, tolerance=0.05)
     expect_equal(params.out2[4], 1.18, tolerance=0.15)
     expect_equal(params.out2[5], 0.64, tolerance=0.05)
 
@@ -130,7 +128,7 @@ test_that("Simulated dataset spatiotemporal", {
     expect_equal(beta.out[-1], beta.out2[-1], tolerance=0.03)
     expect_equal(params.out[1], params.out2[1], tolerance=0.6)
     expect_equal(params.out[2], params.out2[2], tolerance=0.06)
-    expect_equal(params.out[3], params.out2[3], tolerance=0.06)
+    expect_equal(params.out[3]-params.out2[3], 0, tolerance=0.06)
     expect_equal(params.out[4], params.out2[4], tolerance=0.3)
     expect_equal(params.out[5], params.out2[5], tolerance=0.1)
 })

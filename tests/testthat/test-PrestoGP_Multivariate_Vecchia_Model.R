@@ -1,5 +1,3 @@
-context("Multivariate Vecchia Model")
-
 test_that("Invalid locs input", {
   model <- new("MultivariateVecchiaModel")
   expect_error(prestogp_fit(model, list(as.matrix(1:3)), list(as.matrix(1:3)),
@@ -90,9 +88,12 @@ test_that("Simulated dataset multivariate spatial", {
     load("sim_multivariate_big.RData")
     pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors=25)
     pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list, X.st, locs.list,
-                                scaling=c(1,1), apanasovich=TRUE, verbose=FALSE,
-                                optim.control=list(trace=0,maxit=5000,
-                                                   reltol=1e-3))
+        scaling = c(1, 1), apanasovich = TRUE, verbose = FALSE,
+        optim.control = list(
+            trace = 0, maxit = 5000,
+            reltol = 1e-3
+        )
+    )
     beta.out <- as.vector(pgp.mmodel1@beta)
     params.out <- pgp.mmodel1@covparams
 
@@ -121,33 +122,42 @@ test_that("Simulated dataset multivariate spatial", {
 
 test_that("Simulated dataset multivariate spatiotemporal", {
     source("sim_multivariate_big_st.R")
-    pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors=25)
+    pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 25)
     pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list, X.st, locs.list,
-                                scaling=c(1,1,2), verbose=FALSE,
-                                optim.control=list(trace=0,maxit=5000,
-                                                   reltol=1e-3))
+        scaling = c(1, 1, 2), verbose = FALSE,
+        optim.control = list(
+            trace = 0, maxit = 5000,
+            reltol = 1e-3
+        )
+    )
     beta.out <- as.vector(pgp.mmodel1@beta)
     params.out <- pgp.mmodel1@covparams
 
     expect_length(beta.out, 31)
     expect_length(params.out, 18)
-    expect_equal(beta.out, c(0, 0.91, 0.86, 0.82, 0.97, rep(0, 6), 0.95,
-                             0.97, 0.92, 0.78, rep(0, 6), 0.8, 0.97,
-                             1.04, 0.81, rep(0, 6)), tolerance=1.1)
+    expect_equal(beta.out, c(
+        0, 0.91, 0.86, 0.82, 0.97, rep(0, 6), 0.95,
+        0.97, 0.92, 0.78, rep(0, 6), 0.8, 0.97,
+        1.04, 0.81, rep(0, 6)
+    ), tolerance = 1.1)
 })
 
 test_that("Simulated dataset multivariate spatial prediction", {
     source("sim_multivariate_big_pred.R")
-    pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors=25)
+    pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 25)
     pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
-                                locs.list.otr, scaling=c(1,1),
-                                apanasovich=TRUE, verbose=FALSE,
-                                optim.control=list(trace=0,maxit=5000,
-                                                   reltol=1e-3))
+        locs.list.otr,
+        scaling = c(1, 1),
+        apanasovich = TRUE, verbose = FALSE,
+        optim.control = list(
+            trace = 0, maxit = 5000,
+            reltol = 1e-3
+        )
+    )
 
     pgp.mmodel1.pred <- prestogp_predict(pgp.mmodel1, X.st.otst, locs.list.otst)
 
-    mse <- mean((pgp.mmodel1.pred$means-unlist(y.list.otst))^2)
+    mse <- mean((pgp.mmodel1.pred$means - unlist(y.list.otst))^2)
 
-    expect_equal(mse, 1.99, tolerance=0.1)
+    expect_equal(mse, 1.99, tolerance = 0.1)
 })
