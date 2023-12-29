@@ -1,5 +1,3 @@
-context("createUMultivariate")
-
 test_that("create.param.sequence", {
     seq <- create.param.sequence(1)
     colnames(seq) <- NULL
@@ -87,4 +85,60 @@ test_that("sparseNN", {
     # the neighbors by brute force.
     expect_equal(pgp.nn$indices[-(1:5), ], indices[-(1:5), ])
     expect_equal(pgp.nn$distances[-(1:5), ], distances[-(1:5), ], tolerance = 1e-2)
+})
+
+test_that("createUMultivariate", {
+    set.seed(1212)
+
+    dim1 <- (0:9)^2 + rnorm(10, 0, 1e-2)
+    dim2 <- (1:10)^2 + rnorm(10, 0, 1e-2)
+
+    locs <- as.matrix(expand.grid(dim1, dim2))
+
+    params <- c(3,1.5,0.6,2)
+
+    vec.approx <- vecchia_specify(locs, m=5)
+    U.obj <- createU(vec.approx, covparms=params[1:3], nuggets=params[4])
+
+    vec.mapprox <- vecchia_Mspecify(list(locs), 5)
+    U.mobj <- createUMultivariate(vec.mapprox, c(params,1))
+# Should produce the same ordered locs as GPvecchia in the univariate case
+    expect_equal(vec.approx$locsord, vec.mapprox$locsord)
+    expect_equal(vec.approx$ord, vec.mapprox$ord)
+# Should produce the same U matrix as GPvecchia in the univariate case
+    expect_equal(sum(abs(U.obj$U-U.mobj$U)), 0, tolerance=1e-3)
+
+# Should identify the same nearest neighbors and latents as GPvecchia in the
+# univariate case
+    NNarray <- vec.approx$U.prep$revNNarray[,-6]
+    cond <- vec.approx$U.prep$revCond[,-6]
+
+    for (i in 6:100) {
+        cur.y <- NNarray[i,cond[i,]]
+        expect_equal(sort(cur.y), sort(vec.mapprox$q.list$q.y[[i]]))
+        if (sum(!cond[i,])>0) {
+            cur.z <- NNarray[i,!cond[i,]]
+            expect_equal(sort(cur.z), sort(vec.mapprox$q.list$q.z[[i]]))
+        }
+    }
+
+    source("sim_multivariate.R")
+
+    vec.mapprox <- vecchia_Mspecify(locs.list, 25)
+    U.mobj <- createUMultivariate(vec.mapprox, c(marg.var, ranges,
+                                                 marg.smoothness,
+                                                 nuggets, rho.vec))
+    Umat.tst <- readRDS("Umat.rds")
+    expect_equal(sum(abs(U.mobj$U-Umat.tst)), 0, tolerance=1e-4)
+
+    vec.mapprox.full <- vecchia_Mspecify(locs.list, 374)
+    U.mobj.full <- createUMultivariate(vec.mapprox.full, c(marg.var, ranges,
+                                                           marg.smoothness,
+                                                           nuggets, rho.vec))
+
+    Sigma.hat <- solve(U.mobj.full$U %*% t(U.mobj.full$U))
+    Sigma.hat <- Sigma.hat[U.mobj.full$latent,U.mobj.full$latent]
+    Sigma.hat <- Sigma.hat[order(U.mobj.full$ord),order(U.mobj.full$ord)]
+# Vecchia approximation of covariance should equal true covariance when m=n-1
+    expect_equal(sum(abs(Sigma.All-Sigma.hat)), 0, tolerance=1e-4)
 })

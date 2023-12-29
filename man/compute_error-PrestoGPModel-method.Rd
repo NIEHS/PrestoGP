@@ -13,6 +13,5 @@
 The total error used in the main optimization loop
 }
 \description{
-Compute the error (log likelihood using the GP log likelihood
-and penalty from the beta coefficients)
+Compute the error (log likelihood using the GP log likelihood and penalty from the beta coefficients)
 }

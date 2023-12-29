@@ -31,7 +31,6 @@ manuscript/
 
 # Output files from R CMD build
 /*.tar.gz
-*.dll
 
 # Output files from R CMD check
 /*.Rcheck/
