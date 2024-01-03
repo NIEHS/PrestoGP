@@ -233,11 +233,11 @@ vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL,
     mu.pred = vecchia.mean$mu.pred, mu.obs = vecchia.mean$mu.obs,
     var.pred = NULL, var.obs = NULL, V.ord = NULL, U.obj = NULL
   )
-  if (return.values == "meanmat" | return.values == "all") {
+  if (return.values == "meanmat" || return.values == "all") {
     return.list$V.ord <- V.ord
     return.list$U.obj <- U.obj
   }
-  if (return.values == "meanvar" | return.values == "all") {
+  if (return.values == "meanvar" || return.values == "all") {
     if (is.null(var.exact)) {
       var.exact <- (sum(!vecchia.approx$obs) < 4 * 10000)
     }

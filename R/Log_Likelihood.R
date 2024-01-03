@@ -154,7 +154,7 @@ mvnegloglik_ST <- function(logparams, vecchia.approx, y, param.seq, P, scaling, 
     for (j in 1:nscale) {
       locs.scaled[vecchia.approx$ondx == i, scaling == j] <-
         locs.scaled[vecchia.approx$ondx == i, scaling == j] /
-          params[param.seq[2, 1] + nscale * (i - 1) + j - 1]
+        params[param.seq[2, 1] + nscale * (i - 1) + j - 1]
     }
   }
   vecchia.approx$locsord <- locs.scaled

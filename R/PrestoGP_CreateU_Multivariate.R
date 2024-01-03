@@ -160,7 +160,7 @@ calc.q <- function(nn.obj, firstind.pred) {
     for (j in 2:m) {
       cur.k <- cur.q[j]
       cur.qy <- intersect(q.y[[cur.k]], cur.q)
-      if (length(cur.qy) > length(best.qy) & cur.k < firstind.pred) {
+      if (length(cur.qy) > length(best.qy) && cur.k < firstind.pred) {
         best.k <- cur.k
         best.qy <- cur.qy
       }
@@ -235,7 +235,7 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
     loc.order <- max_min_ordering(locs.all, dist.func)
     loc.order <- c(unique(loc.order), setdiff(1:n, loc.order))
   } else {
-    if (is.null(locs.list.pred) | ordering.pred == "general") {
+    if (is.null(locs.list.pred) || ordering.pred == "general") {
       loc.order <- GPvecchia::order_maxmin_exact(locs.all)
       # I am not sure why the next two lines are here. I added them because
       # similar code exists in the GPvecchia package. But I don't know why
@@ -264,7 +264,7 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
   # is non-deterministic, so there may be some slight differences
   # between the output of this function and the output of createU
   # in the GPvecchia package.
-  if (is.null(locs.list.pred) | pred.cond == "general") {
+  if (is.null(locs.list.pred) || pred.cond == "general") {
     nn.mat <- sparseNN(olocs, m, dist.func, dist.func.code)
   } else {
     nn.mat <- sparseNN(
