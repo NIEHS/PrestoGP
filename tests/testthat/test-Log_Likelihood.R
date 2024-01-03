@@ -55,20 +55,26 @@ test_that("negloglik.full", {
     d <- rdist(locs)
     pseq <- create.param.sequence(1)
 
-    res.optim.NM <- optim(par=params.init, fn=negloglik.full, d=d, y=y,
-                          param.seq=pseq, control=list(maxit=5000))
+    res.optim.NM <- optim(
+        par = params.init, fn = negloglik.full, d = d, y = y,
+        param.seq = pseq, control = list(maxit = 5000)
+    )
 
     LL.full <- negloglik.full(res.optim.NM$par, d, y, pseq)
 
-    params.final <- c(exp(res.optim.NM$par[1:2]),
-                      gtools::inv.logit(res.optim.NM$par[3], 0, 2.5),
-                      exp(res.optim.NM$par[4]))
+    params.final <- c(
+        exp(res.optim.NM$par[1:2]),
+        gtools::inv.logit(res.optim.NM$par[3], 0, 2.5),
+        exp(res.optim.NM$par[4])
+    )
 
-    pgp.params <- create.initial.values.flex(params.final[1],
-                                             params.final[2],
-                                             params.final[3],
-                                             params.final[4],
-                                             1, 1)
+    pgp.params <- create.initial.values.flex(
+        params.final[1],
+        params.final[2],
+        params.final[3],
+        params.final[4],
+        1, 1
+    )
 
     LL.full.pgp <- mvnegloglik.full(pgp.params, list(locs), y, pseq)
 
@@ -110,9 +116,11 @@ test_that("mvnegloglik", {
     )
     pseq <- create.param.sequence(P)
     vec.approx <- vecchia_Mspecify(locs.list, 25)
-    neg_likelihood <- mvnegloglik(logparams, vec.approx,
-                                  unlist(y.list), pseq, P)
-    expect_equal(34384.23, neg_likelihood, tolerance=1e-2)
+    neg_likelihood <- mvnegloglik(
+        logparams, vec.approx,
+        unlist(y.list), pseq, P
+    )
+    expect_equal(34384.23, neg_likelihood, tolerance = 1e-2)
 })
 
 test_that("mvnegloglik_ST", {
