@@ -49,18 +49,18 @@ This method fits any PrestoGP model given a matrix of locations, a matrix of ind
 }
 \examples{
 
-US_NO2_Data<- read.csv("data/US_ST_NO2_Data.csv")
-lat       <- US_NO2_Data$Latitude  # Latitude
-lon       <- US_NO2_Data$Longitude # Longitude
-logNO2    <-  log(US_NO2_Data$Y)   # ozone data
-logNO2 <- logNO2[1:1000,]
-time      <- US_NO2_Data$YearFrac  # time in fractional years
-N         <- length(logNO2)
-locs = cbind(lon,lat,time)         # Coordinates in R3 (x,y,t)
-locs <- locs[1:1000,]
-X.Design <- US_NO2_Data[,7:145]    #Design matrix
+US_NO2_Data <- read.csv("data/US_ST_NO2_Data.csv")
+lat <- US_NO2_Data$Latitude # Latitude
+lon <- US_NO2_Data$Longitude # Longitude
+logNO2 <- log(US_NO2_Data$Y) # ozone data
+logNO2 <- logNO2[1:1000, ]
+time <- US_NO2_Data$YearFrac # time in fractional years
+N <- length(logNO2)
+locs <- cbind(lon, lat, time) # Coordinates in R3 (x,y,t)
+locs <- locs[1:1000, ]
+X.Design <- US_NO2_Data[, 7:145] # Design matrix
 X.Design <- scale(X.Design)
-X <- X.Design[1:1000,]
+X <- X.Design[1:1000, ]
 model <- PrestoGPSpatiotemporalModel()
 model <- prestogp_fit(model, logNO2, X, locs)
 ...
