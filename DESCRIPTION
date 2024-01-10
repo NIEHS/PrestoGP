@@ -1,7 +1,7 @@
 Package: PrestoGP
 Type: Package
 Title: Penalized Regression for Spatio-Temporal Outcomes via Gaussian Processes 
-Version: 0.2.0.9020
+Version: 0.2.0.9021
 Authors@R: c(
     person(given = "Eric",
            family = "Bair",
@@ -46,6 +46,7 @@ Imports:
     mvtnorm,
     spam,
     psych
+    doParallel
 License: GPL-3
 Encoding: UTF-8
 VignetteBuilder: knitr 
@@ -55,10 +56,8 @@ Collate:
     'PrestoGP-package.R'
     'PrestoGP_CreateU_Multivariate.R'
     'PrestoGP_Model.R'
-    'PrestoGP_Vecchia_Spatiotemporal.R'
+    'PrestoGP_Vecchia.R'
     'PrestoGP_Full.R'
-    'PrestoGP_Vecchia_Spatial.R'
-    'PrestoGP_Full_Spatial.R'
     'PrestoGP_Multivariate_Vecchia.R'
     'PrestoGP_Util_Functions.R'
     'RcppExports.R'

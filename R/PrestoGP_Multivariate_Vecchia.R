@@ -8,12 +8,7 @@
 #' @include PrestoGP_Model.R
 #' @noRd
 MultivariateVecchiaModel <- setClass("MultivariateVecchiaModel",
-  contains = "PrestoGPModel",
-  slots = c(
-    model = "PrestoGPModel",
-    param_sequence = "matrix",
-    logparams = "numeric"
-  )
+  contains = "PrestoGPModel"
 )
 
 validityMultivariateVecchiaModel <- function(object) {
@@ -24,9 +19,9 @@ setValidity(
   validityMultivariateVecchiaModel
 )
 
-setMethod("initialize", "MultivariateVecchiaModel", function(.Object, ...) {
-  .Object@n_neighbors <- 0 # 25
-  .Object@min_m <- 0
+setMethod("initialize", "MultivariateVecchiaModel", function(.Object, n_neighbors = 25, ...) {
+  .Object@n_neighbors <- n_neighbors
+  .Object@min_m <- 3
   .Object <- callNextMethod()
   validObject(.Object)
   .Object
@@ -132,40 +127,64 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel", function(model, X, loc
   return(return.list)
 })
 
-setMethod("calc_covparams", "MultivariateVecchiaModel", function(model, locs, Y) {
-  # cor.matrix <- cor(Y)
-  # P <- ncol(Y)
-  # col.vars <- apply(Y, 2, var)
-  # N <- length(Y)
-  P <- length(Y)
-  col.vars <- rep(NA, P)
-  D.sample.bar <- rep(NA, model@nscale * P)
-  for (i in 1:P) {
-    col.vars[i] <- var(Y[[i]])
-    N <- length(Y[[i]])
-    # TODO find a better way to compute initial spatial range
-    for (j in 1:model@nscale) {
-      d.sample <- sample(1:N, max(2, ceiling(N / 50)), replace = FALSE)
-      D.sample <- rdist(locs[[i]][d.sample, model@scaling == j])
-      D.sample.bar[(i - 1) * model@nscale + j] <- mean(D.sample) / 4
+setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs) {
+  if (!is.list(locs)) {
+    stop("locs must be a list for multivariate models")
+  }
+  if (!is.list(Y)) {
+    stop("Y must be a list for multivariate models")
+  }
+  if (!is.list(X)) {
+    stop("X must be a list for multivariate models")
+  }
+  if (length(locs) != length(Y)) {
+    stop("locs and Y must have the same length")
+  }
+  if (length(locs) != length(X)) {
+    stop("locs and X must have the same length")
+  }
+  for (i in 1:length(locs)) {
+    if (!is.matrix(locs[[i]])) {
+      stop("Each locs must be a matrix")
+    }
+    if (i > 1) {
+      if (ncol(locs[[i]]) != ncol(locs[[1]])) {
+        stop("All locs must have the same number of columns")
+      }
+    }
+    if (!is.matrix(Y[[i]]) & !is.numeric(Y[[i]])) {
+      stop("Each Y must be a numeric vector or matrix")
+    }
+    if (!is.matrix(X[[i]])) {
+      stop("Each X must be a matrix")
+    }
+    if (is.vector(Y[[i]])) {
+      Y[[i]] <- as.matrix(Y[[i]])
+    }
+    if (ncol(Y[[i]]) != 1) {
+      stop("Each Y must have only 1 column")
+    }
+    if (nrow(Y[[i]]) != nrow(locs[[i]])) {
+      stop("Each Y must have the same number of rows as locs")
+    }
+    if (nrow(Y[[i]]) != nrow(X[[i]])) {
+      stop("Each Y must have the same number of rows as X")
     }
   }
-  model@logparams <- create.initial.values.flex(
-    c(0.9 * col.vars), # marginal variance
-    D.sample.bar, # range
-    rep(0.5, P), # smoothness
-    c(.1 * col.vars), # nuggets
-    rep(0, choose(P, 2)),
-    P
-  )
-  model@param_sequence <- create.param.sequence(P, model@nscale)
-  model <- transform_covariance_parameters(model)
+  model@locs_train <- locs
+  model@Y_train <- as.matrix(unlist(Y))
+  if (length(X) == 1) {
+    model@X_train <- X[[1]]
+  } else {
+    model@X_train <- psych::superMatrix(X)
+  }
   invisible(model)
 })
 
-setMethod("specify", "MultivariateVecchiaModel", function(model, locs, m) {
+setMethod("specify", "MultivariateVecchiaModel", function(model) {
+  locs <- model@locs_train
   locs.scaled <- scale_locs(model, locs)
-  model@vecchia_approx <- vecchia_Mspecify(locs.scaled, m)
+  model@vecchia_approx <- vecchia_Mspecify(locs.scaled, model@n_neighbors)
   if (!model@apanasovich) {
     olocs.scaled <- model@vecchia_approx$locsord
     for (i in 1:length(locs)) {
@@ -181,40 +200,16 @@ setMethod("specify", "MultivariateVecchiaModel", function(model, locs, m) {
   invisible(model)
 })
 
-setMethod("scale_locs", "MultivariateVecchiaModel", function(model, locs) {
-  if (model@apanasovich) {
-    return(locs)
-  } else {
-    locs.out <- locs
-    for (i in 1:length(locs)) {
-      for (j in 1:model@nscale) {
-        locs.out[[i]][, model@scaling == j] <-
-          locs[[i]][, model@scaling == j] /
-            model@covparams[model@param_sequence[2, 1] +
-              model@nscale * (i - 1) + j - 1]
-      }
-    }
-    return(locs.out)
-  }
-})
-
-setMethod("compute_residuals", "MultivariateVecchiaModel", function(model, Y, Y.hat) {
-  model@res <- as.double(Y - Y.hat)
-  model@vecchia_approx$zord <- model@res[model@vecchia_approx$ord]
-  invisible(model)
-})
-
+#' estimate_theta
+#'
+#' Estimate covariance parameters during a single round of model optimization
+#'
+#' @param model The model to estimate theta for
+#' @param locs the locations matrix
+#'
+#' @return a model with an updated covariance parameters estimate
 setMethod("estimate_theta", "MultivariateVecchiaModel", function(model, locs, optim.control, method) {
   P <- length(locs)
-  #  locs_list <- list()
-  #  y <- list()
-  #  for(i in 1:P){
-  #    locs_list[[i]] <- locs
-  #    y[[i]] <- model@Y_train[,i]
-  #  }
-  #  show(model@covparams)
-  #  show(model@param_sequence)
-  #  show(model@logparams)
   if (model@apanasovich) {
     vecchia.result <- optim(
       par = model@logparams,
@@ -244,36 +239,6 @@ setMethod("estimate_theta", "MultivariateVecchiaModel", function(model, locs, op
   model@LL_Vecchia_krig <- vecchia.result$value
   model@logparams <- vecchia.result$par
   model <- transform_covariance_parameters(model)
-  invisible(model)
-})
-
-setMethod("transform_covariance_parameters", "MultivariateVecchiaModel", function(model) {
-  P <- length(model@Y_train)
-  if (P > 1) {
-    model@covparams <- c(
-      exp(model@logparams[1:model@param_sequence[2, 2]]),
-      gtools::inv.logit(
-        model@logparams[model@param_sequence[3, 1]:
-        model@param_sequence[3, 2]],
-        0, 2.5
-      ),
-      exp(model@logparams[model@param_sequence[4, 1]:
-      model@param_sequence[4, 2]]),
-      tanh(model@logparams[model@param_sequence[5, 1]:
-      model@param_sequence[5, 2]])
-    )
-  } else {
-    model@covparams <- c(
-      exp(model@logparams[1:model@param_sequence[2, 2]]),
-      gtools::inv.logit(
-        model@logparams[model@param_sequence[3, 1]:
-        model@param_sequence[3, 2]],
-        0, 2.5
-      ),
-      exp(model@logparams[model@param_sequence[4, 1]:
-      model@param_sequence[4, 2]]), 1
-    )
-  }
   invisible(model)
 })
 
@@ -313,11 +278,8 @@ setMethod("transform_data", "MultivariateVecchiaModel", function(model, Y, X) {
     )
   }
 
-  xcols <- ncol(model@X_train)
-  ycols <- ncol(model@Y_train)
-  tcols <- ncol(transformed.data)
-  model@y_tilde <- Matrix(transformed.data[, 1:ncol(model@Y_train)])
-  model@X_tilde <- Matrix(transformed.data[, (ncol(model@Y_train) + 1):ncol(transformed.data)], sparse = FALSE)
+  model@y_tilde <- Matrix(transformed.data[, 1])
+  model@X_tilde <- Matrix(transformed.data[, -1], sparse = FALSE)
   invisible(model)
 })
 

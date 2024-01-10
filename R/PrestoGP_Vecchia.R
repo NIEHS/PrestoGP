@@ -1,25 +1,22 @@
-#' Spatiotemporal model created with a likelihood function conditioned on a subset of the observations.
+#' Model created with a likelihood function conditioned on a subset of the observations.
 #'
 #' @slot model PrestoGPModel.
 #'
-#' @export SpatiotemporalModel
+#' @export VecchiaModel
 #'
 #' @examples
 #' @include PrestoGP_Model.R
 #' @noRd
-SpatiotemporalModel <- setClass("SpatiotemporalModel",
-  contains = "PrestoGPModel",
-  slots = c(
-    model = "PrestoGPModel"
-  )
+VecchiaModel <- setClass("VecchiaModel",
+  contains = "PrestoGPModel"
 )
 
-validitySpatiotemporalModel <- function(object) {
+validityVecchiaModel <- function(object) {
   TRUE
 }
-setValidity("SpatiotemporalModel", validitySpatiotemporalModel)
+setValidity("VecchiaModel", validityVecchiaModel)
 
-setMethod("initialize", "SpatiotemporalModel", function(.Object, n_neighbors = 25, ...) {
+setMethod("initialize", "VecchiaModel", function(.Object, n_neighbors = 25, ...) {
   .Object@n_neighbors <- n_neighbors
   .Object@min_m <- 3
   .Object <- callNextMethod()
@@ -40,12 +37,12 @@ setMethod("initialize", "SpatiotemporalModel", function(.Object, n_neighbors = 2
 #' @examples
 #'
 #' ...
-#' model <- SpatiotemporalModel()
+#' model <- VecchiaModel()
 #' model <- prestogp_fit(model, logNO2, X, locs)
 #' prediction <- prestogp_predict(model, X.test, locs.test)
 #' Vec.mean <- prediction[[1]]
 #' Vec.sds <- prediction[[2]]
-setMethod("prestogp_predict", "SpatiotemporalModel", function(model, X, locs, m = NULL) {
+setMethod("prestogp_predict", "VecchiaModel", function(model, X, locs, m = NULL) {
   # validate parameters
   if (!is.matrix(X)) {
     stop("X parameter must be a matrix.")
@@ -92,21 +89,31 @@ setMethod("prestogp_predict", "SpatiotemporalModel", function(model, X, locs, m 
   return(list("means" = Vec.mean, "standard deviations" = Vec.sds))
 })
 
-#' calc_covparams
-#'
-#' Set initial value of covarariance parameters.
-#'
-#' @param model The model to set the covariance parameters of
-#' @param locs the locations matrix
-#' @param Y the dependent variable matrix
-#'
-#' @return a model with initial covariance parameters
-setMethod("calc_covparams", "SpatiotemporalModel", function(model, locs, Y) {
-  N <- length(Y)
-  d.sample <- sample(1:N, max(2, ceiling(N / 50)), replace = FALSE) # sample(1:N,N/50,replace = FALSE)
-  D.sample <- rdist(locs[d.sample, 1:2])
-  t.sample <- rdist(locs[d.sample, 3])
-  model@covparams <- c(.9 * var(Y), mean(D.sample) / 4, mean(t.sample) / 4, 0.1 * var(Y)) # smoothness=0.5
+setMethod("check_input", "VecchiaModel", function(model, Y, X, locs) {
+  if (!is.matrix(locs)) {
+    stop("locs must be a matrix")
+  }
+  if (!is.matrix(Y) & !is.numeric(Y)) {
+    stop("Y must be a numeric vector or matrix")
+  }
+  if (!is.matrix(X)) {
+    stop("X must be a matrix")
+  }
+  if (is.vector(Y)) {
+    Y <- as.matrix(Y)
+  }
+  if (ncol(Y) != 1) {
+    stop("Y must have only 1 column")
+  }
+  if (nrow(Y) != nrow(locs)) {
+    stop("Y must have the same number of rows as locs")
+  }
+  if (nrow(Y) != nrow(X)) {
+    stop("Y must have the same number of rows as X")
+  }
+  model@X_train <- X
+  model@Y_train <- Y
+  model@locs_train <- list(locs)
   invisible(model)
 })
 
@@ -119,39 +126,19 @@ setMethod("calc_covparams", "SpatiotemporalModel", function(model, locs, Y) {
 #' @param m the number of neighbors to condition on
 #'
 #' @return a model with a specified conditioning set
-setMethod("specify", "SpatiotemporalModel", function(model, locs, m) {
-  locs.scaled <- scale_locs(model, locs)
-  model@vecchia_approx <- vecchia_specify(locs.scaled, m)
+setMethod("specify", "VecchiaModel", function(model) {
+  locs.scaled <- scale_locs(model, model@locs_train)
+  model@vecchia_approx <- vecchia_specify(locs.scaled[[1]], model@n_neighbors)
+  if (!model@apanasovich) {
+    olocs.scaled <- model@vecchia_approx$locsord
+    for (j in 1:model@nscale) {
+      olocs.scaled[, model@scaling == j] <- olocs.scaled[, model@scaling == j] *
+        model@covparams[model@param_sequence[2, 1] + j - 1]
+    }
+    model@vecchia_approx$locsord <- olocs.scaled
+  }
   invisible(model)
 })
-
-#' scale_locs
-#'
-#' Scale the locations matrix by the covariance parameters
-#'
-#' @param model The model with locations to scale
-#' @param locs the locations matrix
-#'
-#' @return a matrix with scaled locations
-setMethod("scale_locs", "SpatiotemporalModel", function(model, locs) {
-  cbind(locs[, 1] / model@covparams[2], locs[, 2] / model@covparams[2], locs[, 3] / model@covparams[3])
-})
-
-#' compute_residuals
-#'
-#' Compute residuals based on beta parameters
-#'
-#' @param model The model to compute the residual of
-#' @param Y the training dependent variable matrix
-#' @param Y.hat the predicted training dependent variable matrix based on beta hat
-#'
-#' @return a model with computed residuals
-setMethod("compute_residuals", "SpatiotemporalModel", function(model, Y, Y.hat) {
-  model@res <- as.double(Y - Y.hat)
-  model@vecchia_approx$zord <- model@res[model@vecchia_approx$ord]
-  invisible(model)
-})
-
 
 #' estimate_theta
 #'
@@ -161,16 +148,34 @@ setMethod("compute_residuals", "SpatiotemporalModel", function(model, Y, Y.hat) 
 #' @param locs the locations matrix
 #'
 #' @return a model with an updated covariance parameters estimate
-setMethod("estimate_theta", "SpatiotemporalModel", function(model, locs) {
-  ord_locs <- locs[model@vecchia_approx$ord, ]
-  locs_mat <- cbind(ord_locs[, 1], ord_locs[, 2], ord_locs[, 3])
-  vecchia.result <- optim(
-    par = log(model@covparams), fn = negloglik_vecchia_ST,
-    locs = locs_mat, res = model@res, vecchia.approx = model@vecchia_approx, method = "Nelder-Mead",
-    control = list(trace = 0)
-  )
+setMethod("estimate_theta", "VecchiaModel", function(model, locs, optim.control, method) {
+  if (model@apanasovich) {
+    vecchia.result <- optim(
+      par = model@logparams,
+      fn = negloglik_vecchia,
+      res = model@res,
+      vecchia.approx = model@vecchia_approx,
+      param.seq = model@param_sequence,
+      method = method,
+      control = optim.control
+    )
+  } else {
+    vecchia.result <- optim(
+      par = model@logparams,
+      fn = negloglik_vecchia_ST,
+      res = model@res,
+      vecchia.approx = model@vecchia_approx,
+      param.seq = model@param_sequence,
+      scaling = model@scaling,
+      nscale = model@nscale,
+      method = method,
+      control = optim.control
+    )
+  }
+
   model@LL_Vecchia_krig <- vecchia.result$value
-  model@covparams <- exp(vecchia.result$par)
+  model@logparams <- vecchia.result$par
+  model <- transform_covariance_parameters(model)
   invisible(model)
 })
 
@@ -183,12 +188,36 @@ setMethod("estimate_theta", "SpatiotemporalModel", function(model, locs) {
 #' @param X the independent variable matrix
 #'
 #' @return a model with i.i.d. data
-setMethod("transform_data", "SpatiotemporalModel", function(model, Y, X) {
-  transformed.data <- transform_iid(cbind(Y, as.matrix(X)),
-    vecchia.approx = model@vecchia_approx, c(model@covparams[1], 1, 0.5), model@covparams[4]
-  )
+setMethod("transform_data", "VecchiaModel", function(model, Y, X) {
+  vecchia.approx <- model@vecchia_approx
+  params <- model@covparams
+  if (!model@apanasovich) {
+    param.seq <- model@param_sequence
+    vecchia.approx$locsord <- scale_locs(
+      model,
+      list(vecchia.approx$locsord)
+    )[[1]]
+    transformed.data <- transform_iid(cbind(Y, as.matrix(X)),
+      vecchia.approx = vecchia.approx,
+      c(
+        params[1:param.seq[1, 2]],
+        rep(
+          1,
+          param.seq[2, 2] - param.seq[2, 1] + 1
+        ),
+        params[param.seq[3, 1]]
+      ),
+      params[param.seq[4, 1]]
+    )
+  } else {
+    transformed.data <- transform_iid(cbind(Y, as.matrix(X)),
+      vecchia.approx = vecchia.approx,
+      params[1:3], params[4]
+    )
+  }
+
   model@y_tilde <- Matrix(transformed.data[, 1])
-  model@X_tilde <- Matrix(transformed.data[, -1])
+  model@X_tilde <- Matrix(transformed.data[, -1], sparse = FALSE)
   invisible(model)
 })
 
@@ -199,6 +228,6 @@ setMethod("transform_data", "SpatiotemporalModel", function(model, Y, X) {
 #' @param model The model to estimate theta for
 #'
 #' @return a vector with the namems of the covariance parameterss
-setMethod("theta_names", "SpatiotemporalModel", function(model) {
+setMethod("theta_names", "VecchiaModel", function(model) {
   c("Marginal Variance", "Spatial Range", "Temporal Range", "Nugget")
 })
