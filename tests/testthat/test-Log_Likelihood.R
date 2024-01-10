@@ -1,28 +1,72 @@
+test_that("negloglik_vecchia", {
+    set.seed(1234)
+
+    y.orig <- rnorm(100)
+
+    locs.dim1 <- seq(1, 10, length = 10) + rnorm(10, 0, 0.1)
+    locs.dim2 <- seq(1, 10, length = 10) + rnorm(10, 0, 0.1)
+    locs <- as.matrix(expand.grid(locs.dim1, locs.dim2))
+
+    covmat.true <- Matern(rdist(locs), range = 1, smoothness = 0.5) + diag(100)
+
+    y <- y.orig %*% chol(covmat.true)
+    y <- as.vector(y)
+
+    logparams <- create.initial.values.flex(0.9, 0.5, 0.5, 0.1, 1, 1)
+    pseq <- create.param.sequence(1)
+    vec.approx <- vecchia_specify(locs, 5)
+    LL.vecchia <- negloglik_vecchia(logparams, y, vec.approx, pseq)
+    expect_equal(194.75, LL.vecchia, tolerance=1e-2)
+
+    vec.mapprox <- vecchia_Mspecify(list(locs), 5)
+    LL.mvecchia <- mvnegloglik(logparams, vec.mapprox, y, pseq, 1)
+    # Univariate likelihood should equal multivariate likelihood
+    expect_equal(LL.vecchia, LL.mvecchia, tolerance=1e-1)
+
+    logparams2 <- create.initial.values.flex(0.9, 1, 0.5, 0.1, 1, 1)
+    vec.approx2 <- vec.approx
+    vec.approx2$locsord <- vec.approx$locsord / 0.5
+    LL.vecchia2 <- negloglik_vecchia(logparams2, y, vec.approx2, pseq)
+    LL.vecchia.st <- negloglik_vecchia_ST(logparams, y, vec.approx, pseq, 1, 1)
+    vec.mapprox2 <- vec.mapprox
+    vec.mapprox2$locsord <- vec.mapprox$locsord / 0.5
+    LL.mvecchia2 <- mvnegloglik_ST(logparams2, vec.mapprox2, y, pseq, 1, 1, 1)
+
+    # Likelihood should equal spatiotemporal likelihood after scaling locs
+    expect_equal(LL.vecchia, LL.vecchia2, tolerance=1e-3)
+    expect_equal(LL.vecchia, LL.vecchia.st, tolerance=1e-3)
+    expect_equal(LL.vecchia, LL.mvecchia2, tolerance=1e-1)
+})
+
 test_that("negloglik_vecchia_ST", {
-    set.seed(7919)
-    load("small_sim.Rdata")
-    return(1) # this test isn't useful at the moment
-    params <- c(0.5, 0.5, 0.5, 0.5)
-    locs <- locs_train
-    X <- X_train
-    Y <- Y_train
-    locs.scaled <- locs / c(params[2], params[2], params[3])
-    vecchia_approx <- vecchia_specify(locs.scaled, 25)
-    beta.hat <- rep(0, ncol(X))
-    Y.hat <- as.matrix(X) %*% beta.hat
-    res <- as.double(Y - Y.hat)
-    ord_locs <- locs[vecchia_approx$ord, ]
-    locs_mat <- cbind(ord_locs[, 1], ord_locs[, 2], ord_locs[, 3])
-    result <- negloglik_vecchia_ST(log(params), locs_mat, res, vecchia_approx)
-    expect_equal(1597.9808688, result, tolerance = 10e-5)
-    vecchia.result <- optim(
-        par = log(params), fn = negloglik_vecchia_ST,
-        locs = locs_mat, res = res, vecchia.approx = vecchia_approx, method = "Nelder-Mead",
-        control = list(trace = 0)
-    )
-    params_optim <- exp(vecchia.result$par)
-    result_optim <- negloglik_vecchia_ST(log(params_optim), locs_mat, res, vecchia_approx)
-    expect_equal(-6861.65048095, result_optim, tolerance = 1e-5)
+    set.seed(1234)
+
+    y.orig <- rnorm(125)
+
+    locs.dim1 <- seq(1, 5, length = 5) + rnorm(5, 0, 0.1)
+    locs.dim2 <- seq(1, 5, length = 5) + rnorm(5, 0, 0.1)
+    locs.dim3 <- seq(1, 5, length = 5) + rnorm(5, 0, 0.1)
+    locs <- as.matrix(expand.grid(locs.dim1, locs.dim2, locs.dim3))
+
+    covmat.true <- Matern(rdist(locs), range = 1, smoothness = 0.5) + diag(125)
+
+    y <- y.orig %*% chol(covmat.true)
+    y <- as.vector(y)
+
+    logparams <- create.initial.values.flex(0.9, c(2, 3), 0.5, 0.1, 1, 1)
+    pseq <- create.param.sequence(1, 2)
+    vec.approx <- vecchia_specify(locs, 5)
+    LL.vecchia <- negloglik_vecchia_ST(logparams, y, vec.approx, pseq,
+                                       c(1, 1, 2), 2)
+    expect_equal(284.73, LL.vecchia, tolerance=1e-2)
+
+    logparams2 <- create.initial.values.flex(0.9, 1, 0.5, 0.1, 1, 1)
+    pseq2 <- create.param.sequence(1)
+    vec.approx2 <- vec.approx
+    vec.approx2$locsord[,1:2] <- vec.approx$locsord[,1:2] / 2
+    vec.approx2$locsord[,3] <- vec.approx$locsord[,3] / 3
+    LL.vecchia2 <- negloglik_vecchia(logparams2, y, vec.approx2, pseq2)
+    expect_equal(LL.vecchia, LL.vecchia2, tolerance=1e-3)
 })
 
 test_that("negloglik.full", {
@@ -91,6 +135,36 @@ test_that("negloglik.full", {
     # Vecchia approximations
     expect_equal(LL.full, LL.vecchia, tolerance = 1e-3)
     expect_equal(LL.full, LL.pgp, tolerance = 1e-3)
+})
+
+test_that("negloglik_full_ST", {
+    set.seed(1234)
+
+    y.orig <- rnorm(125)
+
+    locs.dim1 <- seq(1, 5, length = 5) + rnorm(5, 0, 0.1)
+    locs.dim2 <- seq(1, 5, length = 5) + rnorm(5, 0, 0.1)
+    locs.dim3 <- seq(1, 5, length = 5) + rnorm(5, 0, 0.1)
+    locs <- as.matrix(expand.grid(locs.dim1, locs.dim2, locs.dim3))
+
+    covmat.true <- Matern(rdist(locs), range = 1, smoothness = 0.5) + diag(125)
+
+    y <- y.orig %*% chol(covmat.true)
+    y <- as.vector(y)
+
+    logparams <- create.initial.values.flex(0.9, c(2, 3), 0.5, 0.1, 1, 1)
+    pseq <- create.param.sequence(1, 2)
+    LL.full <- negloglik_full_ST(logparams, locs, y, pseq,
+                                 c(1, 1, 2), 2)
+    expect_equal(286.84, LL.full, tolerance=1e-2)
+
+    logparams2 <- create.initial.values.flex(0.9, 1, 0.5, 0.1, 1, 1)
+    pseq2 <- create.param.sequence(1)
+    locs2 <- locs
+    locs2[,1:2] <- locs[,1:2] / 2
+    locs2[,3] <- locs[,3] / 3
+    LL.full2 <- negloglik.full(logparams2, rdist(locs2), y, pseq2)
+    expect_equal(LL.full, LL.full2, tolerance=1e-3)
 })
 
 test_that("mvnegloglik", {

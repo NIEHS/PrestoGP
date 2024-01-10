@@ -50,27 +50,17 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel", function(model, X, loc
   ordering.pred <- match.arg(ordering.pred)
   pred.cond <- match.arg(pred.cond)
   return.values <- match.arg(return.values)
-  if (!is.list(X)) {
-    stop("X parameter must be a list.")
-  }
-  if (!is.list(locs)) {
-    stop("locs parameter must be a list.")
-  }
-  ndx.out <- NULL
-  for (i in 1:length(locs)) {
-    if (nrow(X[[i]]) != nrow(locs[[i]])) {
-      stop("The number of locations must match the number of X observations.")
-    }
-    ndx.out <- c(ndx.out, rep(i, nrow(locs[[i]])))
-  }
-  X <- psych::superMatrix(X)
-  if (ncol(X) != ncol(model@X_train)) {
-    stop("The number of predictors in X must match the training data")
-  }
+  X <- check_input_pred(model, X, locs)
   if (is.null(m)) { # m defaults to the value used for training
     m <- model@n_neighbors
   }
-  stopifnot((m > 0)) # FIXME m is not required by full model
+  if (m < model@min_m) {
+    stop(paste("m must be at least ", model@min_m, sep = ""))
+  }
+  if (m >= nrow(model@X_train)) {
+    warning("Conditioning set size m chosen to be >=n. Changing to m=n-1")
+    m <- nrow(model@X_train) - 1
+  }
 
   # Vecchia prediction at new locations
   Vecchia.Pred <- predict(model@linear_model, newx = X, s = model@linear_model$lambda[model@lambda_1se_idx])
@@ -114,15 +104,13 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel", function(model, X, loc
     return.list <- list(means = Vec.mean)
   } else {
     warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
-    vec.sds <- sqrt(pred$var.pred)
+    vec.var <- pred$var.pred
     for (i in 1:length(locs)) {
-      vec.sds[ndx.out == i] <- sqrt(vec.sds[ndx.out == i] +
+      vec.sds[ndx.out == i] <- sqrt(vec.var[ndx.out == i] +
         model@covparams[model@param_sequence[4, i]])
     }
-    return.list$sds <- vec.sds
+    return.list <- list(means = Vec.mean, sds = vec.sds)
   }
-  # option to include or exclude theta below
-  #  Vec.sds = sqrt(pred$var.pred + model@covparams[4]) #standard deviation
 
   return(return.list)
 })
@@ -179,6 +167,47 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs)
     model@X_train <- psych::superMatrix(X)
   }
   invisible(model)
+})
+
+setMethod("check_input_pred", "MultivariateVecchiaModel", function(model, X, locs) {
+  if (!is.list(locs)) {
+    stop("locs must be a list for multivariate models")
+  }
+  if (!is.list(X)) {
+    stop("X must be a list for multivariate models")
+  }
+  if (length(locs) != length(X)) {
+    stop("locs and X must have the same length")
+  }
+  if (length(locs) != length(model@locs_train)) {
+    stop("Training and test set locs must have the same length")
+  }
+  for (i in 1:length(locs)) {
+    if (!is.matrix(locs[[i]])) {
+      stop("Each locs must be a matrix")
+    }
+    if (i > 1) {
+      if (ncol(locs[[i]]) != ncol(model@locs_train[[1]])) {
+        stop("All locs must have the same number of columns as locs_train")
+      }
+    }
+    if (!is.matrix(X[[i]])) {
+      stop("Each X must be a matrix")
+    }
+    if (nrow(X[[i]]) != nrow(locs[[i]])) {
+      stop("Each X must have the same number of rows as locs")
+    }
+  }
+  if (length(X) == 1) {
+      X <- X[[1]]
+  }
+  else {
+      X <- psych::superMatrix(X)
+  }
+  if (ncol(X) != ncol(model@X_train)) {
+      stop("X and X_train must have the same number of predictors")
+  }
+  return(X)
 })
 
 setMethod("specify", "MultivariateVecchiaModel", function(model) {
