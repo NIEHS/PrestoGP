@@ -194,6 +194,224 @@ test_that("Simulated dataset multivariate spatiotemporal", {
   ), tolerance = 1.1)
 })
 
+test_that("Invalid locs input for prediction", {
+  source("sim_multivariate_small_pred.R")
+  pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 5)
+  pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
+    locs.list.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  expect_error(
+    prestogp_predict(pgp.mmodel1, X.st.otst, as.matrix(1:3)),
+    "locs must be a list for multivariate models"
+  )
+})
+
+test_that("Invalid X input for prediction", {
+  source("sim_multivariate_small_pred.R")
+  pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 5)
+  pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
+    locs.list.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  expect_error(
+    prestogp_predict(pgp.mmodel1, as.matrix(1:3), locs.list.otst),
+    "X must be a list for multivariate models"
+  )
+})
+
+test_that("locs/X length mismatch for prediction", {
+  source("sim_multivariate_small_pred.R")
+  pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 5)
+  pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
+    locs.list.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  expect_error(
+    prestogp_predict(pgp.mmodel1, X.st.otst, list(as.matrix(1:3))),
+    "locs and X must have the same length"
+  )
+})
+
+test_that("locs/locs_train length mismatch", {
+  source("sim_multivariate_small_pred.R")
+  pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 5)
+  pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
+    locs.list.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  expect_error(
+    prestogp_predict(
+      pgp.mmodel1, list(1:3, 1:3, 1:3),
+      list(1:3, 1:3, 1:3)
+    ),
+    "Training and test set locs must have the same length"
+  )
+})
+
+test_that("locs not a matrix for prediction", {
+  source("sim_multivariate_small_pred.R")
+  pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 5)
+  pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
+    locs.list.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  expect_error(
+    prestogp_predict(
+      pgp.mmodel1, list(
+        as.matrix(1:3),
+        as.matrix(1:3)
+      ),
+      list(1:3, as.matrix(1:3))
+    ),
+    "Each locs must be a matrix"
+  )
+})
+
+test_that("ncol(locs) != ncol(locs_train)", {
+  source("sim_multivariate_small_pred.R")
+  pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 5)
+  pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
+    locs.list.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  expect_error(
+    prestogp_predict(
+      pgp.mmodel1, list(
+        as.matrix(1:3),
+        as.matrix(1:3)
+      ),
+      list(as.matrix(1:3), as.matrix(1:3))
+    ),
+    "All locs must have the same number of columns as locs_train"
+  )
+})
+
+test_that("X not a matrix for prediction", {
+  source("sim_multivariate_small_pred.R")
+  pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 5)
+  pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
+    locs.list.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  X.st.otst[[1]] <- as.vector(X.st.otst[[1]])
+  expect_error(
+    prestogp_predict(pgp.mmodel1, X.st.otst, locs.list.otst),
+    "Each X must be a matrix"
+  )
+})
+
+test_that("nrow(X) != nrow(locs) for prediction", {
+  source("sim_multivariate_small_pred.R")
+  pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 5)
+  pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
+    locs.list.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  locs.list.otst[[1]] <- rbind(locs.list.otst[[1]], rep(0, 2))
+  expect_error(
+    prestogp_predict(pgp.mmodel1, X.st.otst, locs.list.otst),
+    "Each X must have the same number of rows as locs"
+  )
+})
+
+test_that("ncol(X) != ncol(X_train) for prediction", {
+  source("sim_multivariate_small_pred.R")
+  pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 5)
+  pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
+    locs.list.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  X.st.otst[[1]] <- cbind(X.st.otst[[1]], rep(0, nrow(X.st.otst[[1]])))
+  expect_error(
+    prestogp_predict(pgp.mmodel1, X.st.otst, locs.list.otst),
+    "X and X_train must have the same number of predictors"
+  )
+})
+
+test_that("m too small for prediction", {
+  source("sim_multivariate_small_pred.R")
+  pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 5)
+  pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
+    locs.list.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  expect_error(
+    prestogp_predict(pgp.mmodel1, X.st.otst, locs.list.otst, m = 2),
+    "m must be at least 3"
+  )
+})
+
+test_that("m too large for prediction", {
+  source("sim_multivariate_small_pred.R")
+  pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 5)
+  pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
+    locs.list.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  expect_warning(
+    prestogp_predict(pgp.mmodel1, X.st.otst, locs.list.otst,
+      m = 51
+    ),
+    "Conditioning set size m chosen to be >=n. Changing to m=n-1"
+  )
+})
+
 test_that("Simulated dataset multivariate spatial prediction", {
   source("sim_multivariate_big_pred.R")
   pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 25)
@@ -210,6 +428,8 @@ test_that("Simulated dataset multivariate spatial prediction", {
   pgp.mmodel1.pred <- prestogp_predict(pgp.mmodel1, X.st.otst, locs.list.otst)
 
   mse <- mean((pgp.mmodel1.pred$means - unlist(y.list.otst))^2)
+  me <- mean(pgp.mmodel1.pred$means - unlist(y.list.otst))
 
   expect_equal(mse, 1.99, tolerance = 0.1)
+  expect_equal(me, -0.04, tolerance = 0.03)
 })

@@ -36,15 +36,17 @@ Imports:
     knitr,
     dplyr,
     glmnet,
-    rmarkdown,
-    markdown,
     gtools,
     geoR,
-    doParallel,
     RANN,
+    stats,
+    methods,
     foreach,
     rlang,
-    methods
+    mvtnorm,
+    spam,
+    psych
+    doParallel
 License: GPL-3
 Encoding: UTF-8
 VignetteBuilder: knitr 
@@ -62,3 +64,7 @@ Collate:
     'Visualization.R'
     'package.R'
     'utils-tidy-eval.R'
+Suggests: 
+    roxygen2,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

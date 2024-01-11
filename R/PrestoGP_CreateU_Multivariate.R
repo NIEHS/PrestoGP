@@ -66,7 +66,8 @@ max_min_ordering <- function(locs, dist_func) {
 #' @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
 #'
 #' @return A vector containing the indices of the neighbors
-knn_indices <- function(ordered_locs, query, n_neighbors, dist_func, dist_func_code) {
+knn_indices <- function(ordered_locs, query, n_neighbors,
+                        dist_func, dist_func_code) {
   if (dist_func_code == "custom") {
     dists <- dist_func(query, ordered_locs)
     dists_order <- order(dists)
@@ -90,7 +91,8 @@ knn_indices <- function(ordered_locs, query, n_neighbors, dist_func, dist_func_c
 #' @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
 #'
 #' @return A list containing two matrices, each with one row per location: an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
-sparseNN <- function(ordered_locs, n_neighbors, dist_func, dist_func_code, ordered_locs_pred = NULL) {
+sparseNN <- function(ordered_locs, n_neighbors,
+                     dist_func, dist_func_code, ordered_locs_pred = NULL) {
   ee <- min(apply(ordered_locs, 2, stats::sd))
   n <- nrow(ordered_locs)
   ordered_locs <- ordered_locs + matrix(
@@ -98,17 +100,25 @@ sparseNN <- function(ordered_locs, n_neighbors, dist_func, dist_func_code, order
       stats::rnorm(n * ncol(ordered_locs)),
     n, ncol(ordered_locs)
   )
-  indices_matrix <- matrix(data = NA, nrow = nrow(ordered_locs), ncol = n_neighbors)
-  distances_matrix <- matrix(data = NA, nrow = nrow(ordered_locs), ncol = n_neighbors)
+  indices_matrix <- matrix(data = NA, nrow = nrow(ordered_locs),
+                           ncol = n_neighbors)
+  distances_matrix <- matrix(data = NA, nrow = nrow(ordered_locs),
+                             ncol = n_neighbors)
   for (row in 1:n_neighbors) {
     # for the locations from 1 to n_neighbors, use the entire locs list to find the neighbors
-    nn <- knn_indices(ordered_locs[1:(n_neighbors + 1), , drop = FALSE][-row, , drop = FALSE], ordered_locs[row, , drop = FALSE], n_neighbors, dist_func, dist_func_code)
+    nn <- knn_indices(ordered_locs[1:
+                                     (n_neighbors + 1), , drop = FALSE][-row, ,
+                                                              drop = FALSE],
+                      ordered_locs[row, , drop = FALSE], n_neighbors,
+                      dist_func, dist_func_code)
     indices_matrix[row, 1:n_neighbors] <- nn$indices[1:n_neighbors]
     distances_matrix[row, 1:n_neighbors] <- nn$distances[1:n_neighbors]
   }
   for (row in (n_neighbors + 1):nrow(ordered_locs)) {
     # get the m nearest neighbors from the locs before this one in the max-min order
-    nn <- knn_indices(ordered_locs[1:(row - 1), , drop = FALSE], ordered_locs[row, , drop = FALSE], n_neighbors, dist_func, dist_func_code)
+    nn <- knn_indices(ordered_locs[1:(row - 1), , drop = FALSE],
+                      ordered_locs[row, , drop = FALSE], n_neighbors,
+                      dist_func, dist_func_code)
     indices_matrix[row, 1:n_neighbors] <- nn$indices[1:n_neighbors]
     distances_matrix[row, 1:n_neighbors] <- nn$distances[1:n_neighbors]
   }

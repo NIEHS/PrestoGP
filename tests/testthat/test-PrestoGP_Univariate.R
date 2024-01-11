@@ -65,7 +65,7 @@ test_that("nrow(Y) != nrow(X)", {
 })
 
 test_that("Simulated dataset spatial", {
-  source("sim_vecchia.R")
+  load("sim_vecchia.RData")
   pgp.model1 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model1 <- prestogp_fit(pgp.model1, y, X, locs,
     scaling = c(1, 1), apanasovich = TRUE, verbose = FALSE,
@@ -173,4 +173,154 @@ test_that("Simulated dataset spatiotemporal", {
   expect_equal(params.out[3] - params.out2[3], 0, tolerance = 0.06)
   expect_equal(params.out[4], params.out2[4], tolerance = 0.3)
   expect_equal(params.out[5], params.out2[5], tolerance = 0.1)
+})
+
+test_that("Invalid locs input for prediction", {
+  source("sim_vecchia_small_pred.R")
+  pgp.model1 <- new("VecchiaModel", n_neighbors = 5)
+  pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
+    locs.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  expect_error(
+    prestogp_predict(pgp.model1, X.otst, 1:3),
+    "locs must be a matrix"
+  )
+})
+
+test_that("Invalid X input for prediction", {
+  source("sim_vecchia_small_pred.R")
+  pgp.model1 <- new("VecchiaModel", n_neighbors = 5)
+  pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
+    locs.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  expect_error(
+    prestogp_predict(pgp.model1, 1:3, locs.otst),
+    "X must be a matrix"
+  )
+})
+
+test_that("ncol(locs) != ncol(locs_train)", {
+  source("sim_vecchia_small_pred.R")
+  pgp.model1 <- new("VecchiaModel", n_neighbors = 5)
+  pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
+    locs.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  locs.otst <- cbind(locs.otst, rep(1, nrow(locs.otst)))
+  expect_error(
+    prestogp_predict(pgp.model1, X.otst, locs.otst),
+    "locs must have the same number of columns as locs_train"
+  )
+})
+
+test_that("nrow(X) != nrow(locs) for prediction", {
+  source("sim_vecchia_small_pred.R")
+  pgp.model1 <- new("VecchiaModel", n_neighbors = 5)
+  pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
+    locs.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  X.otst <- rbind(X.otst, rep(1, ncol(X.otst)))
+  expect_error(
+    prestogp_predict(pgp.model1, X.otst, locs.otst),
+    "X must have the same number of rows as locs"
+  )
+})
+
+test_that("ncol(X) != ncol(X_train) for prediction", {
+  source("sim_vecchia_small_pred.R")
+  pgp.model1 <- new("VecchiaModel", n_neighbors = 5)
+  pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
+    locs.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  X.otst <- cbind(X.otst, rep(1, nrow(X.otst)))
+  expect_error(
+    prestogp_predict(pgp.model1, X.otst, locs.otst),
+    "X and X_train must have the same number of predictors"
+  )
+})
+
+test_that("m too small for prediction", {
+  source("sim_vecchia_small_pred.R")
+  pgp.model1 <- new("VecchiaModel", n_neighbors = 5)
+  pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
+    locs.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  expect_error(
+    prestogp_predict(pgp.model1, X.otst, locs.otst, m = 2),
+    "m must be at least 3"
+  )
+})
+
+test_that("m too large for prediction", {
+  source("sim_vecchia_small_pred.R")
+  pgp.model1 <- new("VecchiaModel", n_neighbors = 5)
+  pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
+    locs.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  expect_warning(
+    prestogp_predict(pgp.model1, X.otst, locs.otst, m = 201),
+    "Conditioning set size m chosen to be >=n. Changing to m=n-1"
+  )
+})
+
+test_that("Simulated spatial prediction", {
+  source("sim_vecchia_pred.R")
+  pgp.model1 <- new("VecchiaModel", n_neighbors = 25)
+  pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr, locs.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+
+  pgp.model1.pred <- prestogp_predict(pgp.model1, X.otst, locs.otst)
+
+  mse <- mean((pgp.model1.pred$means - y.otst)^2)
+  me <- mean(pgp.model1.pred$means - y.otst)
+
+  expect_equal(mse, 2.24, tolerance = 0.07)
+  expect_equal(me, 0.03, tolerance = 0.05)
 })
