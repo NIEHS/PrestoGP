@@ -45,7 +45,7 @@ Imports:
     rlang,
     mvtnorm,
     spam,
-    psych
+    psych,
     doParallel
 License: GPL-3
 Encoding: UTF-8
