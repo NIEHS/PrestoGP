@@ -12,11 +12,18 @@
 #'
 #' @examples
 #' @noRd
-negloglik_vecchia_ST <- function(logparms, locs, res, vecchia.approx) {
-  parms <- exp(logparms)
-  locs <- locs / matrix(parms[c(2, 2, 3)], nrow = nrow(locs), ncol = 3, byrow = TRUE)
-  vecchia.approx$locsord <- locs
-  -vecchia_likelihood(res, vecchia.approx, c(parms[1], 1, 0.5), parms[4])
+negloglik_vecchia_ST <- function(logparms, res, vecchia.approx, param.seq,
+                                 scaling, nscale) {
+  parms <- unlog.params(logparms, param.seq, 1)
+  locs.scaled <- vecchia.approx$locsord
+  for (j in 1:nscale) {
+    locs.scaled[, scaling == j] <- locs.scaled[, scaling == j] /
+      parms[param.seq[2, 1] + j - 1]
+  }
+  vecchia.approx$locsord <- locs.scaled
+  -vecchia_likelihood(res, vecchia.approx, c(parms[1], 1,
+                                             parms[param.seq[3, 1]]),
+                      parms[param.seq[4, 1]])
 }
 
 #' negloglik_vecchia
@@ -33,9 +40,10 @@ negloglik_vecchia_ST <- function(logparms, locs, res, vecchia.approx) {
 #'
 #' @examples
 #' @noRd
-negloglik_vecchia <- function(logparms, locs, res, vecchia.approx) {
-  parms <- exp(logparms)
-  -vecchia_likelihood(res, vecchia.approx, c(parms[1], parms[2], 0.5), parms[3])
+negloglik_vecchia <- function(logparms, res, vecchia.approx, param.seq) {
+  parms <- unlog.params(logparms, param.seq, 1)
+  -vecchia_likelihood(res, vecchia.approx, c(parms[1], parms[2], parms[3]),
+                      parms[4])
 }
 
 #' negloglik_full_ST
@@ -52,12 +60,21 @@ negloglik_vecchia <- function(logparms, locs, res, vecchia.approx) {
 #'
 #' @examples
 #' @noRd
-negloglik_full_ST <- function(logparms, locs, y, N) {
-  parms <- exp(logparms)
-  locs.scaled <- cbind(locs[, 1] / parms[2], locs[, 2] / parms[2], locs[, 3] / parms[3])
+negloglik_full_ST <- function(logparms, locs, y, param.seq, scaling, nscale) {
+  parms <- unlog.params(logparms, param.seq, 1)
+  locs.scaled <- locs
+  for (j in 1:nscale) {
+    locs.scaled[, scaling == j] <- locs.scaled[, scaling == j] /
+      parms[param.seq[2, 1] + j - 1]
+  }
   d <- fields::rdist(locs.scaled)
-  cov.mat <- parms[1] * fields::Exponential(d, range = 1) + parms[4] * diag(N)
-  -mvtnorm::dmvnorm(y, rep(0, N), cov.mat, log = TRUE)
+  N <- nrow(d)
+  cov.mat <- parms[1] * fields::Matern(d,
+    range = 1,
+    smoothness = parms[param.seq[3, 1]]
+  ) +
+    parms[param.seq[4, 1]] * diag(N)
+  return(-1 * mvtnorm::dmvnorm(y, rep(0, N), cov.mat, log = TRUE))
 }
 
 #' negloglik.full
@@ -74,15 +91,12 @@ negloglik_full_ST <- function(logparms, locs, y, N) {
 #'
 #' @examples
 #' @noRd
-negloglik.full <- function(logparams, locs, y) {
-  params <- c(
-    exp(logparams[1:2]),
-    gtools::inv.logit(logparams[3], 0, 2.5),
-    exp(logparams[4])
-  )
-  d <- fields::rdist(locs)
+negloglik.full <- function(logparams, d, y, param.seq) {
+  params <- unlog.params(logparams, param.seq, 1)
+  #    d <- fields::rdist(locs)
   N <- nrow(d)
-  cov.mat <- params[1] * fields::Matern(d, range = params[2], smoothness = params[3]) +
+  cov.mat <- params[1] * fields::Matern(d, range = params[2],
+                                        smoothness = params[3]) +
     params[4] * diag(N)
   return(-1 * mvtnorm::dmvnorm(y, rep(0, N), cov.mat, log = TRUE))
 }
@@ -111,17 +125,7 @@ mvnegloglik <- function(logparams, vecchia.approx, y, param.seq, P) {
 
   # P <- length(y)
   # transform the postively constrained parameters from log-space to normal-space
-  params <- c(
-    exp(logparams[1:param.seq[2, 2]]),
-    gtools::inv.logit(logparams[param.seq[3, 1]:param.seq[3, 2]], 0, 2.5),
-    exp(logparams[param.seq[4, 1]:param.seq[4, 2]])
-  )
-  if (P > 1) {
-    params <- c(params, tanh(logparams[param.seq[5, 1]:param.seq[5, 2]]))
-  } else {
-    params <- c(params, 1)
-  }
-
+  params <- unlog.params(logparams, param.seq, P)
   U.obj <- createUMultivariate(vecchia.approx, params)
   -1 * GPvecchia:::vecchia_likelihood_U(y, U.obj)
 }
@@ -129,7 +133,8 @@ mvnegloglik <- function(logparams, vecchia.approx, y, param.seq, P) {
 ##############################################################################
 ### Flexible Spatiotemporal Multivariate Matern Negative Loglikelihood Function ###########
 
-mvnegloglik_ST <- function(logparams, vecchia.approx, y, param.seq, P, scaling, nscale) {
+mvnegloglik_ST <- function(logparams, vecchia.approx, y, param.seq, P, scaling,
+                           nscale) {
   #  Input-
   #  logparams: A numeric vector of length (4*P)+(4*choose(P,2)).
   #             To construct these parameters we unlist a list of the 7 covariance
@@ -149,16 +154,7 @@ mvnegloglik_ST <- function(logparams, vecchia.approx, y, param.seq, P, scaling, 
 
   # P <- length(y)
   # transform the postively constrained parameters from log-space to normal-space
-  params <- c(
-    exp(logparams[1:param.seq[2, 2]]),
-    gtools::inv.logit(logparams[param.seq[3, 1]:param.seq[3, 2]], 0, 2.5),
-    exp(logparams[param.seq[4, 1]:param.seq[4, 2]])
-  )
-  if (P > 1) {
-    params <- c(params, tanh(logparams[param.seq[5, 1]:param.seq[5, 2]]))
-  } else {
-    params <- c(params, 1)
-  }
+  params <- unlog.params(logparams, param.seq, P)
   locs.scaled <- vecchia.approx$locsord
   for (i in 1:P) {
     for (j in 1:nscale) {
@@ -201,15 +197,7 @@ mvnegloglik.full <- function(logparams, locs, y, param.seq) {
   # P <- length(y)
   # transform the postively constrained parameters from log-space to normal-space
   P <- length(locs)
-  params <- c(
-    exp(logparams[1:param.seq[2, 2]]),
-    gtools::inv.logit(logparams[param.seq[3, 1]:param.seq[3, 2]], 0, 2.5),
-    exp(logparams[param.seq[4, 1]:param.seq[4, 2]])
-  )
-  if (P > 1) {
-    params <- c(params, tanh(logparams[param.seq[5, 1]:param.seq[5, 2]]))
-  }
-
+  params <- unlog.params(logparams, param.seq, P)
   sig2 <- params[param.seq[1, 1]:param.seq[1, 2]]
   range <- params[param.seq[2, 1]:param.seq[2, 2]]
   smoothness <- params[param.seq[3, 1]:param.seq[3, 2]]
@@ -254,11 +242,15 @@ create.cov.upper.flex <- function(P, marg.var, marg.range, marg.smooth,
       j <- combs[iter, 2]
 
       smoothness.mat[i, j] <- (marg.smooth[i] + marg.smooth[j]) / 2
-      range.mat[i, j] <- 1 / sqrt(((1 / marg.range[i])^2 + (1 / marg.range[j])^2) / 2)
+      range.mat[i, j] <- 1 / sqrt(((1 / marg.range[i])^2 +
+                                     (1 / marg.range[j])^2) / 2)
 
       s1 <- sqrt(marg.var[i] * marg.var[j])
-      s2 <- ((1 / marg.range[i])^marg.smooth[i] * (1 / marg.range[j])^marg.smooth[j]) / ((1 / range.mat[i, j])^(2 * smoothness.mat[i, j]))
-      s3 <- gamma(smoothness.mat[i, j]) / (sqrt(gamma(marg.smooth[i])) * sqrt(gamma(marg.smooth[j])))
+      s2 <- ((1 / marg.range[i])^marg.smooth[i] *
+               (1 / marg.range[j])^marg.smooth[j]) /
+        ((1 / range.mat[i, j])^(2 * smoothness.mat[i, j]))
+      s3 <- gamma(smoothness.mat[i, j]) / (sqrt(gamma(marg.smooth[i])) *
+                                             sqrt(gamma(marg.smooth[j])))
       s4 <- R.corr[iter]
       sig2.mat[i, j] <- s1 * s2 * s3 * s4
     }
@@ -300,10 +292,12 @@ cat.covariances <- function(locs.list, sig2, range, smoothness, nugget) {
     # Calculate the covariance matrix - if/then based on its location in the super-matrix
     N <- nrow(d)
     if (i == j) { # To accomodate varying size outcomes- the nugget is not included on cross-covariances
-      cov.mat.ij <- sig2[i, j] * geoR::matern(d, phi = range[i, j], kappa = smoothness[i, j]) +
+      cov.mat.ij <- sig2[i, j] * geoR::matern(d, phi = range[i, j], kappa =
+                                                smoothness[i, j]) +
         nugget[i, j] * diag(N)
     } else {
-      cov.mat.ij <- sig2[i, j] * geoR::matern(d, phi = range[i, j], kappa = smoothness[i, j])
+      cov.mat.ij <- sig2[i, j] * geoR::matern(d, phi = range[i, j], kappa =
+                                                smoothness[i, j])
     }
 
 
@@ -348,4 +342,21 @@ create.initial.values.flex <- function(marg.var, marg.range, marg.smooth,
     logparams.init <- c(logparams.init, 0)
   }
   return(logparams.init)
+}
+
+##############################################################################
+### Transform the log Matern parameters back to the original #########
+
+unlog.params <- function(logparams, param.seq, P) {
+  params <- c(
+    exp(logparams[1:param.seq[2, 2]]),
+    gtools::inv.logit(logparams[param.seq[3, 1]:param.seq[3, 2]], 0, 2.5),
+    exp(logparams[param.seq[4, 1]:param.seq[4, 2]])
+  )
+  if (P > 1) {
+    params <- c(params, tanh(logparams[param.seq[5, 1]:param.seq[5, 2]]))
+  } else {
+    params <- c(params, 1)
+  }
+  return(params)
 }
