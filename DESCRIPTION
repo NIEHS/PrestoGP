@@ -46,7 +46,8 @@ Imports:
     mvtnorm,
     spam,
     psych,
-    doParallel
+    doParallel,
+    covr
 License: GPL-3
 Encoding: UTF-8
 VignetteBuilder: knitr 
