@@ -199,13 +199,12 @@ setMethod("check_input_pred", "MultivariateVecchiaModel", function(model, X, loc
     }
   }
   if (length(X) == 1) {
-      X <- X[[1]]
-  }
-  else {
-      X <- psych::superMatrix(X)
+    X <- X[[1]]
+  } else {
+    X <- psych::superMatrix(X)
   }
   if (ncol(X) != ncol(model@X_train)) {
-      stop("X and X_train must have the same number of predictors")
+    stop("X and X_train must have the same number of predictors")
   }
   return(X)
 })

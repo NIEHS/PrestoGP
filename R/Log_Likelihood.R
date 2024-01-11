@@ -21,9 +21,13 @@ negloglik_vecchia_ST <- function(logparms, res, vecchia.approx, param.seq,
       parms[param.seq[2, 1] + j - 1]
   }
   vecchia.approx$locsord <- locs.scaled
-  -vecchia_likelihood(res, vecchia.approx, c(parms[1], 1,
-                                             parms[param.seq[3, 1]]),
-                      parms[param.seq[4, 1]])
+  -vecchia_likelihood(
+    res, vecchia.approx, c(
+      parms[1], 1,
+      parms[param.seq[3, 1]]
+    ),
+    parms[param.seq[4, 1]]
+  )
 }
 
 #' negloglik_vecchia
@@ -42,8 +46,10 @@ negloglik_vecchia_ST <- function(logparms, res, vecchia.approx, param.seq,
 #' @noRd
 negloglik_vecchia <- function(logparms, res, vecchia.approx, param.seq) {
   parms <- unlog.params(logparms, param.seq, 1)
-  -vecchia_likelihood(res, vecchia.approx, c(parms[1], parms[2], parms[3]),
-                      parms[4])
+  -vecchia_likelihood(
+    res, vecchia.approx, c(parms[1], parms[2], parms[3]),
+    parms[4]
+  )
 }
 
 #' negloglik_full_ST
@@ -95,8 +101,10 @@ negloglik.full <- function(logparams, d, y, param.seq) {
   params <- unlog.params(logparams, param.seq, 1)
   #    d <- fields::rdist(locs)
   N <- nrow(d)
-  cov.mat <- params[1] * fields::Matern(d, range = params[2],
-                                        smoothness = params[3]) +
+  cov.mat <- params[1] * fields::Matern(d,
+    range = params[2],
+    smoothness = params[3]
+  ) +
     params[4] * diag(N)
   return(-1 * mvtnorm::dmvnorm(y, rep(0, N), cov.mat, log = TRUE))
 }
@@ -160,7 +168,7 @@ mvnegloglik_ST <- function(logparams, vecchia.approx, y, param.seq, P, scaling,
     for (j in 1:nscale) {
       locs.scaled[vecchia.approx$ondx == i, scaling == j] <-
         locs.scaled[vecchia.approx$ondx == i, scaling == j] /
-        params[param.seq[2, 1] + nscale * (i - 1) + j - 1]
+          params[param.seq[2, 1] + nscale * (i - 1) + j - 1]
     }
   }
   vecchia.approx$locsord <- locs.scaled
@@ -243,14 +251,14 @@ create.cov.upper.flex <- function(P, marg.var, marg.range, marg.smooth,
 
       smoothness.mat[i, j] <- (marg.smooth[i] + marg.smooth[j]) / 2
       range.mat[i, j] <- 1 / sqrt(((1 / marg.range[i])^2 +
-                                     (1 / marg.range[j])^2) / 2)
+        (1 / marg.range[j])^2) / 2)
 
       s1 <- sqrt(marg.var[i] * marg.var[j])
       s2 <- ((1 / marg.range[i])^marg.smooth[i] *
-               (1 / marg.range[j])^marg.smooth[j]) /
+        (1 / marg.range[j])^marg.smooth[j]) /
         ((1 / range.mat[i, j])^(2 * smoothness.mat[i, j]))
       s3 <- gamma(smoothness.mat[i, j]) / (sqrt(gamma(marg.smooth[i])) *
-                                             sqrt(gamma(marg.smooth[j])))
+        sqrt(gamma(marg.smooth[j])))
       s4 <- R.corr[iter]
       sig2.mat[i, j] <- s1 * s2 * s3 * s4
     }
@@ -292,12 +300,16 @@ cat.covariances <- function(locs.list, sig2, range, smoothness, nugget) {
     # Calculate the covariance matrix - if/then based on its location in the super-matrix
     N <- nrow(d)
     if (i == j) { # To accomodate varying size outcomes- the nugget is not included on cross-covariances
-      cov.mat.ij <- sig2[i, j] * geoR::matern(d, phi = range[i, j], kappa =
-                                                smoothness[i, j]) +
+      cov.mat.ij <- sig2[i, j] * geoR::matern(d,
+        phi = range[i, j], kappa =
+          smoothness[i, j]
+      ) +
         nugget[i, j] * diag(N)
     } else {
-      cov.mat.ij <- sig2[i, j] * geoR::matern(d, phi = range[i, j], kappa =
-                                                smoothness[i, j])
+      cov.mat.ij <- sig2[i, j] * geoR::matern(d,
+        phi = range[i, j], kappa =
+          smoothness[i, j]
+      )
     }
 
 
