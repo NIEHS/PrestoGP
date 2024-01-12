@@ -70,7 +70,7 @@ setMethod("initialize", "PrestoGPModel", function(.Object, ...) {
 setGeneric("show_theta", function(object, Y_names) standardGeneric("show_theta"))
 setGeneric("prestogp_fit", function(model, Y, X, locs, scaling = NULL, apanasovich = FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100, verbose = FALSE, optim.method = "Nelder-Mead", optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000), parallel = FALSE, foldid = NULL) standardGeneric("prestogp_fit"))
 setGeneric("prestogp_predict", function(model, X = "matrix", locs = "matrix", m = "numeric", ordering.pred = c("obspred", "general"), pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) standardGeneric("prestogp_predict"))
-setGeneric("calc_covparams", function(model, locs, Y) standardGeneric("calc_covparams"))
+setGeneric("calc_covparams", function(model, locs, Y, covparams) standardGeneric("calc_covparams"))
 setGeneric("specify", function(model, ...) standardGeneric("specify"))
 setGeneric("compute_residuals", function(model, Y, Y.hat) standardGeneric("compute_residuals"))
 setGeneric("transform_data", function(model, Y, X) standardGeneric("transform_data"))
@@ -81,6 +81,7 @@ setGeneric("scale_locs", function(model, locs) standardGeneric("scale_locs"))
 setGeneric("theta_names", function(model) standardGeneric("theta_names"))
 setGeneric("transform_covariance_parameters", function(model) standardGeneric("transform_covariance_parameters"))
 setGeneric("check_input", function(model, Y, X, locs) standardGeneric("check_input"))
+setGeneric("check_input_pred", function(model, X, locs) standardGeneric("check_input_pred"))
 
 #' show
 #'
@@ -205,22 +206,35 @@ setMethod(
            optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
            parallel = FALSE, foldid = NULL) {
     model <- check_input(model, Y, X, locs)
-    if (!is.double(beta.hat) && !is.null(beta.hat)) {
-      stop("The beta.hat parameter must be floating point number.")
+    if (!is.null(beta.hat)) {
+        if (!is.vector(beta.hat) | !is.numeric(beta.hat)) {
+            stop("beta.hat parameter must be a numeric vector")
+        }
+        if (length(beta.hat) != (ncol(model@X_train) + 1)) {
+            stop("Length of beta.hat must match the number of predictors")
+        }
+        beta.hat <- as.matrix(beta.hat)
     }
-    if (!is.double(tol)) {
-      stop("The tol parameter must be floating point number.")
+    if (!is.numeric(tol)) {
+      stop("tol must be numeric")
+    }
+    if (length(tol) != 1) {
+      stop("tol must be a scalar")
+    }
+    if (tol<=0 | tol>1) {
+      stop("tol must satisfy 0<tol<=1")
     }
     if (is.null(scaling)) {
-      if (is.matrix(locs)) {
-        scaling <- rep(1, ncol(locs))
-      } else {
-        scaling <- rep(1, ncol(locs[[1]]))
-      }
-    }
-    nscale <- length(unique(scaling))
-    if (sum(sort(unique(scaling)) == 1:nscale) < nscale) {
-      stop("scaling must consist of sequential integers between 1 and ncol(locs)")
+        scaling <- rep(1, ncol(model@locs_train[[1]]))
+        nscale <- 1
+    } else {
+        if (length(scaling) != ncol(model@locs_train[[1]])) {
+            stop("Length of scaling must equal ncol of locs")
+        }
+        nscale <- length(unique(scaling))
+        if (sum(sort(unique(scaling)) == 1:nscale) < nscale) {
+            stop("scaling must consist of sequential integers starting at 1")
+        }
     }
     if (is.null(apanasovich)) {
       if (nscale == 1) {
@@ -235,14 +249,18 @@ setMethod(
     model@scaling <- scaling
     model@nscale <- nscale
     model@apanasovich <- apanasovich
-    if (is.null(covparams)) {
-      model <- calc_covparams(model, locs, Y)
+    if (!is.null(covparams)) {
+      if (!is.vector(covparams) | !is.numeric(covparams)) {
+        stop("covparams must be a numeric vector")
+      }
     }
-    if (!is.vector(model@covparams)) {
-      stop("The covparams paramter must be a numeric vector.")
-    }
+    model <- calc_covparams(model, locs, Y, covparams)
     if (model@n_neighbors < model@min_m) {
-      stop(paste("M must be at least ", model@min_m, ".", sep = ""))
+      stop(paste("m must be at least ", model@min_m, sep = ""))
+    }
+    if (model@n_neighbors >= nrow(model@Y_train)) {
+      warning("Conditioning set size m chosen to be >=n. Changing to m=n-1")
+      model@n_neighbors <- nrow(model@Y_train) - 1
     }
 
     model <- specify(model)
@@ -278,7 +296,7 @@ setMethod(
         model <- specify(model)
       }
       model <- transform_data(model, model@Y_train, model@X_train)
-      model <- estimate_betas(model, parallel, foldid)
+      model <- estimate_betas(model, parallel)
       min.error <- compute_error(model)
       ### Check min-error against the previous error and tolerance
       if (min.error < prev.error * tol) {
@@ -390,7 +408,7 @@ setMethod("compute_error", "PrestoGPModel", function(model) {
 #' @param Y the dependent variable matrix
 #'
 #' @return a model with initial covariance parameters
-setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y) {
+setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y, covparams) {
   if (!is.list(locs)) {
     P <- 1
     locs <- list(locs)
@@ -398,27 +416,68 @@ setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y) {
   } else {
     P <- length(locs)
   }
-  col.vars <- rep(NA, P)
-  D.sample.bar <- rep(NA, model@nscale * P)
-  for (i in 1:P) {
-    col.vars[i] <- var(Y[[i]])
-    N <- length(Y[[i]])
-    # TODO find a better way to compute initial spatial range
-    for (j in 1:model@nscale) {
-      d.sample <- sample(1:N, max(2, ceiling(N / 50)), replace = FALSE)
-      D.sample <- rdist(locs[[i]][d.sample, model@scaling == j])
-      D.sample.bar[(i - 1) * model@nscale + j] <- mean(D.sample) / 4
-    }
+  pseq <- create.param.sequence(P, model@nscale)
+  if (is.null(covparams)) {
+      col.vars <- rep(NA, P)
+      D.sample.bar <- rep(NA, model@nscale * P)
+      for (i in 1:P) {
+          col.vars[i] <- var(Y[[i]])
+          N <- length(Y[[i]])
+          # TODO find a better way to compute initial spatial range
+          for (j in 1:model@nscale) {
+              d.sample <- sample(1:N, max(2, ceiling(N / 50)), replace = FALSE)
+              D.sample <- rdist(locs[[i]][d.sample, model@scaling == j])
+              D.sample.bar[(i - 1) * model@nscale + j] <- mean(D.sample) / 4
+          }
+      }
+      model@logparams <- create.initial.values.flex(
+          c(0.9 * col.vars), # marginal variance
+          D.sample.bar, # range
+          rep(0.5, P), # smoothness
+          c(.1 * col.vars), # nuggets
+          rep(0, choose(P, 2)),
+          P
+      )
+  } else {
+      if (P==1) {
+          if (length(covparams) != pseq[4,2]) {
+              stop("Incorrect number of parameters in covparams")
+          }
+      } else {
+          if (length(covparams) != pseq[5,2]) {
+              stop("Incorrect number of parameters in covparams")
+          }
+      }
+      init.var <- covparams[pseq[1,1]:pseq[1,2]]
+      init.range <- covparams[pseq[2,1]:pseq[2,2]]
+      init.smooth <- covparams[pseq[3,1]:pseq[3,2]]
+      init.nugget <- covparams[pseq[4,1]:pseq[4,2]]
+      if (P>1) {
+          init.corr <- covparams[pseq[5,1]:pseq[5,2]]
+      }
+      else {
+          init.corr <- 0
+      }
+      if (sum(init.var<=0)>0) {
+          stop("Initial variance estimates must be positive")
+      }
+      if (sum(init.range<=0)>0) {
+          stop("Initial range estimates must be positive")
+      }
+      if (sum(init.nugget<=0)>0) {
+          stop("Initial nugget estimates must be positive")
+      }
+      if (sum(init.smooth<=0)>0 | sum(init.smooth>=2.5)>0) {
+          stop("Initial smoothness estimates must be between 0 and 2.5")
+      }
+      if (sum(init.corr < -1)>0 | sum(init.corr > 1)>0) {
+          stop("Initial correlation estimates must be between -1 and 1")
+      }
+      model@logparams <- create.initial.values.flex(init.var, init.range,
+                                                    init.smooth, init.nugget,
+                                                    init.corr, P)
   }
-  model@logparams <- create.initial.values.flex(
-    c(0.9 * col.vars), # marginal variance
-    D.sample.bar, # range
-    rep(0.5, P), # smoothness
-    c(.1 * col.vars), # nuggets
-    rep(0, choose(P, 2)),
-    P
-  )
-  model@param_sequence <- create.param.sequence(P, model@nscale)
+  model@param_sequence <- pseq
   model <- transform_covariance_parameters(model)
   invisible(model)
 })

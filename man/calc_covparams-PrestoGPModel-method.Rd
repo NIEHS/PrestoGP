@@ -4,7 +4,7 @@
 \alias{calc_covparams,PrestoGPModel-method}
 \title{calc_covparams}
 \usage{
-\S4method{calc_covparams}{PrestoGPModel}(model, locs, Y)
+\S4method{calc_covparams}{PrestoGPModel}(model, locs, Y, covparams)
 }
 \arguments{
 \item{model}{The model to set the covariance parameters of}
