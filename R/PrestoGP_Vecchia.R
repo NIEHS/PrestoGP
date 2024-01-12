@@ -71,24 +71,24 @@ setMethod("prestogp_predict", "VecchiaModel", function(model, X, locs, m = NULL,
 
   locs.train.scaled <- scale_locs(model, model@locs_train)[[1]]
   locs.scaled <- scale_locs(model, list(locs))[[1]]
-  vec.approx.test <- vecchia_specify(locs.train.scaled, m, locs.pred = locs.scaled, ordering.pred=ordering.pred, pred.cond=pred.cond)
+  vec.approx.test <- vecchia_specify(locs.train.scaled, m, locs.pred = locs.scaled, ordering.pred = ordering.pred, pred.cond = pred.cond)
 
-    ## carry out prediction
-    if (!model@apanasovich) {
-        pred <- vecchia_prediction(res, vec.approx.test, c(model@covparams[1], 1, model@covparams[3]), model@covparams[4], return.values=return.values)
-    } else {
-        pred <- vecchia_prediction(res, vec.approx.test, c(model@covparams[1], model@covparams[2], model@covparams[3]), model@covparams[4], return.values=return.values)
-    }
+  ## carry out prediction
+  if (!model@apanasovich) {
+    pred <- vecchia_prediction(res, vec.approx.test, c(model@covparams[1], 1, model@covparams[3]), model@covparams[4], return.values = return.values)
+  } else {
+    pred <- vecchia_prediction(res, vec.approx.test, c(model@covparams[1], model@covparams[2], model@covparams[3]), model@covparams[4], return.values = return.values)
+  }
 
   # prediction function can return both mean and sds
   # returns a list with elements mu.pred,mu.obs,var.pred,var.obs,V.ord
   Vec.mean <- pred$mu.pred + Vecchia.Pred # residual + mean trend
   if (return.values == "mean") {
-      return.list <- list(means = Vec.mean)
+    return.list <- list(means = Vec.mean)
   } else {
-      warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
-      Vec.sds <- sqrt(pred$var.pred + model@covparams[4])
-      return.list <- list(means = Vec.mean, sds = vec.sds)
+    warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
+    Vec.sds <- sqrt(pred$var.pred + model@covparams[4])
+    return.list <- list(means = Vec.mean, sds = vec.sds)
   }
 
   return(return.list)
@@ -130,13 +130,13 @@ setMethod("check_input_pred", "VecchiaModel", function(model, X, locs) {
     stop("X must be a matrix")
   }
   if (ncol(locs) != ncol(model@locs_train[[1]])) {
-      stop("locs must have the same number of columns as locs_train")
+    stop("locs must have the same number of columns as locs_train")
   }
   if (nrow(X) != nrow(locs)) {
-      stop("X must have the same number of rows as locs")
+    stop("X must have the same number of rows as locs")
   }
   if (ncol(X) != ncol(model@X_train)) {
-      stop("X and X_train must have the same number of predictors")
+    stop("X and X_train must have the same number of predictors")
   }
   invisible(model)
 })

@@ -100,25 +100,34 @@ sparseNN <- function(ordered_locs, n_neighbors,
       stats::rnorm(n * ncol(ordered_locs)),
     n, ncol(ordered_locs)
   )
-  indices_matrix <- matrix(data = NA, nrow = nrow(ordered_locs),
-                           ncol = n_neighbors)
-  distances_matrix <- matrix(data = NA, nrow = nrow(ordered_locs),
-                             ncol = n_neighbors)
+  indices_matrix <- matrix(
+    data = NA, nrow = nrow(ordered_locs),
+    ncol = n_neighbors
+  )
+  distances_matrix <- matrix(
+    data = NA, nrow = nrow(ordered_locs),
+    ncol = n_neighbors
+  )
   for (row in 1:n_neighbors) {
     # for the locations from 1 to n_neighbors, use the entire locs list to find the neighbors
-    nn <- knn_indices(ordered_locs[1:
-                                     (n_neighbors + 1), , drop = FALSE][-row, ,
-                                                              drop = FALSE],
-                      ordered_locs[row, , drop = FALSE], n_neighbors,
-                      dist_func, dist_func_code)
+    nn <- knn_indices(
+      ordered_locs[1:
+      (n_neighbors + 1), , drop = FALSE][-row, ,
+        drop = FALSE
+      ],
+      ordered_locs[row, , drop = FALSE], n_neighbors,
+      dist_func, dist_func_code
+    )
     indices_matrix[row, 1:n_neighbors] <- nn$indices[1:n_neighbors]
     distances_matrix[row, 1:n_neighbors] <- nn$distances[1:n_neighbors]
   }
   for (row in (n_neighbors + 1):nrow(ordered_locs)) {
     # get the m nearest neighbors from the locs before this one in the max-min order
-    nn <- knn_indices(ordered_locs[1:(row - 1), , drop = FALSE],
-                      ordered_locs[row, , drop = FALSE], n_neighbors,
-                      dist_func, dist_func_code)
+    nn <- knn_indices(
+      ordered_locs[1:(row - 1), , drop = FALSE],
+      ordered_locs[row, , drop = FALSE], n_neighbors,
+      dist_func, dist_func_code
+    )
     indices_matrix[row, 1:n_neighbors] <- nn$indices[1:n_neighbors]
     distances_matrix[row, 1:n_neighbors] <- nn$distances[1:n_neighbors]
   }
@@ -170,7 +179,7 @@ calc.q <- function(nn.obj, firstind.pred) {
     for (j in 2:m) {
       cur.k <- cur.q[j]
       cur.qy <- intersect(q.y[[cur.k]], cur.q)
-      if (length(cur.qy) > length(best.qy) & cur.k < firstind.pred) {
+      if (length(cur.qy) > length(best.qy) && cur.k < firstind.pred) {
         best.k <- cur.k
         best.qy <- cur.qy
       }
@@ -245,7 +254,7 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
     loc.order <- max_min_ordering(locs.all, dist.func)
     loc.order <- c(unique(loc.order), setdiff(1:n, loc.order))
   } else {
-    if (is.null(locs.list.pred) | ordering.pred == "general") {
+    if (is.null(locs.list.pred) || ordering.pred == "general") {
       loc.order <- GPvecchia::order_maxmin_exact(locs.all)
       # I am not sure why the next two lines are here. I added them because
       # similar code exists in the GPvecchia package. But I don't know why
@@ -274,7 +283,7 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
   # is non-deterministic, so there may be some slight differences
   # between the output of this function and the output of createU
   # in the GPvecchia package.
-  if (is.null(locs.list.pred) | pred.cond == "general") {
+  if (is.null(locs.list.pred) || pred.cond == "general") {
     nn.mat <- sparseNN(olocs, m, dist.func, dist.func.code)
   } else {
     nn.mat <- sparseNN(

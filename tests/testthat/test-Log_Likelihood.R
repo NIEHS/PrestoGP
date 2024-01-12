@@ -16,12 +16,12 @@ test_that("negloglik_vecchia", {
     pseq <- create.param.sequence(1)
     vec.approx <- vecchia_specify(locs, 5)
     LL.vecchia <- negloglik_vecchia(logparams, y, vec.approx, pseq)
-    expect_equal(194.75, LL.vecchia, tolerance=1e-2)
+    expect_equal(194.75, LL.vecchia, tolerance = 1e-2)
 
     vec.mapprox <- vecchia_Mspecify(list(locs), 5)
     LL.mvecchia <- mvnegloglik(logparams, vec.mapprox, y, pseq, 1)
     # Univariate likelihood should equal multivariate likelihood
-    expect_equal(LL.vecchia, LL.mvecchia, tolerance=1e-1)
+    expect_equal(LL.vecchia, LL.mvecchia, tolerance = 1e-1)
 
     logparams2 <- create.initial.values.flex(0.9, 1, 0.5, 0.1, 1, 1)
     vec.approx2 <- vec.approx
@@ -33,9 +33,9 @@ test_that("negloglik_vecchia", {
     LL.mvecchia2 <- mvnegloglik_ST(logparams2, vec.mapprox2, y, pseq, 1, 1, 1)
 
     # Likelihood should equal spatiotemporal likelihood after scaling locs
-    expect_equal(LL.vecchia, LL.vecchia2, tolerance=1e-3)
-    expect_equal(LL.vecchia, LL.vecchia.st, tolerance=1e-3)
-    expect_equal(LL.vecchia, LL.mvecchia2, tolerance=1e-1)
+    expect_equal(LL.vecchia, LL.vecchia2, tolerance = 1e-3)
+    expect_equal(LL.vecchia, LL.vecchia.st, tolerance = 1e-3)
+    expect_equal(LL.vecchia, LL.mvecchia2, tolerance = 1e-1)
 })
 
 test_that("negloglik_vecchia_ST", {
@@ -56,17 +56,19 @@ test_that("negloglik_vecchia_ST", {
     logparams <- create.initial.values.flex(0.9, c(2, 3), 0.5, 0.1, 1, 1)
     pseq <- create.param.sequence(1, 2)
     vec.approx <- vecchia_specify(locs, 5)
-    LL.vecchia <- negloglik_vecchia_ST(logparams, y, vec.approx, pseq,
-                                       c(1, 1, 2), 2)
-    expect_equal(284.73, LL.vecchia, tolerance=1e-2)
+    LL.vecchia <- negloglik_vecchia_ST(
+        logparams, y, vec.approx, pseq,
+        c(1, 1, 2), 2
+    )
+    expect_equal(284.73, LL.vecchia, tolerance = 1e-2)
 
     logparams2 <- create.initial.values.flex(0.9, 1, 0.5, 0.1, 1, 1)
     pseq2 <- create.param.sequence(1)
     vec.approx2 <- vec.approx
-    vec.approx2$locsord[,1:2] <- vec.approx$locsord[,1:2] / 2
-    vec.approx2$locsord[,3] <- vec.approx$locsord[,3] / 3
+    vec.approx2$locsord[, 1:2] <- vec.approx$locsord[, 1:2] / 2
+    vec.approx2$locsord[, 3] <- vec.approx$locsord[, 3] / 3
     LL.vecchia2 <- negloglik_vecchia(logparams2, y, vec.approx2, pseq2)
-    expect_equal(LL.vecchia, LL.vecchia2, tolerance=1e-3)
+    expect_equal(LL.vecchia, LL.vecchia2, tolerance = 1e-3)
 })
 
 test_that("negloglik.full", {
@@ -99,20 +101,26 @@ test_that("negloglik.full", {
     d <- rdist(locs)
     pseq <- create.param.sequence(1)
 
-    res.optim.NM <- optim(par=params.init, fn=negloglik.full, d=d, y=y,
-                          param.seq=pseq, control=list(maxit=5000))
+    res.optim.NM <- optim(
+        par = params.init, fn = negloglik.full, d = d, y = y,
+        param.seq = pseq, control = list(maxit = 5000)
+    )
 
     LL.full <- negloglik.full(res.optim.NM$par, d, y, pseq)
 
-    params.final <- c(exp(res.optim.NM$par[1:2]),
-                      gtools::inv.logit(res.optim.NM$par[3], 0, 2.5),
-                      exp(res.optim.NM$par[4]))
+    params.final <- c(
+        exp(res.optim.NM$par[1:2]),
+        gtools::inv.logit(res.optim.NM$par[3], 0, 2.5),
+        exp(res.optim.NM$par[4])
+    )
 
-    pgp.params <- create.initial.values.flex(params.final[1],
-                                             params.final[2],
-                                             params.final[3],
-                                             params.final[4],
-                                             1, 1)
+    pgp.params <- create.initial.values.flex(
+        params.final[1],
+        params.final[2],
+        params.final[3],
+        params.final[4],
+        1, 1
+    )
 
     LL.full.pgp <- mvnegloglik.full(pgp.params, list(locs), y, pseq)
 
@@ -154,17 +162,19 @@ test_that("negloglik_full_ST", {
 
     logparams <- create.initial.values.flex(0.9, c(2, 3), 0.5, 0.1, 1, 1)
     pseq <- create.param.sequence(1, 2)
-    LL.full <- negloglik_full_ST(logparams, locs, y, pseq,
-                                 c(1, 1, 2), 2)
-    expect_equal(286.84, LL.full, tolerance=1e-2)
+    LL.full <- negloglik_full_ST(
+        logparams, locs, y, pseq,
+        c(1, 1, 2), 2
+    )
+    expect_equal(286.84, LL.full, tolerance = 1e-2)
 
     logparams2 <- create.initial.values.flex(0.9, 1, 0.5, 0.1, 1, 1)
     pseq2 <- create.param.sequence(1)
     locs2 <- locs
-    locs2[,1:2] <- locs[,1:2] / 2
-    locs2[,3] <- locs[,3] / 3
+    locs2[, 1:2] <- locs[, 1:2] / 2
+    locs2[, 3] <- locs[, 3] / 3
     LL.full2 <- negloglik.full(logparams2, rdist(locs2), y, pseq2)
-    expect_equal(LL.full, LL.full2, tolerance=1e-3)
+    expect_equal(LL.full, LL.full2, tolerance = 1e-3)
 })
 
 test_that("mvnegloglik", {
@@ -184,9 +194,11 @@ test_that("mvnegloglik", {
     )
     pseq <- create.param.sequence(P)
     vec.approx <- vecchia_Mspecify(locs.list, 25)
-    neg_likelihood <- mvnegloglik(logparams, vec.approx,
-                                  unlist(y.list), pseq, P)
-    expect_equal(34384.23, neg_likelihood, tolerance=1e-2)
+    neg_likelihood <- mvnegloglik(
+        logparams, vec.approx,
+        unlist(y.list), pseq, P
+    )
+    expect_equal(34384.23, neg_likelihood, tolerance = 1e-2)
 })
 
 test_that("mvnegloglik_ST", {
