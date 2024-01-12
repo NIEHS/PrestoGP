@@ -90,7 +90,8 @@ knn_indices <- function(ordered_locs, query, n_neighbors,
 #' @param n_neighbors The number of neighbors to find (K) for each location
 #' @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
 #'
-#' @return A list containing two matrices, each with one row per location: an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
+#' @return A list containing two matrices, each with one row per location:
+#' an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
 sparseNN <- function(ordered_locs, n_neighbors,
                      dist_func, dist_func_code, ordered_locs_pred = NULL) {
   ee <- min(apply(ordered_locs, 2, stats::sd))
@@ -432,7 +433,7 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
     U1[7, ] <- c(1, 3, -1 * bi * ri^(-1 / 2))
     # U[3,3] <- ri^(-1/2)
     # U[1,3] <- -1*bi*ri^(-1/2)
-    i = NULL # lintr requirement
+    i <- NULL # lintr requirement
     U2 <- foreach(i = 3:n, .combine = rbind) %dopar% {
       # U[2*i,2*i] <- nugget[ondx[i]]^(-1/2)
       # U[2*i-1,2*i] <- -1*U[2*i,2*i]

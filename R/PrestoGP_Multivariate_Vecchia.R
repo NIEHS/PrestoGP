@@ -45,7 +45,9 @@ setMethod("initialize", "MultivariateVecchiaModel", function(.Object, n_neighbor
 #' prediction <- prestogp_predict(model, X.test, locs.test)
 #' Vec.mean <- prediction[[1]]
 #' Vec.sds <- prediction[[2]]
-setMethod("prestogp_predict", "MultivariateVecchiaModel", function(model, X, locs, m = NULL, ordering.pred = c("obspred", "general"), pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
+setMethod("prestogp_predict",
+  "MultivariateVecchiaModel",
+  function(model, X, locs, m = NULL, ordering.pred = c("obspred", "general"), pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
   # validate parameters
   ordering.pred <- match.arg(ordering.pred)
   pred.cond <- match.arg(pred.cond)
@@ -105,7 +107,8 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel", function(model, X, loc
   } else {
     warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
     vec.var <- pred$var.pred
-    for (i in 1:length(locs)) {
+    ndx.out <- NULL
+    for (i in seq_along(length(locs))) {
       vec.sds[ndx.out == i] <- sqrt(vec.var[ndx.out == i] +
         model@covparams[model@param_sequence[4, i]])
     }
@@ -131,7 +134,7 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs)
   if (length(locs) != length(X)) {
     stop("locs and X must have the same length")
   }
-  for (i in 1:length(locs)) {
+  for (i in seq_along(length(locs))) {
     if (!is.matrix(locs[[i]])) {
       stop("Each locs must be a matrix")
     }
@@ -182,7 +185,7 @@ setMethod("check_input_pred", "MultivariateVecchiaModel", function(model, X, loc
   if (length(locs) != length(model@locs_train)) {
     stop("Training and test set locs must have the same length")
   }
-  for (i in 1:length(locs)) {
+  for (i in seq_along(length(locs))) {
     if (!is.matrix(locs[[i]])) {
       stop("Each locs must be a matrix")
     }
@@ -215,7 +218,7 @@ setMethod("specify", "MultivariateVecchiaModel", function(model) {
   model@vecchia_approx <- vecchia_Mspecify(locs.scaled, model@n_neighbors)
   if (!model@apanasovich) {
     olocs.scaled <- model@vecchia_approx$locsord
-    for (i in 1:length(locs)) {
+    for (i in seq_along(length(locs))) {
       for (j in 1:model@nscale) {
         olocs.scaled[model@vecchia_approx$ondx == i, model@scaling == j] <-
           olocs.scaled[model@vecchia_approx$ondx == i, model@scaling == j] *

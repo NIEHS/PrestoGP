@@ -68,8 +68,22 @@ setMethod("initialize", "PrestoGPModel", function(.Object, ...) {
 })
 
 setGeneric("show_theta", function(object, Y_names) standardGeneric("show_theta"))
-setGeneric("prestogp_fit", function(model, Y, X, locs, scaling = NULL, apanasovich = FALSE, covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100, verbose = FALSE, optim.method = "Nelder-Mead", optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000), parallel = FALSE, foldid = NULL) standardGeneric("prestogp_fit"))
-setGeneric("prestogp_predict", function(model, X = "matrix", locs = "matrix", m = "numeric", ordering.pred = c("obspred", "general"), pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) standardGeneric("prestogp_predict"))
+setGeneric(
+  "prestogp_fit",
+  function(model, Y, X, locs, scaling = NULL, apanasovich = FALSE,
+           covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100, verbose = FALSE,
+           optim.method = "Nelder-Mead", optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
+           parallel = FALSE, foldid = NULL) {
+    standardGeneric("prestogp_fit")
+  }
+)
+setGeneric(
+  "prestogp_predict",
+  function(model, X = "matrix", locs = "matrix", m = "numeric", ordering.pred = c("obspred", "general"),
+           pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
+    standardGeneric("prestogp_predict")
+  }
+)
 setGeneric("calc_covparams", function(model, locs, Y, covparams) standardGeneric("calc_covparams"))
 setGeneric("specify", function(model, ...) standardGeneric("specify"))
 setGeneric("compute_residuals", function(model, Y, Y.hat) standardGeneric("compute_residuals"))
@@ -335,7 +349,14 @@ setMethod(
 #' @return A model with updated coefficients
 setMethod("estimate_betas", "PrestoGPModel", function(model, parallel, foldid) {
   if (ncol(model@Y_train) > 1) {
-    model@linear_model <- cv.glmnet(as.matrix(model@X_tilde), as.matrix(model@y_tilde), family = "mgaussian", alpha = model@alpha, parallel = parallel, foldid = foldid)
+    model@linear_model <- cv.glmnet(
+      as.matrix(model@X_tilde),
+      as.matrix(model@y_tilde),
+      family = "mgaussian",
+      alpha = model@alpha,
+      parallel = parallel,
+      foldid = foldid
+    )
   } else {
     model@linear_model <- cv.glmnet(as.matrix(model@X_tilde), as.matrix(model@y_tilde), alpha = model@alpha, parallel = parallel, foldid = foldid)
   }

@@ -42,7 +42,9 @@ setMethod("initialize", "VecchiaModel", function(.Object, n_neighbors = 25, ...)
 #' prediction <- prestogp_predict(model, X.test, locs.test)
 #' Vec.mean <- prediction[[1]]
 #' Vec.sds <- prediction[[2]]
-setMethod("prestogp_predict", "VecchiaModel", function(model, X, locs, m = NULL, ordering.pred = c("obspred", "general"), pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
+setMethod("prestogp_predict",
+  "VecchiaModel",
+  function(model, X, locs, m = NULL, ordering.pred = c("obspred", "general"), pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
   # validate parameters
   ordering.pred <- match.arg(ordering.pred)
   pred.cond <- match.arg(pred.cond)
@@ -75,9 +77,20 @@ setMethod("prestogp_predict", "VecchiaModel", function(model, X, locs, m = NULL,
 
   ## carry out prediction
   if (!model@apanasovich) {
-    pred <- vecchia_prediction(res, vec.approx.test, c(model@covparams[1], 1, model@covparams[3]), model@covparams[4], return.values = return.values)
+    pred <- vecchia_prediction(
+      res,
+      vec.approx.test,
+      c(model@covparams[1], 1, model@covparams[3]),
+      model@covparams[4],
+      return.values = return.values
+    )
   } else {
-    pred <- vecchia_prediction(res, vec.approx.test, c(model@covparams[1], model@covparams[2], model@covparams[3]), model@covparams[4], return.values = return.values)
+    pred <- vecchia_prediction(
+      res,
+      vec.approx.test,
+      c(model@covparams[1], model@covparams[2], model@covparams[3]),
+      model@covparams[4], return.values = return.values
+    )
   }
 
   # prediction function can return both mean and sds
@@ -87,6 +100,7 @@ setMethod("prestogp_predict", "VecchiaModel", function(model, X, locs, m = NULL,
     return.list <- list(means = Vec.mean)
   } else {
     warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
+     # TODO: @Eric.Bair is this a typo/bug? Capital 'V' in Vec.sds but 'vec.sds' in return.list
     Vec.sds <- sqrt(pred$var.pred + model@covparams[4])
     return.list <- list(means = Vec.mean, sds = vec.sds)
   }
