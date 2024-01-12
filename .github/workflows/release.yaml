@@ -74,10 +74,10 @@ jobs:
       - name: Build package (Windows)
         if: runner.os == 'Windows'
         shell: cmd
-        run: R CMD build .
+        run: R CMD build --no-build-vignettes .
       - name: Build package
         if: runner.os == 'Linux' || runner.os == 'macOs' 
-        run: R CMD build .
+        run: R CMD build --no-build-vignettes .
       - name: Test Install (Windows)
         if: runner.os == 'Windows'
         shell: cmd
