@@ -245,7 +245,7 @@ create.cov.upper.flex <- function(P, marg.var, marg.range, marg.smooth,
   nugget.mat <- diag(nugget, P, P)
   if (P > 1) {
     combs <- gtools::combinations(P, 2)
-    for (iter in 1:nrow(combs)) {
+    for (iter in seq_len(nrow(combs))) {
       i <- combs[iter, 1]
       j <- combs[iter, 2]
 
@@ -292,7 +292,7 @@ cat.covariances <- function(locs.list, sig2, range, smoothness, nugget) {
 
   l <- length(locs.list)
   combs <- gtools::combinations(l, 2, repeats.allowed = TRUE)
-  for (iter in 1:nrow(combs)) {
+  for (iter in seq_len(nrow(combs))) {
     i <- combs[iter, 1]
     j <- combs[iter, 2]
     # d <- fields::rdist.earth(locs.list[[i]],locs.list[[j]],miles = FALSE)

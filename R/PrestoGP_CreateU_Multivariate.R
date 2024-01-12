@@ -31,14 +31,14 @@ max_min_ordering <- function(locs, dist_func) {
   # find the point closest to the mean of all points
   dists <- dist_func(center, locs)
   first <- which.min(dists)
-  unsolved <- 1:nrow(locs)
+  unsolved <- seq_len(nrow(locs))
   unsolved <- unsolved[-first]
   order <- c(first)
 
   while (length(order) < nrow(locs)) {
     max_min <- 0
     max_min_i <- unsolved[1]
-    in_order <- locs[order[1:length(order)], ]
+    in_order <- locs[seq_along(order), ]
     dim(in_order) <- c(length(order), ncol(locs))
     for (i in unsolved) {
       loc_i <- locs[i, ]
@@ -140,7 +140,7 @@ sparseNN <- function(ordered_locs, n_neighbors,
       data = NA, nrow = nrow(ordered_locs_pred),
       ncol = n_neighbors
     )
-    for (row in 1:nrow(ordered_locs_pred)) {
+    for (row in seq_len(nrow(ordered_locs_pred))) {
       nn <- knn_indices(
         ordered_locs,
         ordered_locs_pred[row, , drop = FALSE], n_neighbors,
@@ -291,7 +291,14 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
       olocs[-(1:n), , drop = FALSE]
     )
   }
-  last.obs <- max((1:length(obs))[obs])
+  # TODO: @Eric.Bair Can you verify the logic below is equivalent to the commented line?
+  # The linter does not allow using 1:length() due to a possibility of getting negative numbers.
+  if (any(obs)) {
+    last.obs <- max(which(obs))
+  } else {
+    last.obs <- NA
+  }
+  # last.obs <- max((1:length(obs))[obs])
   q.list <- calc.q(nn.mat$indices, last.obs + 1)
 
   return(list(
@@ -425,6 +432,7 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
     U1[7, ] <- c(1, 3, -1 * bi * ri^(-1 / 2))
     # U[3,3] <- ri^(-1/2)
     # U[1,3] <- -1*bi*ri^(-1/2)
+    i = NULL # lintr requirement
     U2 <- foreach(i = 3:n, .combine = rbind) %dopar% {
       # U[2*i,2*i] <- nugget[ondx[i]]^(-1/2)
       # U[2*i-1,2*i] <- -1*U[2*i,2*i]
