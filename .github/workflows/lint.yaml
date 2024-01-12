@@ -12,6 +12,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     env:
+      R_LINTR_LINTER_FILE: .lintr
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v3
