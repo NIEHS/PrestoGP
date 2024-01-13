@@ -7,6 +7,9 @@
 # additional example workflows available for the R community.
 
 name: Release New version
+  
+permissions:
+  contents: write
 
 on:
   push: 
