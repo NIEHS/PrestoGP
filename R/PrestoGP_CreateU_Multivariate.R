@@ -31,14 +31,14 @@ max_min_ordering <- function(locs, dist_func) {
   # find the point closest to the mean of all points
   dists <- dist_func(center, locs)
   first <- which.min(dists)
-  unsolved <- 1:nrow(locs)
+  unsolved <- seq_len(nrow(locs))
   unsolved <- unsolved[-first]
   order <- c(first)
 
   while (length(order) < nrow(locs)) {
     max_min <- 0
     max_min_i <- unsolved[1]
-    in_order <- locs[order[1:length(order)], ]
+    in_order <- locs[order[seq_along(order)], ]
     dim(in_order) <- c(length(order), ncol(locs))
     for (i in unsolved) {
       loc_i <- locs[i, ]
@@ -66,8 +66,7 @@ max_min_ordering <- function(locs, dist_func) {
 #' @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
 #'
 #' @return A vector containing the indices of the neighbors
-knn_indices <- function(ordered_locs, query, n_neighbors,
-                        dist_func, dist_func_code) {
+knn_indices <- function(ordered_locs, query, n_neighbors, dist_func, dist_func_code) {
   if (dist_func_code == "custom") {
     dists <- dist_func(query, ordered_locs)
     dists_order <- order(dists)
@@ -90,9 +89,9 @@ knn_indices <- function(ordered_locs, query, n_neighbors,
 #' @param n_neighbors The number of neighbors to find (K) for each location
 #' @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
 #'
-#' @return A list containing two matrices, each with one row per location: an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
-sparseNN <- function(ordered_locs, n_neighbors,
-                     dist_func, dist_func_code, ordered_locs_pred = NULL) {
+#' @return A list containing two matrices, each with one row per location:
+#' an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
+sparseNN <- function(ordered_locs, n_neighbors, dist_func, dist_func_code, ordered_locs_pred = NULL) {
   ee <- min(apply(ordered_locs, 2, stats::sd))
   n <- nrow(ordered_locs)
   ordered_locs <- ordered_locs + matrix(
@@ -100,25 +99,33 @@ sparseNN <- function(ordered_locs, n_neighbors,
       stats::rnorm(n * ncol(ordered_locs)),
     n, ncol(ordered_locs)
   )
-  indices_matrix <- matrix(data = NA, nrow = nrow(ordered_locs),
-                           ncol = n_neighbors)
-  distances_matrix <- matrix(data = NA, nrow = nrow(ordered_locs),
-                             ncol = n_neighbors)
+  indices_matrix <- matrix(
+    data = NA, nrow = nrow(ordered_locs),
+    ncol = n_neighbors
+  )
+  distances_matrix <- matrix(
+    data = NA, nrow = nrow(ordered_locs),
+    ncol = n_neighbors
+  )
   for (row in 1:n_neighbors) {
     # for the locations from 1 to n_neighbors, use the entire locs list to find the neighbors
-    nn <- knn_indices(ordered_locs[1:
-                                     (n_neighbors + 1), , drop = FALSE][-row, ,
-                                                              drop = FALSE],
-                      ordered_locs[row, , drop = FALSE], n_neighbors,
-                      dist_func, dist_func_code)
+    nn <- knn_indices(
+      ordered_locs[1:(n_neighbors + 1), , drop = FALSE][-row, ,
+        drop = FALSE
+      ],
+      ordered_locs[row, , drop = FALSE], n_neighbors,
+      dist_func, dist_func_code
+    )
     indices_matrix[row, 1:n_neighbors] <- nn$indices[1:n_neighbors]
     distances_matrix[row, 1:n_neighbors] <- nn$distances[1:n_neighbors]
   }
   for (row in (n_neighbors + 1):nrow(ordered_locs)) {
     # get the m nearest neighbors from the locs before this one in the max-min order
-    nn <- knn_indices(ordered_locs[1:(row - 1), , drop = FALSE],
-                      ordered_locs[row, , drop = FALSE], n_neighbors,
-                      dist_func, dist_func_code)
+    nn <- knn_indices(
+      ordered_locs[1:(row - 1), , drop = FALSE],
+      ordered_locs[row, , drop = FALSE], n_neighbors,
+      dist_func, dist_func_code
+    )
     indices_matrix[row, 1:n_neighbors] <- nn$indices[1:n_neighbors]
     distances_matrix[row, 1:n_neighbors] <- nn$distances[1:n_neighbors]
   }
@@ -131,7 +138,7 @@ sparseNN <- function(ordered_locs, n_neighbors,
       data = NA, nrow = nrow(ordered_locs_pred),
       ncol = n_neighbors
     )
-    for (row in 1:nrow(ordered_locs_pred)) {
+    for (row in seq_len(nrow(ordered_locs_pred))) {
       nn <- knn_indices(
         ordered_locs,
         ordered_locs_pred[row, , drop = FALSE], n_neighbors,
@@ -170,7 +177,7 @@ calc.q <- function(nn.obj, firstind.pred) {
     for (j in 2:m) {
       cur.k <- cur.q[j]
       cur.qy <- intersect(q.y[[cur.k]], cur.q)
-      if (length(cur.qy) > length(best.qy) & cur.k < firstind.pred) {
+      if (length(cur.qy) > length(best.qy) && cur.k < firstind.pred) {
         best.k <- cur.k
         best.qy <- cur.qy
       }
@@ -188,9 +195,9 @@ calc.q <- function(nn.obj, firstind.pred) {
 
 #' @export
 vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
-                             dist.func = NULL,
-                             ordering.pred = c("obspred", "general"),
-                             pred.cond = c("independent", "general")) {
+  dist.func = NULL,
+  ordering.pred = c("obspred", "general"),
+  pred.cond = c("independent", "general")) {
   ordering.pred <- match.arg(ordering.pred)
   pred.cond <- match.arg(pred.cond)
 
@@ -245,7 +252,7 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
     loc.order <- max_min_ordering(locs.all, dist.func)
     loc.order <- c(unique(loc.order), setdiff(1:n, loc.order))
   } else {
-    if (is.null(locs.list.pred) | ordering.pred == "general") {
+    if (is.null(locs.list.pred) || ordering.pred == "general") {
       loc.order <- GPvecchia::order_maxmin_exact(locs.all)
       # I am not sure why the next two lines are here. I added them because
       # similar code exists in the GPvecchia package. But I don't know why
@@ -274,7 +281,7 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
   # is non-deterministic, so there may be some slight differences
   # between the output of this function and the output of createU
   # in the GPvecchia package.
-  if (is.null(locs.list.pred) | pred.cond == "general") {
+  if (is.null(locs.list.pred) || pred.cond == "general") {
     nn.mat <- sparseNN(olocs, m, dist.func, dist.func.code)
   } else {
     nn.mat <- sparseNN(
@@ -282,7 +289,7 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
       olocs[-(1:n), , drop = FALSE]
     )
   }
-  last.obs <- max((1:length(obs))[obs])
+  last.obs <- max(which(obs))
   q.list <- calc.q(nn.mat$indices, last.obs + 1)
 
   return(list(
@@ -348,8 +355,7 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
     ajj <- 1 / rangep[ondx[2]]
     aij <- sqrt((aii^2 + ajj^2) / 2)
     K1 <- rho.mat[ondx[1], ondx[2]] * sqrt(sig2[ondx[1]]) * sqrt(sig2[ondx[2]]) *
-      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) *
-        gamma(vjj))) *
+      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
       cov_func(dist_func(olocs[1, , drop = FALSE], olocs[2, , drop = FALSE], ),
         smoothness = vij, alpha = aij
       )
@@ -404,8 +410,7 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
     ajj <- 1 / rangep[ondx[2]]
     aij <- sqrt((aii^2 + ajj^2) / 2)
     K1 <- rho.mat[ondx[1], ondx[2]] * sqrt(sig2[ondx[1]]) * sqrt(sig2[ondx[2]]) *
-      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) *
-        gamma(vjj))) *
+      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
       cov_func(dist_func(olocs[1, , drop = FALSE], olocs[2, , drop = FALSE], ),
         smoothness = vij, alpha = aij
       )
@@ -416,6 +421,7 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
     U1[7, ] <- c(1, 3, -1 * bi * ri^(-1 / 2))
     # U[3,3] <- ri^(-1/2)
     # U[1,3] <- -1*bi*ri^(-1/2)
+    i <- NULL # lintr requirement
     U2 <- foreach(i = 3:n, .combine = rbind) %dopar% {
       # U[2*i,2*i] <- nugget[ondx[i]]^(-1/2)
       # U[2*i-1,2*i] <- -1*U[2*i,2*i]
@@ -443,8 +449,7 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
         # positive definite. See equation (9) in Apanasovich (2011).
         K1[j] <- rho.mat[ondx[i], ondx[cur.q[j]]] *
           sqrt(sig2[ondx[i]]) * sqrt(sig2[ondx[cur.q[j]]]) *
-          aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) *
-            sqrt(gamma(vii) * gamma(vjj))) *
+          aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
           cov_func(
             dist_func(
               olocs[i, , drop = FALSE],

@@ -5,4 +5,5 @@
 ^\.Rproj\.user$
 ^doc$
 ^Meta$
-^\.github/
+^\.lintr
+^\.github
