@@ -3,7 +3,7 @@
 ################################################################################
 SCAD_Penalty_Loglike <- function(beta.in, lambda) {
   penalty <- matrix(NA, nrow = nrow(beta.in), ncol = ncol(beta.in))
-  for (j in 1:nrow(beta.in)) {
+  for (j in seq_len(nrow(beta.in))) {
     beta.j <- beta.in[j, ]
     idx1 <- abs(beta.j) <= lambda
     idx2 <- abs(beta.j) > lambda & abs(beta.j) <= 3.7 * lambda
@@ -54,7 +54,7 @@ Kr_pred <- function(new_coords, obs_coords, Y_obs, cov.pars, NN) {
   df_new <- new_coords_scaled
   df_obs <- obs_coords_scaled
 
-  for (i in 1:nrow(new_coords)) {
+  for (i in seq_len(nrow(new_coords))) {
     # print(i)
     locs.test.i <- rep.row(df_new[i, ], nrow(df_obs))
     dist.op <- fields::rdist.vec(locs.test.i, df_obs)
@@ -140,7 +140,9 @@ transform_iid <- function(data, vecchia.approx, covparms, nuggets) {
   # compute transformed data in parts
   part1.ord <- Matrix::crossprod(U.z, data[U.obj$ord.z, ]) # C.hat^-1
   temp1 <- U.y %*% part1.ord #
-  revord <- nrow(temp1):1
+  # TODO: @Eric.Bair can you verify the logic below?
+  revord <- rev(seq_len(nrow(temp1)))
+  # revord <- nrow(temp1):1
   temp2 <- spam::solve(V.ord, temp1[revord, ])
   part2.rev <- spam::solve(Matrix::t(V.ord), temp2)
   part2.ord <- spam::crossprod(U.y, part2.rev[revord, ])
@@ -148,7 +150,7 @@ transform_iid <- function(data, vecchia.approx, covparms, nuggets) {
 
   # return to original ordering
   orig.order <- order(U.obj$ord)
-  transformed.data <- transform.ord[orig.order, ]
+  transformed.data <- transform.ord[orig.order, ] # TODO: @Eric.Bair is this a required variable?
   return(transform.ord)
 }
 
@@ -168,7 +170,9 @@ transform_miid <- function(data, vecchia.approx, params) {
   # compute transformed data in parts
   part1.ord <- Matrix::crossprod(U.z, data[U.obj$ord.z, ]) # C.hat^-1
   temp1 <- U.y %*% part1.ord #
-  revord <- nrow(temp1):1
+  # TODO: @Eric.Bair
+  revord <- rev(seq_len(nrow(temp1)))
+  # revord <- nrow(temp1):1
   temp2 <- spam::solve(V.ord, temp1[revord, ])
   part2.rev <- spam::solve(Matrix::t(V.ord), temp2)
   part2.ord <- spam::crossprod(U.y, part2.rev[revord, ])
@@ -176,7 +180,7 @@ transform_miid <- function(data, vecchia.approx, params) {
 
   # return to original ordering
   orig.order <- order(U.obj$ord)
-  transformed.data <- transform.ord[orig.order, ]
+  transformed.data <- transform.ord[orig.order, ] # TODO: @Eric.Bair is this a required variable?
   return(transform.ord)
 }
 
@@ -218,7 +222,14 @@ U2V <- function(U.obj) {
 
 ###########################################################
 ## Reverse order of matrix rows,cols
-revMat <- function(mat) mat[nrow(mat):1, ncol(mat):1, drop = FALSE]
+revMat <- function(mat) {
+  if (nrow(mat) == 0 || ncol(mat) == 0) {
+    return(mat)
+  }
+  row_seq <- rev(seq_len(nrow(mat)))
+  col_seq <- rev(seq_len(ncol(mat)))
+  mat[row_seq, col_seq, drop = FALSE]
+}
 
 #' @export
 vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL,
@@ -233,11 +244,11 @@ vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL,
     mu.pred = vecchia.mean$mu.pred, mu.obs = vecchia.mean$mu.obs,
     var.pred = NULL, var.obs = NULL, V.ord = NULL, U.obj = NULL
   )
-  if (return.values == "meanmat" | return.values == "all") {
+  if (return.values == "meanmat" || return.values == "all") {
     return.list$V.ord <- V.ord
     return.list$U.obj <- U.obj
   }
-  if (return.values == "meanvar" | return.values == "all") {
+  if (return.values == "meanvar" || return.values == "all") {
     if (is.null(var.exact)) {
       var.exact <- (sum(!vecchia.approx$obs) < 4 * 10000)
     }
