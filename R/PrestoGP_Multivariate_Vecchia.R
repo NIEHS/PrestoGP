@@ -110,9 +110,7 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
         ndx.out <- c(ndx.out, rep(i, nrow(locs[[i]])))
       }
       for (i in seq_along(locs)) {
-        Vec.sds[ndx.out == i] <- sqrt(Vec.sds[ndx.out == i] +
-                                      model@covparams[model@param_sequence[4,
-                                                                           i]])
+        Vec.sds[ndx.out == i] <- sqrt(Vec.sds[ndx.out == i] + model@covparams[model@param_sequence[4, i]])
       }
       return.list <- list(means = Vec.mean, sds = Vec.sds)
     }
