@@ -104,12 +104,17 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
       return.list <- list(means = Vec.mean)
     } else {
       warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
-      vec.var <- pred$var.pred
+      Vec.sds <- pred$var.pred
       ndx.out <- NULL
-      for (i in seq_along(length(locs))) {
-        vec.sds[ndx.out == i] <- sqrt(vec.var[ndx.out == i] + model@covparams[model@param_sequence[4, i]])
+      for (i in seq_along(locs)) {
+        ndx.out <- c(ndx.out, rep(i, nrow(locs[[i]])))
       }
-      return.list <- list(means = Vec.mean, sds = vec.sds)
+      for (i in seq_along(locs)) {
+        Vec.sds[ndx.out == i] <- sqrt(Vec.sds[ndx.out == i] +
+                                      model@covparams[model@param_sequence[4,
+                                                                           i]])
+      }
+      return.list <- list(means = Vec.mean, sds = Vec.sds)
     }
 
     return(return.list)
@@ -132,7 +137,7 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs)
   if (length(locs) != length(X)) {
     stop("locs and X must have the same length")
   }
-  for (i in seq_along(length(locs))) {
+  for (i in seq_along(locs)) {
     if (!is.matrix(locs[[i]])) {
       stop("Each locs must be a matrix")
     }
@@ -183,14 +188,12 @@ setMethod("check_input_pred", "MultivariateVecchiaModel", function(model, X, loc
   if (length(locs) != length(model@locs_train)) {
     stop("Training and test set locs must have the same length")
   }
-  for (i in seq_along(length(locs))) {
+  for (i in seq_along(locs)) {
     if (!is.matrix(locs[[i]])) {
       stop("Each locs must be a matrix")
     }
-    if (i > 1) {
-      if (ncol(locs[[i]]) != ncol(model@locs_train[[1]])) {
-        stop("All locs must have the same number of columns as locs_train")
-      }
+    if (ncol(locs[[i]]) != ncol(model@locs_train[[1]])) {
+      stop("All locs must have the same number of columns as locs_train")
     }
     if (!is.matrix(X[[i]])) {
       stop("Each X must be a matrix")
@@ -216,7 +219,7 @@ setMethod("specify", "MultivariateVecchiaModel", function(model) {
   model@vecchia_approx <- vecchia_Mspecify(locs.scaled, model@n_neighbors)
   if (!model@apanasovich) {
     olocs.scaled <- model@vecchia_approx$locsord
-    for (i in seq_along(length(locs))) {
+    for (i in seq_along(locs)) {
       for (j in 1:model@nscale) {
         olocs.scaled[model@vecchia_approx$ondx == i, model@scaling == j] <-
           olocs.scaled[model@vecchia_approx$ondx == i, model@scaling == j] *

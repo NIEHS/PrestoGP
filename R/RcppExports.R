@@ -2,9 +2,10 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 na_omit_c <- function(x) {
-  .Call("_PrestoGP_na_omit_c", PACKAGE = "PrestoGP", x)
+    .Call('_PrestoGP_na_omit_c', PACKAGE = 'PrestoGP', x)
 }
 
 createU_helper_mat <- function(olocs, ondx, curqys, curqzs, vijs, aijs, full_const, nugget, sig2, U_beginning) {
-  .Call("_PrestoGP_createU_helper_mat", PACKAGE = "PrestoGP", olocs, ondx, curqys, curqzs, vijs, aijs, full_const, nugget, sig2, U_beginning)
+    .Call('_PrestoGP_createU_helper_mat', PACKAGE = 'PrestoGP', olocs, ondx, curqys, curqzs, vijs, aijs, full_const, nugget, sig2, U_beginning)
 }
+

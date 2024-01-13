@@ -7,64 +7,49 @@
 using namespace Rcpp;
 
 #ifdef RCPP_USE_GLOBAL_ROSTREAM
-Rcpp::Rostream<true> &Rcpp::Rcout = Rcpp::Rcpp_cout_get();
-Rcpp::Rostream<false> &Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // na_omit_c
 arma::vec na_omit_c(arma::vec x);
 RcppExport SEXP _PrestoGP_na_omit_c(SEXP xSEXP) {
-  BEGIN_RCPP
-  Rcpp::RObject rcpp_result_gen;
-  Rcpp::RNGScope rcpp_rngScope_gen;
-  Rcpp::traits::input_parameter<arma::vec>::type x(xSEXP);
-  rcpp_result_gen = Rcpp::wrap(na_omit_c(x));
-  return rcpp_result_gen;
-  END_RCPP
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(na_omit_c(x));
+    return rcpp_result_gen;
+END_RCPP
 }
 // createU_helper_mat
-arma::sp_mat createU_helper_mat(const arma::mat &olocs, const arma::vec &ondx,
-                                const arma::mat &curqys,
-                                const arma::mat &curqzs, const arma::mat &vijs,
-                                const arma::mat &aijs,
-                                const arma::mat &full_const,
-                                const arma::vec &nugget, const arma::vec &sig2,
-                                const arma::vec &U_beginning);
-RcppExport SEXP _PrestoGP_createU_helper_mat(SEXP olocsSEXP, SEXP ondxSEXP,
-                                             SEXP curqysSEXP, SEXP curqzsSEXP,
-                                             SEXP vijsSEXP, SEXP aijsSEXP,
-                                             SEXP full_constSEXP,
-                                             SEXP nuggetSEXP, SEXP sig2SEXP,
-                                             SEXP U_beginningSEXP) {
-  BEGIN_RCPP
-  Rcpp::RObject rcpp_result_gen;
-  Rcpp::RNGScope rcpp_rngScope_gen;
-  Rcpp::traits::input_parameter<const arma::mat &>::type olocs(olocsSEXP);
-  Rcpp::traits::input_parameter<const arma::vec &>::type ondx(ondxSEXP);
-  Rcpp::traits::input_parameter<const arma::mat &>::type curqys(curqysSEXP);
-  Rcpp::traits::input_parameter<const arma::mat &>::type curqzs(curqzsSEXP);
-  Rcpp::traits::input_parameter<const arma::mat &>::type vijs(vijsSEXP);
-  Rcpp::traits::input_parameter<const arma::mat &>::type aijs(aijsSEXP);
-  Rcpp::traits::input_parameter<const arma::mat &>::type full_const(
-      full_constSEXP);
-  Rcpp::traits::input_parameter<const arma::vec &>::type nugget(nuggetSEXP);
-  Rcpp::traits::input_parameter<const arma::vec &>::type sig2(sig2SEXP);
-  Rcpp::traits::input_parameter<const arma::vec &>::type U_beginning(
-      U_beginningSEXP);
-  rcpp_result_gen =
-      Rcpp::wrap(createU_helper_mat(olocs, ondx, curqys, curqzs, vijs, aijs,
-                                    full_const, nugget, sig2, U_beginning));
-  return rcpp_result_gen;
-  END_RCPP
+arma::sp_mat createU_helper_mat(const arma::mat& olocs, const arma::vec& ondx, const arma::mat& curqys, const arma::mat& curqzs, const arma::mat& vijs, const arma::mat& aijs, const arma::mat& full_const, const arma::vec& nugget, const arma::vec& sig2, const arma::vec& U_beginning);
+RcppExport SEXP _PrestoGP_createU_helper_mat(SEXP olocsSEXP, SEXP ondxSEXP, SEXP curqysSEXP, SEXP curqzsSEXP, SEXP vijsSEXP, SEXP aijsSEXP, SEXP full_constSEXP, SEXP nuggetSEXP, SEXP sig2SEXP, SEXP U_beginningSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type olocs(olocsSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type ondx(ondxSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type curqys(curqysSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type curqzs(curqzsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type vijs(vijsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type aijs(aijsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type full_const(full_constSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type nugget(nuggetSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type sig2(sig2SEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type U_beginning(U_beginningSEXP);
+    rcpp_result_gen = Rcpp::wrap(createU_helper_mat(olocs, ondx, curqys, curqzs, vijs, aijs, full_const, nugget, sig2, U_beginning));
+    return rcpp_result_gen;
+END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_PrestoGP_na_omit_c", (DL_FUNC)&_PrestoGP_na_omit_c, 1},
-    {"_PrestoGP_createU_helper_mat", (DL_FUNC)&_PrestoGP_createU_helper_mat,
-     10},
-    {NULL, NULL, 0}};
+    {"_PrestoGP_na_omit_c", (DL_FUNC) &_PrestoGP_na_omit_c, 1},
+    {"_PrestoGP_createU_helper_mat", (DL_FUNC) &_PrestoGP_createU_helper_mat, 10},
+    {NULL, NULL, 0}
+};
 
 RcppExport void R_init_PrestoGP(DllInfo *dll) {
-  R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
-  R_useDynamicSymbols(dll, FALSE);
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }

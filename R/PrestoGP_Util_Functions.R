@@ -139,18 +139,16 @@ transform_iid <- function(data, vecchia.approx, covparms, nuggets) {
 
   # compute transformed data in parts
   part1.ord <- Matrix::crossprod(U.z, data[U.obj$ord.z, ]) # C.hat^-1
-  temp1 <- U.y %*% part1.ord #
-  # TODO: @Eric.Bair can you verify the logic below?
+  temp1 <- U.y %*% part1.ord
   revord <- rev(seq_len(nrow(temp1)))
-  # revord <- nrow(temp1):1
   temp2 <- spam::solve(V.ord, temp1[revord, ])
   part2.rev <- spam::solve(Matrix::t(V.ord), temp2)
   part2.ord <- spam::crossprod(U.y, part2.rev[revord, ])
   transform.ord <- part1.ord - part2.ord
 
   # return to original ordering
-  orig.order <- order(U.obj$ord)
-  transformed.data <- transform.ord[orig.order, ] # nolint # TODO: @Eric.Bair is this a required variable?
+  # orig.order <- order(U.obj$ord)
+  # transformed.data <- transform.ord[orig.order, ]
   return(transform.ord)
 }
 
@@ -170,17 +168,15 @@ transform_miid <- function(data, vecchia.approx, params) {
   # compute transformed data in parts
   part1.ord <- Matrix::crossprod(U.z, data[U.obj$ord.z, ]) # C.hat^-1
   temp1 <- U.y %*% part1.ord #
-  # TODO: @Eric.Bair
   revord <- rev(seq_len(nrow(temp1)))
-  # revord <- nrow(temp1):1
   temp2 <- spam::solve(V.ord, temp1[revord, ])
   part2.rev <- spam::solve(Matrix::t(V.ord), temp2)
   part2.ord <- spam::crossprod(U.y, part2.rev[revord, ])
   transform.ord <- part1.ord - part2.ord
 
   # return to original ordering
-  orig.order <- order(U.obj$ord)
-  transformed.data <- transform.ord[orig.order, ] # nolint TODO: @Eric.Bair is this a required variable?
+  # orig.order <- order(U.obj$ord)
+  # transformed.data <- transform.ord[orig.order, ]
   return(transform.ord)
 }
 

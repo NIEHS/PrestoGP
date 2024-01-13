@@ -17,8 +17,9 @@
   max_iters = 100,
   verbose = FALSE,
   optim.method = "Nelder-Mead",
-  optim.control = list(trace = 0, reltol = 1e-04, maxit = 5000),
-  parallel = FALSE
+  optim.control = list(trace = 0, reltol = 0.001, maxit = 5000),
+  parallel = FALSE,
+  foldid = NULL
 )
 }
 \arguments{
@@ -34,21 +35,17 @@
 
 \item{beta.hat}{The initial beta parameters to use (optional).}
 
-\item{tol}{The model is considered converged when error isn't less than
-tol*previous_error (optional).}
+\item{tol}{The model is considered converged when error isn't less than tol*previous_error (optional).}
 
-\item{verbose}{If TRUE, additional information about model fit
-will be printed.}
+\item{verbose}{If TRUE, additional information about model fit will be printed.}
 
-\item{m}{The number of neighboring datapoints to condition on in the
-likelihood function (optional).}
+\item{m}{The number of neighboring datapoints to condition on in the likelihood function (optional).}
 }
 \value{
 An object containing model parameters for spatiotemporal prediction.
 }
 \description{
-This method fits any PrestoGP model given a matrix of locations, a matrix of
-#' independent variables, and a matrix of dependent variables.
+This method fits any PrestoGP model given a matrix of locations, a matrix of independent variables, and a matrix of dependent variables.
 }
 \examples{
 

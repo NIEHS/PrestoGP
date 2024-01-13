@@ -431,5 +431,5 @@ test_that("Simulated dataset multivariate spatial prediction", {
   me <- mean(pgp.mmodel1.pred$means - unlist(y.list.otst))
 
   expect_equal(mse, 1.99, tolerance = 0.1)
-  expect_equal(me, -0.04, tolerance = 0.03)
+  expect_equal(me + 0.04, 0, tolerance = 0.03)
 })

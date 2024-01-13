@@ -20,7 +20,8 @@ sparseNN(
 \item{dist_func}{Any distance function with a signature of dist(query_location, locations_matrix)}
 }
 \value{
-A list containing two matrices, each with one row per location: an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
+A list containing two matrices, each with one row per location:
+an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
 }
 \description{
 Find the index of K nearest neighbors within a set of locations for a given query and distance function
