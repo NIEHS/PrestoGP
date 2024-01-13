@@ -12,8 +12,7 @@
 #'
 #' @examples
 #' @noRd
-negloglik_vecchia_ST <- function(logparms, res, vecchia.approx, param.seq,
-                                 scaling, nscale) {
+negloglik_vecchia_ST <- function(logparms, res, vecchia.approx, param.seq, scaling, nscale) {
   parms <- unlog.params(logparms, param.seq, 1)
   locs.scaled <- vecchia.approx$locsord
   for (j in 1:nscale) {
@@ -141,8 +140,7 @@ mvnegloglik <- function(logparams, vecchia.approx, y, param.seq, P) {
 ##############################################################################
 ### Flexible Spatiotemporal Multivariate Matern Negative Loglikelihood Function ###########
 
-mvnegloglik_ST <- function(logparams, vecchia.approx, y, param.seq, P, scaling,
-                           nscale) {
+mvnegloglik_ST <- function(logparams, vecchia.approx, y, param.seq, P, scaling, nscale) {
   #  Input-
   #  logparams: A numeric vector of length (4*P)+(4*choose(P,2)).
   #             To construct these parameters we unlist a list of the 7 covariance
@@ -235,8 +233,7 @@ mvnegloglik.full <- function(logparams, locs, y, param.seq) {
 }
 
 ##############################################################################
-create.cov.upper.flex <- function(P, marg.var, marg.range, marg.smooth,
-                                  nugget, R.corr) {
+create.cov.upper.flex <- function(P, marg.var, marg.range, marg.smooth, nugget, R.corr) {
   # Create the symmetrical marginal+cross-covariance flexible matern from the
   # given parameters. Output is a list of the 4 Matern parameters as matrices
   sig2.mat <- diag(marg.var, P, P)
@@ -337,8 +334,7 @@ cat.covariances <- function(locs.list, sig2, range, smoothness, nugget) {
 ##############################################################################
 ### Create the likelihood initial values                    #########
 
-create.initial.values.flex <- function(marg.var, marg.range, marg.smooth,
-                                       nugget, R.corr, P) {
+create.initial.values.flex <- function(marg.var, marg.range, marg.smooth, nugget, R.corr, P) {
   # Log-transform the covariance parameters and arrange in the proper order
   # for the likelihood function
   logparams.init <- c(

@@ -150,7 +150,7 @@ transform_iid <- function(data, vecchia.approx, covparms, nuggets) {
 
   # return to original ordering
   orig.order <- order(U.obj$ord)
-  transformed.data <- transform.ord[orig.order, ] # TODO: @Eric.Bair is this a required variable?
+  transformed.data <- transform.ord[orig.order, ] # nolint # TODO: @Eric.Bair is this a required variable?
   return(transform.ord)
 }
 
@@ -180,7 +180,7 @@ transform_miid <- function(data, vecchia.approx, params) {
 
   # return to original ordering
   orig.order <- order(U.obj$ord)
-  transformed.data <- transform.ord[orig.order, ] # TODO: @Eric.Bair is this a required variable?
+  transformed.data <- transform.ord[orig.order, ] # nolint TODO: @Eric.Bair is this a required variable?
   return(transform.ord)
 }
 

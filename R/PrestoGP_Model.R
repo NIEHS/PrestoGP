@@ -71,16 +71,16 @@ setGeneric("show_theta", function(object, Y_names) standardGeneric("show_theta")
 setGeneric(
   "prestogp_fit",
   function(model, Y, X, locs, scaling = NULL, apanasovich = FALSE,
-           covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100, verbose = FALSE,
-           optim.method = "Nelder-Mead", optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
-           parallel = FALSE, foldid = NULL) {
+    covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100, verbose = FALSE,
+    optim.method = "Nelder-Mead", optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
+    parallel = FALSE, foldid = NULL) {
     standardGeneric("prestogp_fit")
   }
 )
 setGeneric(
   "prestogp_predict",
   function(model, X = "matrix", locs = "matrix", m = "numeric", ordering.pred = c("obspred", "general"),
-           pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
+    pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
     standardGeneric("prestogp_predict")
   }
 )
@@ -215,10 +215,10 @@ setMethod(
 setMethod(
   "prestogp_fit", "PrestoGPModel",
   function(model, Y, X, locs, scaling = NULL, apanasovich = NULL,
-           covparams = NULL, beta.hat = NULL, tol = 0.999999,
-           max_iters = 100, verbose = FALSE, optim.method = "Nelder-Mead",
-           optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
-           parallel = FALSE, foldid = NULL) {
+    covparams = NULL, beta.hat = NULL, tol = 0.999999,
+    max_iters = 100, verbose = FALSE, optim.method = "Nelder-Mead",
+    optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
+    parallel = FALSE, foldid = NULL) {
     model <- check_input(model, Y, X, locs)
     if (!is.null(beta.hat)) {
       if (!is.vector(beta.hat) | !is.numeric(beta.hat)) {
@@ -284,10 +284,7 @@ setMethod(
         parallel = parallel,
         foldid = foldid
       )
-      beta.hat <- as.matrix(predict(beta0.glmnet,
-        type = "coefficients",
-        s = beta0.glmnet$lambda.1se
-      ))
+      beta.hat <- as.matrix(predict(beta0.glmnet, type = "coefficients", s = beta0.glmnet$lambda.1se))
     }
     Y.hat <- beta.hat[1, 1] + model@X_train %*% beta.hat[-1, ]
 

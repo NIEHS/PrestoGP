@@ -66,8 +66,7 @@ max_min_ordering <- function(locs, dist_func) {
 #' @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
 #'
 #' @return A vector containing the indices of the neighbors
-knn_indices <- function(ordered_locs, query, n_neighbors,
-                        dist_func, dist_func_code) {
+knn_indices <- function(ordered_locs, query, n_neighbors, dist_func, dist_func_code) {
   if (dist_func_code == "custom") {
     dists <- dist_func(query, ordered_locs)
     dists_order <- order(dists)
@@ -92,8 +91,7 @@ knn_indices <- function(ordered_locs, query, n_neighbors,
 #'
 #' @return A list containing two matrices, each with one row per location:
 #' an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
-sparseNN <- function(ordered_locs, n_neighbors,
-                     dist_func, dist_func_code, ordered_locs_pred = NULL) {
+sparseNN <- function(ordered_locs, n_neighbors, dist_func, dist_func_code, ordered_locs_pred = NULL) {
   ee <- min(apply(ordered_locs, 2, stats::sd))
   n <- nrow(ordered_locs)
   ordered_locs <- ordered_locs + matrix(
@@ -197,9 +195,9 @@ calc.q <- function(nn.obj, firstind.pred) {
 
 #' @export
 vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
-                             dist.func = NULL,
-                             ordering.pred = c("obspred", "general"),
-                             pred.cond = c("independent", "general")) {
+  dist.func = NULL,
+  ordering.pred = c("obspred", "general"),
+  pred.cond = c("independent", "general")) {
   ordering.pred <- match.arg(ordering.pred)
   pred.cond <- match.arg(pred.cond)
 

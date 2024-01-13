@@ -100,8 +100,8 @@ setMethod("prestogp_predict", "VecchiaModel",
     } else {
       warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
       # TODO: @Eric.Bair is this a typo/bug? Capital 'V' in Vec.sds but 'vec.sds' in return.list
-      Vec.sds <- sqrt(pred$var.pred + model@covparams[4])
-      return.list <- list(means = Vec.mean, sds = vec.sds)
+      Vec.sds <- sqrt(pred$var.pred + model@covparams[4]) # nolint
+      return.list <- list(means = Vec.mean, sds = vec.sds) # nolint
     }
 
     return(return.list)
