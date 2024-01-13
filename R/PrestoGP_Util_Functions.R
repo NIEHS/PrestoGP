@@ -232,8 +232,7 @@ revMat <- function(mat) {
 }
 
 #' @export
-vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL,
-                                return.values = "mean") {
+vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL, return.values = "mean") {
   GPvecchia:::removeNAs()
   U.obj <- createUMultivariate(vecchia.approx, covparms)
   V.ord <- U2V(U.obj)

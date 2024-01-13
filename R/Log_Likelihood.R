@@ -250,15 +250,12 @@ create.cov.upper.flex <- function(P, marg.var, marg.range, marg.smooth,
       j <- combs[iter, 2]
 
       smoothness.mat[i, j] <- (marg.smooth[i] + marg.smooth[j]) / 2
-      range.mat[i, j] <- 1 / sqrt(((1 / marg.range[i])^2 +
-        (1 / marg.range[j])^2) / 2)
+      range.mat[i, j] <- 1 / sqrt(((1 / marg.range[i])^2 + (1 / marg.range[j])^2) / 2)
 
       s1 <- sqrt(marg.var[i] * marg.var[j])
-      s2 <- ((1 / marg.range[i])^marg.smooth[i] *
-        (1 / marg.range[j])^marg.smooth[j]) /
+      s2 <- ((1 / marg.range[i])^marg.smooth[i] * (1 / marg.range[j])^marg.smooth[j]) /
         ((1 / range.mat[i, j])^(2 * smoothness.mat[i, j]))
-      s3 <- gamma(smoothness.mat[i, j]) / (sqrt(gamma(marg.smooth[i])) *
-        sqrt(gamma(marg.smooth[j])))
+      s3 <- gamma(smoothness.mat[i, j]) / (sqrt(gamma(marg.smooth[i])) * sqrt(gamma(marg.smooth[j])))
       s4 <- R.corr[iter]
       sig2.mat[i, j] <- s1 * s2 * s3 * s4
     }

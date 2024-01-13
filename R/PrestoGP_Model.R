@@ -521,8 +521,7 @@ setMethod("scale_locs", "PrestoGPModel", function(model, locs) {
       for (j in 1:model@nscale) {
         locs.out[[i]][, model@scaling == j] <-
           locs[[i]][, model@scaling == j] /
-            model@covparams[model@param_sequence[2, 1] +
-              model@nscale * (i - 1) + j - 1]
+            model@covparams[model@param_sequence[2, 1] + model@nscale * (i - 1) + j - 1]
       }
     }
     return(locs.out)
@@ -535,25 +534,20 @@ setMethod("transform_covariance_parameters", "PrestoGPModel", function(model) {
     model@covparams <- c(
       exp(model@logparams[1:model@param_sequence[2, 2]]),
       gtools::inv.logit(
-        model@logparams[model@param_sequence[3, 1]:
-        model@param_sequence[3, 2]],
+        model@logparams[model@param_sequence[3, 1]:model@param_sequence[3, 2]],
         0, 2.5
       ),
-      exp(model@logparams[model@param_sequence[4, 1]:
-      model@param_sequence[4, 2]]),
-      tanh(model@logparams[model@param_sequence[5, 1]:
-      model@param_sequence[5, 2]])
+      exp(model@logparams[model@param_sequence[4, 1]:model@param_sequence[4, 2]]),
+      tanh(model@logparams[model@param_sequence[5, 1]:model@param_sequence[5, 2]])
     )
   } else {
     model@covparams <- c(
       exp(model@logparams[1:model@param_sequence[2, 2]]),
       gtools::inv.logit(
-        model@logparams[model@param_sequence[3, 1]:
-        model@param_sequence[3, 2]],
+        model@logparams[model@param_sequence[3, 1]:model@param_sequence[3, 2]],
         0, 2.5
       ),
-      exp(model@logparams[model@param_sequence[4, 1]:
-      model@param_sequence[4, 2]]), 1
+      exp(model@logparams[model@param_sequence[4, 1]:model@param_sequence[4, 2]]), 1
     )
   }
   invisible(model)

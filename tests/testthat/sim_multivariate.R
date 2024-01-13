@@ -102,20 +102,20 @@ d22 <- fields::rdist(expand.grid(space.dim2, space.dim2, time.dim2))
 d33 <- fields::rdist(expand.grid(space.dim3, space.dim3, time.dim3))
 
 d12 <- fields::rdist(
-    expand.grid(space.dim1, space.dim1, time.dim1),
-    expand.grid(space.dim2, space.dim2, time.dim2)
+  expand.grid(space.dim1, space.dim1, time.dim1),
+  expand.grid(space.dim2, space.dim2, time.dim2)
 )
 d21 <- t(d12)
 
 d13 <- fields::rdist(
-    expand.grid(space.dim1, space.dim1, time.dim1),
-    expand.grid(space.dim3, space.dim3, time.dim3)
+  expand.grid(space.dim1, space.dim1, time.dim1),
+  expand.grid(space.dim3, space.dim3, time.dim3)
 )
 d31 <- t(d13)
 
 d23 <- fields::rdist(
-    expand.grid(space.dim2, space.dim2, time.dim2),
-    expand.grid(space.dim3, space.dim3, time.dim3)
+  expand.grid(space.dim2, space.dim2, time.dim2),
+  expand.grid(space.dim3, space.dim3, time.dim3)
 )
 d32 <- t(d23)
 
@@ -132,8 +132,8 @@ aii <- 1 / ranges[1]
 ajj <- 1 / ranges[2]
 aij <- sqrt((aii^2 + ajj^2) / 2)
 Sigma12 <- rho[1, 2] * sqrt(marg.var[1]) * sqrt(marg.var[2]) * aii^vii *
-    ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
-    fields::Matern(d12, smoothness = vij, alpha = aij)
+  ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
+  fields::Matern(d12, smoothness = vij, alpha = aij)
 Sigma21 <- t(Sigma12)
 
 vii <- marg.smoothness[1]
@@ -143,8 +143,8 @@ aii <- 1 / ranges[1]
 ajj <- 1 / ranges[3]
 aij <- sqrt((aii^2 + ajj^2) / 2)
 Sigma13 <- rho[1, 3] * sqrt(marg.var[1]) * sqrt(marg.var[3]) * aii^vii *
-    ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
-    fields::Matern(d13, smoothness = vij, alpha = aij)
+  ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
+  fields::Matern(d13, smoothness = vij, alpha = aij)
 Sigma31 <- t(Sigma13)
 
 vii <- marg.smoothness[2]
@@ -154,15 +154,15 @@ aii <- 1 / ranges[2]
 ajj <- 1 / ranges[3]
 aij <- sqrt((aii^2 + ajj^2) / 2)
 Sigma23 <- rho[2, 3] * sqrt(marg.var[2]) * sqrt(marg.var[3]) * aii^vii *
-    ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
-    fields::Matern(d23, smoothness = vij, alpha = aij)
+  ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
+  fields::Matern(d23, smoothness = vij, alpha = aij)
 Sigma32 <- t(Sigma23)
 
 # Combine into the super Multivariate covariance matrix
 Sigma.All <- rbind(
-    cbind(Sigma11, Sigma12, Sigma13),
-    cbind(Sigma21, Sigma22, Sigma23),
-    cbind(Sigma31, Sigma32, Sigma33)
+  cbind(Sigma11, Sigma12, Sigma13),
+  cbind(Sigma21, Sigma22, Sigma23),
+  cbind(Sigma31, Sigma32, Sigma33)
 )
 
 # Cholesky decomposition

@@ -112,8 +112,7 @@ sparseNN <- function(ordered_locs, n_neighbors,
   for (row in 1:n_neighbors) {
     # for the locations from 1 to n_neighbors, use the entire locs list to find the neighbors
     nn <- knn_indices(
-      ordered_locs[1:
-      (n_neighbors + 1), , drop = FALSE][-row, ,
+      ordered_locs[1:(n_neighbors + 1), , drop = FALSE][-row, ,
         drop = FALSE
       ],
       ordered_locs[row, , drop = FALSE], n_neighbors,
@@ -365,8 +364,7 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
     ajj <- 1 / rangep[ondx[2]]
     aij <- sqrt((aii^2 + ajj^2) / 2)
     K1 <- rho.mat[ondx[1], ondx[2]] * sqrt(sig2[ondx[1]]) * sqrt(sig2[ondx[2]]) *
-      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) *
-        gamma(vjj))) *
+      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
       cov_func(dist_func(olocs[1, , drop = FALSE], olocs[2, , drop = FALSE], ),
         smoothness = vij, alpha = aij
       )
@@ -421,8 +419,7 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
     ajj <- 1 / rangep[ondx[2]]
     aij <- sqrt((aii^2 + ajj^2) / 2)
     K1 <- rho.mat[ondx[1], ondx[2]] * sqrt(sig2[ondx[1]]) * sqrt(sig2[ondx[2]]) *
-      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) *
-        gamma(vjj))) *
+      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
       cov_func(dist_func(olocs[1, , drop = FALSE], olocs[2, , drop = FALSE], ),
         smoothness = vij, alpha = aij
       )
@@ -461,8 +458,7 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
         # positive definite. See equation (9) in Apanasovich (2011).
         K1[j] <- rho.mat[ondx[i], ondx[cur.q[j]]] *
           sqrt(sig2[ondx[i]]) * sqrt(sig2[ondx[cur.q[j]]]) *
-          aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) *
-            sqrt(gamma(vii) * gamma(vjj))) *
+          aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
           cov_func(
             dist_func(
               olocs[i, , drop = FALSE],

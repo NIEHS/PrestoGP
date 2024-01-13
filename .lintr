@@ -6,6 +6,7 @@ linters: linters_with_defaults(
     object_length_linter = NULL,
     indentation_linter(
       indent = 2L,
+      hanging_indent_style = "never",
       assignment_as_infix = FALSE
     )
   )

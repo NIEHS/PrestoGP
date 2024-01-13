@@ -45,78 +45,76 @@ setMethod("initialize", "MultivariateVecchiaModel", function(.Object, n_neighbor
 #' prediction <- prestogp_predict(model, X.test, locs.test)
 #' Vec.mean <- prediction[[1]]
 #' Vec.sds <- prediction[[2]]
-setMethod("prestogp_predict",
-  "MultivariateVecchiaModel",
+setMethod("prestogp_predict", "MultivariateVecchiaModel",
   function(model, X, locs, m = NULL, ordering.pred = c("obspred", "general"), pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
-  # validate parameters
-  ordering.pred <- match.arg(ordering.pred)
-  pred.cond <- match.arg(pred.cond)
-  return.values <- match.arg(return.values)
-  X <- check_input_pred(model, X, locs)
-  if (is.null(m)) { # m defaults to the value used for training
-    m <- model@n_neighbors
-  }
-  if (m < model@min_m) {
-    stop(paste("m must be at least ", model@min_m, sep = ""))
-  }
-  if (m >= nrow(model@X_train)) {
-    warning("Conditioning set size m chosen to be >=n. Changing to m=n-1")
-    m <- nrow(model@X_train) - 1
-  }
-
-  # Vecchia prediction at new locations
-  Vecchia.Pred <- predict(model@linear_model, newx = X, s = model@linear_model$lambda[model@lambda_1se_idx])
-  # Vecchia trend prediction at observed data
-  Vecchia.hat <- predict(model@linear_model, newx = model@X_train, s = model@linear_model$lambda[model@lambda_1se_idx])
-
-  # Test set prediction
-  res <- model@Y_train - Vecchia.hat
-
-  locs.train.scaled <- scale_locs(model, model@locs_train)
-  locs.scaled <- scale_locs(model, locs)
-  vec.approx.test <- vecchia_Mspecify(locs.train.scaled, m,
-    locs.list.pred = locs.scaled,
-    ordering.pred = ordering.pred,
-    pred.cond = pred.cond
-  )
-
-  ## carry out prediction
-  if (!model@apanasovich) {
-    params <- model@covparams
-    param.seq <- model@param_sequence
-    pred <- vecchia_Mprediction(res, vec.approx.test,
-      c(
-        params[1:param.seq[1, 2]],
-        rep(1, param.seq[2, 2] - param.seq[2, 1] + 1),
-        params[param.seq[3, 1]:
-        param.seq[5, 2]]
-      ),
-      return.values = return.values
-    )
-  } else {
-    pred <- vecchia_Mprediction(res, vec.approx.test, model@covparams,
-      return.values = return.values
-    )
-  }
-
-  # prediction function can return both mean and sds
-  # returns a list with elements mu.pred,mu.obs,var.pred,var.obs,V.ord
-  Vec.mean <- pred$mu.pred + Vecchia.Pred # residual + mean trend
-  if (return.values == "mean") {
-    return.list <- list(means = Vec.mean)
-  } else {
-    warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
-    vec.var <- pred$var.pred
-    ndx.out <- NULL
-    for (i in seq_along(length(locs))) {
-      vec.sds[ndx.out == i] <- sqrt(vec.var[ndx.out == i] +
-        model@covparams[model@param_sequence[4, i]])
+    # validate parameters
+    ordering.pred <- match.arg(ordering.pred)
+    pred.cond <- match.arg(pred.cond)
+    return.values <- match.arg(return.values)
+    X <- check_input_pred(model, X, locs)
+    if (is.null(m)) { # m defaults to the value used for training
+      m <- model@n_neighbors
     }
-    return.list <- list(means = Vec.mean, sds = vec.sds)
-  }
+    if (m < model@min_m) {
+      stop(paste("m must be at least ", model@min_m, sep = ""))
+    }
+    if (m >= nrow(model@X_train)) {
+      warning("Conditioning set size m chosen to be >=n. Changing to m=n-1")
+      m <- nrow(model@X_train) - 1
+    }
 
-  return(return.list)
-})
+    # Vecchia prediction at new locations
+    Vecchia.Pred <- predict(model@linear_model, newx = X, s = model@linear_model$lambda[model@lambda_1se_idx])
+    # Vecchia trend prediction at observed data
+    Vecchia.hat <- predict(model@linear_model, newx = model@X_train, s = model@linear_model$lambda[model@lambda_1se_idx])
+
+    # Test set prediction
+    res <- model@Y_train - Vecchia.hat
+
+    locs.train.scaled <- scale_locs(model, model@locs_train)
+    locs.scaled <- scale_locs(model, locs)
+    vec.approx.test <- vecchia_Mspecify(locs.train.scaled, m,
+      locs.list.pred = locs.scaled,
+      ordering.pred = ordering.pred,
+      pred.cond = pred.cond
+    )
+
+    ## carry out prediction
+    if (!model@apanasovich) {
+      params <- model@covparams
+      param.seq <- model@param_sequence
+      pred <- vecchia_Mprediction(res, vec.approx.test,
+        c(
+          params[1:param.seq[1, 2]],
+          rep(1, param.seq[2, 2] - param.seq[2, 1] + 1),
+          params[param.seq[3, 1]:param.seq[5, 2]]
+        ),
+        return.values = return.values
+      )
+    } else {
+      pred <- vecchia_Mprediction(res, vec.approx.test, model@covparams,
+        return.values = return.values
+      )
+    }
+
+    # prediction function can return both mean and sds
+    # returns a list with elements mu.pred,mu.obs,var.pred,var.obs,V.ord
+    Vec.mean <- pred$mu.pred + Vecchia.Pred # residual + mean trend
+    if (return.values == "mean") {
+      return.list <- list(means = Vec.mean)
+    } else {
+      warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
+      vec.var <- pred$var.pred
+      ndx.out <- NULL
+      for (i in seq_along(length(locs))) {
+        vec.sds[ndx.out == i] <- sqrt(vec.var[ndx.out == i] + model@covparams[model@param_sequence[4, i]])
+      }
+      return.list <- list(means = Vec.mean, sds = vec.sds)
+    }
+
+    return(return.list)
+  }
+)
 
 setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs) {
   if (!is.list(locs)) {
@@ -222,8 +220,7 @@ setMethod("specify", "MultivariateVecchiaModel", function(model) {
       for (j in 1:model@nscale) {
         olocs.scaled[model@vecchia_approx$ondx == i, model@scaling == j] <-
           olocs.scaled[model@vecchia_approx$ondx == i, model@scaling == j] *
-            model@covparams[model@param_sequence[2, 1] +
-              model@nscale * (i - 1) + j - 1]
+            model@covparams[model@param_sequence[2, 1] + model@nscale * (i - 1) + j - 1]
       }
     }
     model@vecchia_approx$locsord <- olocs.scaled
@@ -294,12 +291,8 @@ setMethod("transform_data", "MultivariateVecchiaModel", function(model, Y, X) {
       vecchia.approx = vecchia.approx,
       c(
         params[1:param.seq[1, 2]],
-        rep(
-          1,
-          param.seq[2, 2] - param.seq[2, 1] + 1
-        ),
-        params[param.seq[3, 1]:
-        param.seq[5, 2]]
+        rep(1, param.seq[2, 2] - param.seq[2, 1] + 1),
+        params[param.seq[3, 1]:param.seq[5, 2]]
       )
     )
   } else {

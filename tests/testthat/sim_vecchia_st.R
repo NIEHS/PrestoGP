@@ -32,8 +32,8 @@ locss[, 1:2] <- locss[, 1:2] / ranges[1]
 locss[, 3] <- locs[, 3] / ranges[2]
 
 Sigma.All <- marg.var * Matern(rdist(locss),
-   range = 1,
-   smoothness = marg.smoothness
+  range = 1,
+  smoothness = marg.smoothness
 )
 L.C <- chol(Sigma.All)
 
@@ -42,7 +42,7 @@ nug.error <- nuggets * rnorm(n.spatial.xy^3)
 y <- mean.trend.st + st.error + nug.error
 
 rm(
-   p, p.nz, n.spatial.xy, beta1, Sigma.X, mean.trend.st, loc1, loc2, loc3, L.C,
-   st.error, nug.error, ranges, Sigma.All, nuggets, marg.smoothness, marg.var,
-   x.variance, locss
+  p, p.nz, n.spatial.xy, beta1, Sigma.X, mean.trend.st, loc1, loc2, loc3, L.C,
+  st.error, nug.error, ranges, Sigma.All, nuggets, marg.smoothness, marg.var,
+  x.variance, locss
 )
