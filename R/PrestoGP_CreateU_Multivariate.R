@@ -38,7 +38,7 @@ max_min_ordering <- function(locs, dist_func) {
   while (length(order) < nrow(locs)) {
     max_min <- 0
     max_min_i <- unsolved[1]
-    in_order <- locs[seq_along(order), ]
+    in_order <- locs[order[seq_along(order)], ]
     dim(in_order) <- c(length(order), ncol(locs))
     for (i in unsolved) {
       loc_i <- locs[i, ]
@@ -289,14 +289,7 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
       olocs[-(1:n), , drop = FALSE]
     )
   }
-  # TODO: @Eric.Bair Can you verify the logic below is equivalent to the commented line?
-  # The linter does not allow using 1:length() due to a possibility of getting negative numbers.
-  if (any(obs)) {
-    last.obs <- max(which(obs))
-  } else {
-    last.obs <- NA
-  }
-  # last.obs <- max((1:length(obs))[obs])
+  last.obs <- max(which(obs))
   q.list <- calc.q(nn.mat$indices, last.obs + 1)
 
   return(list(
