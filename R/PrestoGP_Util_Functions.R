@@ -150,7 +150,7 @@ transform_iid <- function(data, vecchia.approx, covparms, nuggets) {
 
   # return to original ordering
   orig.order <- order(U.obj$ord)
-  transformed.data <- transform.ord[orig.order, ] # TODO: @Eric.Bair is this a required variable?
+  transformed.data <- transform.ord[orig.order, ] # nolint # TODO: @Eric.Bair is this a required variable?
   return(transform.ord)
 }
 
@@ -180,7 +180,7 @@ transform_miid <- function(data, vecchia.approx, params) {
 
   # return to original ordering
   orig.order <- order(U.obj$ord)
-  transformed.data <- transform.ord[orig.order, ] # TODO: @Eric.Bair is this a required variable?
+  transformed.data <- transform.ord[orig.order, ] # nolint TODO: @Eric.Bair is this a required variable?
   return(transform.ord)
 }
 
@@ -232,8 +232,7 @@ revMat <- function(mat) {
 }
 
 #' @export
-vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL,
-                                return.values = "mean") {
+vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL, return.values = "mean") {
   GPvecchia:::removeNAs()
   U.obj <- createUMultivariate(vecchia.approx, covparms)
   V.ord <- U2V(U.obj)

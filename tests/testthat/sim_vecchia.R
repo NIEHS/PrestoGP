@@ -27,8 +27,8 @@ loc2 <- seq(0, 1, length.out = n.spatial.xy) + rnorm(n.spatial.xy, 0, 0.001)
 locs <- as.matrix(expand.grid(loc1, loc2))
 
 Sigma.All <- marg.var * Matern(rdist(locs),
-   range = ranges,
-   smoothness = marg.smoothness
+  range = ranges,
+  smoothness = marg.smoothness
 )
 L.C <- chol(Sigma.All)
 
@@ -37,7 +37,7 @@ nug.error <- nuggets * rnorm(n.spatial.xy^2)
 y <- mean.trend.st + st.error + nug.error
 
 rm(
-   p, p.nz, n.spatial.xy, beta1, Sigma.X, mean.trend.st, loc1, loc2, L.C,
-   st.error, nug.error, ranges, Sigma.All, nuggets, marg.smoothness, marg.var,
-   x.variance
+  p, p.nz, n.spatial.xy, beta1, Sigma.X, mean.trend.st, loc1, loc2, L.C,
+  st.error, nug.error, ranges, Sigma.All, nuggets, marg.smoothness, marg.var,
+  x.variance
 )

@@ -42,71 +42,71 @@ setMethod("initialize", "VecchiaModel", function(.Object, n_neighbors = 25, ...)
 #' prediction <- prestogp_predict(model, X.test, locs.test)
 #' Vec.mean <- prediction[[1]]
 #' Vec.sds <- prediction[[2]]
-setMethod("prestogp_predict",
-  "VecchiaModel",
+setMethod("prestogp_predict", "VecchiaModel",
   function(model, X, locs, m = NULL, ordering.pred = c("obspred", "general"), pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
-  # validate parameters
-  ordering.pred <- match.arg(ordering.pred)
-  pred.cond <- match.arg(pred.cond)
-  return.values <- match.arg(return.values)
-  model <- check_input_pred(model, X, locs)
-  if (is.null(m)) { # m defaults to the value used for training
-    m <- model@n_neighbors
+    # validate parameters
+    ordering.pred <- match.arg(ordering.pred)
+    pred.cond <- match.arg(pred.cond)
+    return.values <- match.arg(return.values)
+    model <- check_input_pred(model, X, locs)
+    if (is.null(m)) { # m defaults to the value used for training
+      m <- model@n_neighbors
+    }
+    if (m < model@min_m) {
+      stop(paste("m must be at least ", model@min_m, sep = ""))
+    }
+    if (m >= nrow(model@X_train)) {
+      warning("Conditioning set size m chosen to be >=n. Changing to m=n-1")
+      m <- nrow(model@X_train) - 1
+    }
+
+    # Vecchia prediction at new locations
+    # Vecchia.Pred <- predict(model@Vecchia_SCAD_fit[[1]], X = X, which = model@lambda_1se_idx[[1]])
+    Vecchia.Pred <- predict(model@linear_model, newx = X, s = model@linear_model$lambda[model@lambda_1se_idx])
+    # Vecchia trend prediction at observed data
+    # Vecchia.hat <- predict(model@Vecchia_SCAD_fit[[1]], X = model@X_train, which = model@lambda_1se_idx[[1]])
+    Vecchia.hat <- predict(model@linear_model, newx = model@X_train, s = model@linear_model$lambda[model@lambda_1se_idx])
+
+    # Test set prediction
+    res <- model@Y_train - Vecchia.hat
+
+    locs.train.scaled <- scale_locs(model, model@locs_train)[[1]]
+    locs.scaled <- scale_locs(model, list(locs))[[1]]
+    vec.approx.test <- vecchia_specify(locs.train.scaled, m, locs.pred = locs.scaled, ordering.pred = ordering.pred, pred.cond = pred.cond)
+
+    ## carry out prediction
+    if (!model@apanasovich) {
+      pred <- vecchia_prediction(
+        res,
+        vec.approx.test,
+        c(model@covparams[1], 1, model@covparams[3]),
+        model@covparams[4],
+        return.values = return.values
+      )
+    } else {
+      pred <- vecchia_prediction(
+        res,
+        vec.approx.test,
+        c(model@covparams[1], model@covparams[2], model@covparams[3]),
+        model@covparams[4], return.values = return.values
+      )
+    }
+
+    # prediction function can return both mean and sds
+    # returns a list with elements mu.pred,mu.obs,var.pred,var.obs,V.ord
+    Vec.mean <- pred$mu.pred + Vecchia.Pred # residual + mean trend
+    if (return.values == "mean") {
+      return.list <- list(means = Vec.mean)
+    } else {
+      warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
+      # TODO: @Eric.Bair is this a typo/bug? Capital 'V' in Vec.sds but 'vec.sds' in return.list
+      Vec.sds <- sqrt(pred$var.pred + model@covparams[4]) # nolint
+      return.list <- list(means = Vec.mean, sds = vec.sds) # nolint
+    }
+
+    return(return.list)
   }
-  if (m < model@min_m) {
-    stop(paste("m must be at least ", model@min_m, sep = ""))
-  }
-  if (m >= nrow(model@X_train)) {
-    warning("Conditioning set size m chosen to be >=n. Changing to m=n-1")
-    m <- nrow(model@X_train) - 1
-  }
-
-  # Vecchia prediction at new locations
-  # Vecchia.Pred <- predict(model@Vecchia_SCAD_fit[[1]], X = X, which = model@lambda_1se_idx[[1]])
-  Vecchia.Pred <- predict(model@linear_model, newx = X, s = model@linear_model$lambda[model@lambda_1se_idx])
-  # Vecchia trend prediction at observed data
-  # Vecchia.hat <- predict(model@Vecchia_SCAD_fit[[1]], X = model@X_train, which = model@lambda_1se_idx[[1]])
-  Vecchia.hat <- predict(model@linear_model, newx = model@X_train, s = model@linear_model$lambda[model@lambda_1se_idx])
-
-  # Test set prediction
-  res <- model@Y_train - Vecchia.hat
-
-  locs.train.scaled <- scale_locs(model, model@locs_train)[[1]]
-  locs.scaled <- scale_locs(model, list(locs))[[1]]
-  vec.approx.test <- vecchia_specify(locs.train.scaled, m, locs.pred = locs.scaled, ordering.pred = ordering.pred, pred.cond = pred.cond)
-
-  ## carry out prediction
-  if (!model@apanasovich) {
-    pred <- vecchia_prediction(
-      res,
-      vec.approx.test,
-      c(model@covparams[1], 1, model@covparams[3]),
-      model@covparams[4],
-      return.values = return.values
-    )
-  } else {
-    pred <- vecchia_prediction(
-      res,
-      vec.approx.test,
-      c(model@covparams[1], model@covparams[2], model@covparams[3]),
-      model@covparams[4], return.values = return.values
-    )
-  }
-
-  # prediction function can return both mean and sds
-  # returns a list with elements mu.pred,mu.obs,var.pred,var.obs,V.ord
-  Vec.mean <- pred$mu.pred + Vecchia.Pred # residual + mean trend
-  if (return.values == "mean") {
-    return.list <- list(means = Vec.mean)
-  } else {
-    warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
-     # TODO: @Eric.Bair is this a typo/bug? Capital 'V' in Vec.sds but 'vec.sds' in return.list
-    Vec.sds <- sqrt(pred$var.pred + model@covparams[4])
-    return.list <- list(means = Vec.mean, sds = vec.sds)
-  }
-
-  return(return.list)
-})
+)
 
 setMethod("check_input", "VecchiaModel", function(model, Y, X, locs) {
   if (!is.matrix(locs)) {

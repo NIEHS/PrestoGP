@@ -66,8 +66,7 @@ max_min_ordering <- function(locs, dist_func) {
 #' @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
 #'
 #' @return A vector containing the indices of the neighbors
-knn_indices <- function(ordered_locs, query, n_neighbors,
-                        dist_func, dist_func_code) {
+knn_indices <- function(ordered_locs, query, n_neighbors, dist_func, dist_func_code) {
   if (dist_func_code == "custom") {
     dists <- dist_func(query, ordered_locs)
     dists_order <- order(dists)
@@ -92,8 +91,7 @@ knn_indices <- function(ordered_locs, query, n_neighbors,
 #'
 #' @return A list containing two matrices, each with one row per location:
 #' an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
-sparseNN <- function(ordered_locs, n_neighbors,
-                     dist_func, dist_func_code, ordered_locs_pred = NULL) {
+sparseNN <- function(ordered_locs, n_neighbors, dist_func, dist_func_code, ordered_locs_pred = NULL) {
   ee <- min(apply(ordered_locs, 2, stats::sd))
   n <- nrow(ordered_locs)
   ordered_locs <- ordered_locs + matrix(
@@ -112,8 +110,7 @@ sparseNN <- function(ordered_locs, n_neighbors,
   for (row in 1:n_neighbors) {
     # for the locations from 1 to n_neighbors, use the entire locs list to find the neighbors
     nn <- knn_indices(
-      ordered_locs[1:
-      (n_neighbors + 1), , drop = FALSE][-row, ,
+      ordered_locs[1:(n_neighbors + 1), , drop = FALSE][-row, ,
         drop = FALSE
       ],
       ordered_locs[row, , drop = FALSE], n_neighbors,
@@ -198,9 +195,9 @@ calc.q <- function(nn.obj, firstind.pred) {
 
 #' @export
 vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
-                             dist.func = NULL,
-                             ordering.pred = c("obspred", "general"),
-                             pred.cond = c("independent", "general")) {
+  dist.func = NULL,
+  ordering.pred = c("obspred", "general"),
+  pred.cond = c("independent", "general")) {
   ordering.pred <- match.arg(ordering.pred)
   pred.cond <- match.arg(pred.cond)
 
@@ -365,8 +362,7 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
     ajj <- 1 / rangep[ondx[2]]
     aij <- sqrt((aii^2 + ajj^2) / 2)
     K1 <- rho.mat[ondx[1], ondx[2]] * sqrt(sig2[ondx[1]]) * sqrt(sig2[ondx[2]]) *
-      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) *
-        gamma(vjj))) *
+      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
       cov_func(dist_func(olocs[1, , drop = FALSE], olocs[2, , drop = FALSE], ),
         smoothness = vij, alpha = aij
       )
@@ -421,8 +417,7 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
     ajj <- 1 / rangep[ondx[2]]
     aij <- sqrt((aii^2 + ajj^2) / 2)
     K1 <- rho.mat[ondx[1], ondx[2]] * sqrt(sig2[ondx[1]]) * sqrt(sig2[ondx[2]]) *
-      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) *
-        gamma(vjj))) *
+      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
       cov_func(dist_func(olocs[1, , drop = FALSE], olocs[2, , drop = FALSE], ),
         smoothness = vij, alpha = aij
       )
@@ -461,8 +456,7 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
         # positive definite. See equation (9) in Apanasovich (2011).
         K1[j] <- rho.mat[ondx[i], ondx[cur.q[j]]] *
           sqrt(sig2[ondx[i]]) * sqrt(sig2[ondx[cur.q[j]]]) *
-          aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) *
-            sqrt(gamma(vii) * gamma(vjj))) *
+          aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
           cov_func(
             dist_func(
               olocs[i, , drop = FALSE],
