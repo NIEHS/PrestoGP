@@ -2,7 +2,8 @@
 
 [![R-CMD-check](https://github.com/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/actions/workflows/check-standard.yaml)
 [![test-coverage](https://github.com/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/actions/workflows/test-coverage.yaml)
-[![codecov](https://codecov.io/gh/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/graph/badge.svg?token=eLxuNnsNYB)](https://codecov.io/gh/Spatiotemporal-Exposures-and-Toxicology/PrestoGP)    
+[![codecov](https://codecov.io/gh/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/graph/badge.svg?token=eLxuNnsNYB)](https://codecov.io/gh/Spatiotemporal-Exposures-and-Toxicology/PrestoGP) 
+[![lint](https://github.com/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/actions/workflows/lint.yaml/badge.svg)](https://github.com/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/actions/workflows/lint.yaml)
 # LURK-Vecchia
 
 Simultaneous variable seletion and estimation of LUR models with spatiotemporally correlated errors that is scalable for big data
