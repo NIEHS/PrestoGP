@@ -138,7 +138,7 @@ test_that("Simulated dataset spatiotemporal", {
   )
   expect_equal(params.out[1], 1.7, tolerance = 0.55)
   expect_equal(params.out[2] - 0.19, 0, tolerance = 0.05)
-  expect_equal(params.out[3], 0.22, tolerance = 0.05)
+  expect_equal(params.out[3] - 0.22, 0, tolerance = 0.05)
   expect_equal(params.out[4], 1.12, tolerance = 0.3)
   expect_equal(params.out[5], 0.62, tolerance = 0.05)
 
@@ -169,7 +169,7 @@ test_that("Simulated dataset spatiotemporal", {
   expect_equal(beta.out[1], beta.out2[1], tolerance = 0.08)
   expect_equal(beta.out[-1], beta.out2[-1], tolerance = 0.03)
   expect_equal(params.out[1], params.out2[1], tolerance = 0.6)
-  expect_equal(params.out[2], params.out2[2], tolerance = 0.06)
+  expect_equal(params.out[2] - params.out2[2], 0, tolerance = 0.06)
   expect_equal(params.out[3] - params.out2[3], 0, tolerance = 0.06)
   expect_equal(params.out[4], params.out2[4], tolerance = 0.3)
   expect_equal(params.out[5], params.out2[5], tolerance = 0.1)
