@@ -20,19 +20,6 @@ jobs:
             sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
             rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
             sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
-        - uses: awalsh128/cache-apt-pkgs-action@latest
-          with: 
-            packages: intel-mkl libmkl-dev
-            version: 1.0
-        - name: install oneAPI MKL library
-          shell: bash
-          run: |
-            sudo apt install intel-mkl libmkl-dev
-        - uses: r-lib/actions/setup-r@v2
-          with:
-            r-version: ${{ matrix.config.r }}
-            http-user-agent: ${{ matrix.config.http-user-agent }}
-            use-public-rspm: true
         - uses: r-lib/actions/setup-r-dependencies@v2
           with: 
             packages: |
@@ -42,23 +29,22 @@ jobs:
           run: |
             library(microbenchmark)
             microbenchmark(
-              rnorm(1000000),
-              times = 10000
+                rnorm(100000),
+                times = 10000
             )
-        - name: Link MKL
+        - name: install oneAPI MKL library
           shell: bash
           run: |
-            update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas.so     \
-            libblas.so-x86_64-linux-gnu      /opt/intel/mkl/lib/intel64/libmkl_rt.so 50
-            update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas.so.3   \
-            libblas.so.3-x86_64-linux-gnu    /opt/intel/mkl/lib/intel64/libmkl_rt.so 50
-            update-alternatives --install /usr/lib/x86_64-linux-gnu/liblapack.so   \
-            liblapack.so-x86_64-linux-gnu    /opt/intel/mkl/lib/intel64/libmkl_rt.so 50
-            update-alternatives --install /usr/lib/x86_64-linux-gnu/liblapack.so.3 \
-            liblapack.so.3-x86_64-linux-gnu  /opt/intel/mkl/lib/intel64/libmkl_rt.so 50
-            echo "/opt/intel/lib/intel64"     >  /etc/ld.so.conf.d/mkl.conf
-            echo "/opt/intel/mkl/lib/intel64" >> /etc/ld.so.conf.d/mkl.conf
+            sudo apt install intel-mkl libmkl-dev
+        - name: Refresh LD_LIBRARY_PATH
+          shell: bash
+          run: |
             ldconfig
+        - uses: r-lib/actions/setup-r@v2
+          with:
+            r-version: ${{ matrix.config.r }}
+            http-user-agent: ${{ matrix.config.http-user-agent }}
+            use-public-rspm: true
         - name: Check R sessionInfo
           shell: Rscript
           run: |
@@ -68,6 +54,6 @@ jobs:
           run: |
             library(microbenchmark)
             microbenchmark(
-              rnorm(1000000),
+              rnorm(100000),
               times = 10000
             )
