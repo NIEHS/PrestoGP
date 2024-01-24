@@ -7,7 +7,6 @@ jobs:
     build:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v4
         - name: add oneAPI to apt
           shell: bash
           run: |
@@ -24,8 +23,12 @@ jobs:
           shell: bash
           run: |
             sudo apt install intel-mkl libmkl-dev
+        - uses: r-lib/actions/setup-r-dependencies@v2
+          with: 
+            packages: |
+                any::microbenchmark
         - name: check R performance
-          shell: Rscript
+          shell: Rscript {0}
           run: |
             library(microbenchmark)
             microbenchmark(
@@ -51,7 +54,7 @@ jobs:
           run: |
             sessionInfo()
         - name: check R performance after MKL
-          shell: Rscript
+          shell: Rscript {0}
           run: |
             library(microbenchmark)
             microbenchmark(
