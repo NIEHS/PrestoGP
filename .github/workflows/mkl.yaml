@@ -12,6 +12,10 @@ jobs:
           config:
             - {os: ubuntu-latest,   r: 'release'}
       steps:
+        - name: Print CPU info
+          shell: bash
+          run: |
+            lscpu
         - name: add oneAPI to apt
           shell: bash
           run: |
