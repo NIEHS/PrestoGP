@@ -29,6 +29,10 @@ jobs:
           with: 
             packages: |
                 any::microbenchmark
+        - name: Check R sessionInfo
+          shell: Rscript {0}
+          run: |
+            sessionInfo()
         - name: check R performance
           shell: Rscript {0}
           run: |
@@ -42,7 +46,7 @@ jobs:
           run: |
             sudo apt install intel-mkl libmkl-dev
         - name: Check R sessionInfo
-          shell: Rscript
+          shell: Rscript {0}
           run: |
             sessionInfo()
         - name: check R performance after MKL
