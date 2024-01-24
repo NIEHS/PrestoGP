@@ -45,11 +45,16 @@ jobs:
           shell: bash
           run: |
             sudo apt install intel-mkl libmkl-dev
+        - name: Update Alternatives
+          shell: bash
+          run: |
+            update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas64.so libblas64.so-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
+            update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas64.so.3   libblas64.so.3-x86_64-linux-gnu    /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
+            update-alternatives --install /usr/lib/x86_64-linux-gnu/liblapack64.so   liblapack64.so-x86_64-linux-gnu    /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
+            update-alternatives --install /usr/lib/x86_64-linux-gnu/liblapack64.so.3 liblapack64.so.3-x86_64-linux-gnu  /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
         - name: Update Dynamic Linker
           shell: bash 
           run: |
-            sudo echo "/opt/intel/lib/intel64"     >  /etc/ld.so.conf.d/mkl.conf
-            sudo echo "/opt/intel/mkl/lib/intel64" >> /etc/ld.so.conf.d/mkl.conf
             sudo ldconfig 
         - name: Check R sessionInfo
           shell: Rscript {0}
