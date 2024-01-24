@@ -38,7 +38,7 @@ jobs:
           run: |
             library(microbenchmark)
             microbenchmark(
-                rnorm(100000),
+                rnorm(1000000),
                 times = 10000
             )
         - name: install oneAPI MKL library
@@ -64,6 +64,6 @@ jobs:
           run: |
             library(microbenchmark)
             microbenchmark(
-              rnorm(100000),
+              rnorm(1000000),
               times = 10000
             )
