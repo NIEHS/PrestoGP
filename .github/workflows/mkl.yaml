@@ -45,6 +45,12 @@ jobs:
           shell: bash
           run: |
             sudo apt install intel-mkl libmkl-dev
+        - name: Update Dynamic Linker
+          shell: bash 
+          run: |
+            echo "/opt/intel/lib/intel64"     >  /etc/ld.so.conf.d/mkl.conf
+            echo "/opt/intel/mkl/lib/intel64" >> /etc/ld.so.conf.d/mkl.conf
+            sudo ldconfig 
         - name: Check R sessionInfo
           shell: Rscript {0}
           run: |
