@@ -83,8 +83,10 @@ jobs:
         - name: Update Alternatives
           shell: bash
           run: |
-            sudo ls -al /opt/OpenBLAS/lib
-            sudo ls -al /opt/OpenBLAS/include
+            # sudo ls -al /opt/OpenBLAS/lib
+            # sudo ls -al /opt/OpenBLAS/include
+            sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas64.so libblas64.so-x86_64-linux-gnu /opt/OpenBLAS/lib/libopenblas_threaded_zenp-r0.3.26.so 150
+            # sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas64.so libblas64.so-x86_64-linux-gnu /opt/OpenBLAS/lib/libopenblas_threaded_zenp-r0.3.26.so 150
             # sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas64.so libblas64.so-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
             # sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3   libblas64.so.3-x86_64-linux-gnu    /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
             # # sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so liblapack64.so.3-x86_64-linux-gnu  /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
