@@ -3,6 +3,7 @@ on:
     push:
       branches:
         - intel-mkl-action
+    workflow_dispatch:
 jobs:
     build:
       runs-on: ${{ matrix.config.os }}
