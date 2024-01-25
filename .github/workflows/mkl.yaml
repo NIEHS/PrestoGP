@@ -40,7 +40,15 @@ jobs:
         #     sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
         #     rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
         #     sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
-        - name: Clone latest OpenBLAS
+        - name: Restore cached OpenBlas
+          id: cache-openblas
+          uses: actions/cache/restore@v4
+          with:
+            path: ${{ env.OPENBLAS_DIR }}
+            key: ${{ runner.os }}-openblas
+         # - name: Install oneAPI
+        - name: Clone and install latest OpenBLAS
+          if: steps.cache-openblas.outputs.cache-hit != 'true'
           shell: bash
           run: |
             git clone https://github.com/xianyi/OpenBLAS.git
@@ -49,6 +57,11 @@ jobs:
             sudo mkdir $OPENBLAS_DIR
             make -j DYNAMIC_ARCH=0 CC=gcc FC=gfortran HOSTCC=gcc BINARY=64 INTERFACE=64 LIBNAMESUFFIX=threaded 
             sudo make PREFIX=$OPENBLAS_DIR LIBNAMESUFFIX=threaded install
+        - name: Cache OpenBLAS
+          uses: actions/cache/save@v4
+          with:
+            path: ${{ env.OPENBLAS_DIR }}
+            key: ${{ steps.cache-openblas.outputs.cache-primary-key }}
         - uses: r-lib/actions/setup-r@v2
           with:
             r-version: ${{ matrix.config.r }}
@@ -85,11 +98,11 @@ jobs:
           run: |
             # sudo ls -al /opt/OpenBLAS/lib
             # sudo ls -al /opt/OpenBLAS/include
-            sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas64.so libblas64.so-x86_64-linux-gnu /opt/OpenBLAS/lib/libopenblas_threaded_zenp-r0.3.26.so 150
+            sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 libblas64.so-x86_64-linux-gnu /opt/OpenBLAS/lib/libopenblas_threaded_zenp-r0.3.26.so 150
+            sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so liblapack64.so.3-x86_64-linux-gnu  /opt/OpenBLAS/lib/libopenblas_threaded_zenp-r0.3.26.so 150
             # sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas64.so libblas64.so-x86_64-linux-gnu /opt/OpenBLAS/lib/libopenblas_threaded_zenp-r0.3.26.so 150
             # sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas64.so libblas64.so-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
             # sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3   libblas64.so.3-x86_64-linux-gnu    /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
-            # # sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so liblapack64.so.3-x86_64-linux-gnu  /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
         - name: Update Dynamic Linker
           shell: bash 
           run: |
@@ -98,6 +111,7 @@ jobs:
           shell: Rscript {0}
           run: |
             sessionInfo()
+        
         # - name: check R performance after latest OpenBlas
         #   shell: Rscript {0}
         #   run: |
