@@ -6,6 +6,21 @@ on:
 jobs:
     build:
       runs-on: ${{ matrix.config.os }}
+      env: 
+        C_INCLUDE_PATH: "$C_INCLUDE_PATH:/opt/OpenBLAS/include"
+        CPATH: "$CPATH:/opt/OpenBLAS/include"
+        LIBRARY_PATH: "$LIBRARY_PATH:/opt/OpenBLAS/lib"
+        LD_LIBRARY_PATH: "$LD_LIBRARY_PATH:/opt/OpenBLAS/lib"
+        OPENBLAS_DIR: "/opt/OpenBLAS"
+        USE_THREAD: 1
+        NUM_THREADS: 64
+        DYNAMIC_ARCH: 0
+        NO_WARMUP: 1
+        BUILD_RELAPACK: 0
+        COMMON_OPT: "-O2 -march=native"
+        CFLAGS: "-O2 -march=native"
+        FCOMMON_OPT: "-O2 -march=native"
+        FCFLAGS: "-O2 -march=native"
       strategy:
         fail-fast: false
         matrix:
@@ -16,14 +31,23 @@ jobs:
           shell: bash
           run: |
             lscpu
-        - name: add oneAPI to apt
+        # - name: add oneAPI to apt
+        #   shell: bash
+        #   run: |
+        #     cd /tmp
+        #     wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        #     sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        #     rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        #     sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
+        - name: Clone latest OpenBLAS
           shell: bash
           run: |
-            cd /tmp
-            wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-            sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-            rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-            sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
+            git clone https://github.com/xianyi/OpenBLAS.git
+            cd OpenBLAS
+            git checkout v0.3.26
+            sudo mkdir $OPENBLAS_DIR
+            make -j DYNAMIC_ARCH=0 CC=gcc FC=gfortran HOSTCC=gcc BINARY=64 INTERFACE=64 LIBNAMESUFFIX=threaded 
+            sudo make PREFIX=$OPENBLAS_DIR LIBNAMESUFFIX=threaded install
         - uses: r-lib/actions/setup-r@v2
           with:
             r-version: ${{ matrix.config.r }}
@@ -37,24 +61,24 @@ jobs:
           shell: Rscript {0}
           run: |
             sessionInfo()
-        - name: check R performance
-          shell: Rscript {0}
-          run: |
-            library(microbenchmark)
-            microbenchmark(
-                rnorm(1000000),
-                times = 10000
-            )
-        - name: install oneAPI MKL library
-          shell: bash
-          run: |
-            sudo apt install intel-mkl libmkl-dev
-        - name: Update Alternatives
-          shell: bash
-          run: |
-            sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas64.so libblas64.so-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
-            sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3   libblas64.so.3-x86_64-linux-gnu    /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
-            # sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so liblapack64.so.3-x86_64-linux-gnu  /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
+        # - name: check R performance
+        #   shell: Rscript {0}
+        #   run: |
+        #     library(microbenchmark)
+        #     microbenchmark(
+        #         rnorm(1000000),
+        #         times = 10000
+        #     )
+        # - name: install oneAPI MKL library
+        #   shell: bash
+        #   run: |
+        #     sudo apt install intel-mkl libmkl-dev
+        # - name: Update Alternatives
+        #   shell: bash
+        #   run: |
+        #     sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/libblas64.so libblas64.so-x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
+        #     sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3   libblas64.so.3-x86_64-linux-gnu    /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
+        #     # sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so liblapack64.so.3-x86_64-linux-gnu  /usr/lib/x86_64-linux-gnu/libmkl_rt.so 150
         - name: Update Dynamic Linker
           shell: bash 
           run: |
@@ -63,11 +87,20 @@ jobs:
           shell: Rscript {0}
           run: |
             sessionInfo()
-        - name: check R performance after MKL
-          shell: Rscript {0}
-          run: |
-            library(microbenchmark)
-            microbenchmark(
-              rnorm(1000000),
-              times = 10000
-            )
+        # - name: check R performance after latest OpenBlas
+        #   shell: Rscript {0}
+        #   run: |
+        #     library(microbenchmark)
+        #     microbenchmark(
+        #       rnorm(1000000),
+        #       times = 10000
+        #     )
+
+# update-alternatives: using /usr/lib/x86_64-linux-gnu/libmkl_rt.so to provide /usr/lib/x86_64-linux-gnu/libblas64.so.3 (libblas64.so.3-x86_64-linux-gnu) in auto mode
+# update-alternatives: using /usr/lib/x86_64-linux-gnu/libmkl_rt.so to provide /usr/lib/x86_64-linux-gnu/liblapack64.so.3 (liblapack64.so.3-x86_64-linux-gnu) in auto mode
+# update-alternatives: using /usr/lib/x86_64-linux-gnu/libmkl_rt.so to provide /usr/lib/x86_64-linux-gnu/libblas64.so (libblas64.so-x86_64-linux-gnu) in auto mode
+# update-alternatives: using /usr/lib/x86_64-linux-gnu/libmkl_rt.so to provide /usr/lib/x86_64-linux-gnu/liblapack64.so (liblapack64.so-x86_64-linux-gnu) in auto mode
+
+# Matrix products: default
+# BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
+# LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so;  LAPACK version 3.10.0
