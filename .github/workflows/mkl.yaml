@@ -75,14 +75,14 @@ jobs:
           shell: Rscript {0}
           run: |
             sessionInfo()
-        # - name: check R performance
-        #   shell: Rscript {0}
-        #   run: |
-        #     library(microbenchmark)
-        #     microbenchmark(
-        #         rnorm(1000000),
-        #         times = 10000
-        #     )
+        - name: check R performance
+          shell: Rscript {0}
+          run: |
+            library(microbenchmark)
+            microbenchmark(
+                rnorm(1000000),
+                times = 10000
+            )
         # - name: install oneAPI MKL library
         #   shell: bash
         #   run: |
@@ -111,15 +111,14 @@ jobs:
           shell: Rscript {0}
           run: |
             sessionInfo()
-        
-        # - name: check R performance after latest OpenBlas
-        #   shell: Rscript {0}
-        #   run: |
-        #     library(microbenchmark)
-        #     microbenchmark(
-        #       rnorm(1000000),
-        #       times = 10000
-        #     )
+        - name: check R performance after latest OpenBlas
+          shell: Rscript {0}
+          run: |
+            library(microbenchmark)
+            microbenchmark(
+              rnorm(1000000),
+              times = 10000
+            )
 
 # update-alternatives: using /usr/lib/x86_64-linux-gnu/libmkl_rt.so to provide /usr/lib/x86_64-linux-gnu/libblas64.so.3 (libblas64.so.3-x86_64-linux-gnu) in auto mode
 # update-alternatives: using /usr/lib/x86_64-linux-gnu/libmkl_rt.so to provide /usr/lib/x86_64-linux-gnu/liblapack64.so.3 (liblapack64.so.3-x86_64-linux-gnu) in auto mode
