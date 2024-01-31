@@ -59,6 +59,7 @@ Collate:
 Suggests: 
     roxygen2,
     covr,
+    knitr,
     GpGp,
     RandomFields,
     geoR,
