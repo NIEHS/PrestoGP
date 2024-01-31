@@ -2,6 +2,7 @@
 % Please edit documentation in R/PrestoGP_Model.R
 \name{prestogp_fit,PrestoGPModel-method}
 \alias{prestogp_fit,PrestoGPModel-method}
+\alias{prestogp_fit}
 \title{Train a PrestoGP model.}
 \usage{
 \S4method{prestogp_fit}{PrestoGPModel}(
@@ -18,50 +19,127 @@
   verbose = FALSE,
   optim.method = "Nelder-Mead",
   optim.control = list(trace = 0, reltol = 0.001, maxit = 5000),
-  parallel = FALSE,
-  foldid = NULL
+  family = c("gaussian", "binomial"),
+  nfolds = 10,
+  foldid = NULL,
+  parallel = FALSE
 )
 }
 \arguments{
-\item{model}{The model object being fit.}
+\item{model}{The PrestoGP model object being fit.}
 
-\item{Y}{A matrix containing training values for the dependent variable.}
+\item{Y}{The values of the response variable(s). Should be a matrix or
+vector for univariate models or a list for multivariate models.}
 
-\item{X}{A matrix containing training values for the independent varaibles.}
+\item{X}{The values of the predictor variable(s). Should be a matrix for
+univariate models or a list for multivariate models.}
 
-\item{locs}{A matrix containing the training spatial coordinates and times.}
+\item{locs}{The values of the locations. Should be a matrix for univariate
+models or a list for multivariate models.}
 
-\item{covparams}{The initial covariance parameters to use (optional).}
+\item{scaling}{A vector of consecutive positive integers that is used to
+specify which columns of locs should have the same scaling parameter. For
+example, in a spatiotemporal model with two spatial measures and a time
+measure, the value of scaling would be c(1, 1, 2). The length of scaling
+must match the number of columns of locs. If it is not specified, all
+columns of locs will have a common scale parameter.}
 
-\item{beta.hat}{The initial beta parameters to use (optional).}
+\item{apanasovich}{Should the multivariate Matern model described in
+Apanasovich et al. (2012) be used? Defaults to TRUE if there is only one
+scale parameter for each outcome and FALSE otherwise.}
 
-\item{tol}{The model is considered converged when error isn't less than tol*previous_error (optional).}
+\item{covparams}{The initial covariance parameters estimate (optional).}
 
-\item{verbose}{If TRUE, additional information about model fit will be printed.}
+\item{beta.hat}{The initial beta parameters estimates (optional).}
 
-\item{m}{The number of neighboring datapoints to condition on in the likelihood function (optional).}
+\item{tol}{The model is considered converged when error is not less than
+tol*previous_error (optional). Defaults to 0.999999.}
+
+\item{max_iters}{Maximum number of iterations for the model fitting
+procedure. Defaults to 100.}
+
+\item{verbose}{If TRUE, additional information about model fit will be
+printed. Defaults to FALSE.}
+
+\item{optim.method}{Optimization method to be used for the maximum
+likelihood estimation that is passed to optim. Defaults to "Nelder-Mead".
+See \code{\link[stats]{optim}}.}
+
+\item{optim.control}{Control parameter that is passed to optim. See
+\code{\link[stats]{optim}}.}
+
+\item{family}{Family parameter for the glmnet model. Currently only
+"gaussian" and "binomial" are supported. Defaults to "gaussian". See
+\code{\link[glmnet]{glmnet}}.}
+
+\item{nfolds}{Number of cross-validation folds for cv.glmnet. Defaults to
+10. See \code{\link[glmnet]{cv.glmnet}}.}
+
+\item{foldid}{Optional vector of values between 1 and "nfolds" specifying
+what fold each observation should be assigned to in the cv.glmnet
+cross-validation. See \code{\link[glmnet]{cv.glmnet}}.}
+
+\item{parallel}{Should cv.glmnet use parallel "foreach" to fit each fold?
+Defaults to FALSE. See \code{\link[glmnet]{cv.glmnet}}.}
 }
 \value{
-An object containing model parameters for spatiotemporal prediction.
+A PrestoGPModel object with slots updated based on the results of
+the model fitting procedure. See \code{\link{PrestoGPModel-class}} for
+details.
 }
 \description{
-This method fits any PrestoGP model given a matrix of locations, a matrix of independent variables, and a matrix of dependent variables.
+This method fits a PrestoGP model given a set of locations and predictor
+and outcome variables.
 }
 \examples{
+data(soil, package="RandomFields")
+soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+y <- soil[,4]                   # predict moisture content
+X <- as.matrix(soil[,5:9])
+locs <- as.matrix(soil[,1:2])
 
-US_NO2_Data <- read.csv("data/US_ST_NO2_Data.csv")
-lat <- US_NO2_Data$Latitude # Latitude
-lon <- US_NO2_Data$Longitude # Longitude
-logNO2 <- log(US_NO2_Data$Y) # ozone data
-logNO2 <- logNO2[1:1000, ]
-time <- US_NO2_Data$YearFrac # time in fractional years
-N <- length(logNO2)
-locs <- cbind(lon, lat, time) # Coordinates in R3 (x,y,t)
-locs <- locs[1:1000, ]
-X.Design <- US_NO2_Data[, 7:145] # Design matrix
-X.Design <- scale(X.Design)
-X <- X.Design[1:1000, ]
-model <- PrestoGPSpatiotemporalModel()
-model <- prestogp_fit(model, logNO2, X, locs)
-...
+# Vecchia model
+soil.vm <- new("VecchiaModel", n_neighbors = 10)
+soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+
+# Full model
+soil.fm <- new("FullModel")
+soil.fm <- prestogp_fit(soil.fm, y, X, locs)
+
+# Multivariate model
+ym <- list()
+ym[[1]] <- soil[,5]             # predict two nitrogen concentration levels
+ym[[2]] <- soil[,7]
+Xm <- list()
+Xm[[1]] <- Xm[[2]] <- as.matrix(soil[,c(4,6,8,9)])
+locsm <- list()
+locsm[[1]] <- locsm[[2]] <- locs
+
+soil.mvm <-  new("MultivariateVecchiaModel", n_neighbors = 10)
+soil.mvm <- prestogp_fit(soil.mvm, ym, Xm, locsm)
+
+# Space/elevation model
+data(soil250, package="geoR")
+y2 <- soil250[,7]               # predict pH level
+X2 <- as.matrix(soil250[,c(4:6,8:22)])
+# columns 1+2 are location coordinates; column 3 is elevation
+locs2 <- as.matrix(soil250[,1:3])
+
+soil.vm2 <- new("VecchiaModel", n_neighbors = 10)
+# fit separate scale parameters for location and elevation
+soil.vm2 <- prestogp_fit(soil.vm2, y2, X2, locs2, scaling = c(1, 1, 2))
+}
+\references{
+\itemize{
+\item Apanasovich, T.V., Genton, M.G. and Sun, Y. "A valid Matérn class of
+cross-covariance functions for multivariate random fields with any number
+of components", Journal of the American Statistical Association (2012)
+107(497):180-193.
+\item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
+land-use regression for ground-level nitrogen dioxide", The Annals of
+Applied Statistics (2021) 15(2):688-710.
+}
+}
+\seealso{
+\code{\link{PrestoGPModel-class}}, \code{\link[glmnet]{glmnet}}
 }

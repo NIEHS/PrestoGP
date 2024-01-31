@@ -1,28 +1,71 @@
-# Look at https://github.com/cran/gpclib/blob/master/R/Rgpc.R
-library(methods)
-
 setOldClass("cv.glmnet")
 
-
-#' PrestoGPModel
+#' PrestoGPModel superclass
 #'
-#' @slot covparams numeric.
-#' @slot beta numeric.
-#' @slot lambda_1se_idx numeric.
-#' @slot vecchia_approx list.
-#' @slot y_tilde numeric.
-#' @slot X_tilde dgeMatrix.
+#' This is the superclass for PrestoGP models. All other types of PrestoGP
+#' model classes (e.g. \code{\link{VecchiaModel-class}} and
+#' \code{\link{FullModel-class}} are inherited from this class. Normally
+#' users should not create objects of this class. Instead, they should use
+#' the appropriate inherited class for the type of model they are fitting.
+#'
+#' @slot covparams A numeric vector containing the parameters for the Matern
+#' model.
+#' @slot logparams A numeric vector containing the transformed versions of the
+#' Matern parameters (used internally for likelihood calculations).
+#' @slot beta A matrix containing the regression coefficients.
+#' @slot lambda_1se_idx Stores the index of the optimal tuning parameter for
+#' the glmnet model. See \code{\link[glmnet]{glmnet}}.
+#' @slot vecchia_approx The output of the Vecchia specify function. See
+#' \code{\link[GPvecchia]{vecchia_specify}} and \code{\link{vecchia_Mspecify}}.
+#' @slot X_train A matrix containing the original predictors. This will be a
+#' "super matrix" for multivariate models. See
+#' \code{\link[psych]{superMatrix}}.
+#' @slot Y_train A column matrix containing the original response values.
+#' @slot X_tilde The matrix of transformed predictors.
+#' @slot y_tilde The column matrix containing the transformed response values.
 #' @slot res numeric.
-#' @slot Vecchia_SCAD_fit cv.ncvreg.
+#' @slot locs_train A list containing the location coordinates. Each element
+#' of the list corresponds to a different outcome. (The list will have length
+#' 1 for univariate models.)
+#' @slot res A numeric vector of the residuals.
+#' @slot linear_model The glmnet model. See \code{\link[glmnet]{glmnet}} and
+#' \code{\link[glmnet]{cv.glmnet}}.
+#' @slot converged Did the model fitting process converge?
+#' @slot LL_Vecchia_krig The value of the negative log likelihood function
+#' after optimization.
+#' @slot error Penalized model error. See References for details.
+#' @slot n_eighbors Number of neighbors to condition on for the Vecchia
+#' approximation. Ignored for full models.
+#' @slot min_m Minimum permissible number of neighbors.
+#' @slot alpha Parameter alpha for glmnet. See \code{\link[glmnet]{glmnet}}.
+#' @slot scaling The indices of the scale parameters. See
+#' \code{link{prestogp_fit}}.
+#' @slot nscale The number of scale parameters in the model.
+#' @slot apanasovich Should the Apanasovich covariance model be used? See
+#' References.
+#' @slot param_sequence Records the indices of the various Matern parameters.
+#' See \code{\link{create.param.sequence}}.
 #'
-#' @export PrestoGPModel
-#' @import GPvecchia Matrix fields ncvreg readxl scoringRules MASS glmnet
-#' @importFrom stats optim predict var
-#' @importFrom aod wald.test
-#' @importFrom dplyr %>%
+#' @seealso \code{\link{VecchiaModel-class}}, \code{\link{FullModel-class}},
+#' \code{\link{MultivariateVecchiaModel-class}}, \code{\link{prestogp_fit}}
+#'
+#' @references
+#' \itemize{
+#' \item Apanasovich, T.V., Genton, M.G. and Sun, Y. "A valid Matérn class of
+#' cross-covariance functions for multivariate random fields with any number
+#' of components", Journal of the American Statistical Association (2012)
+#' 107(497):180-193.
+#' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
+#' land-use regression for ground-level nitrogen dioxide", The Annals of
+#' Applied Statistics (2021) 15(2):688-710.
+#' }
 #'
 #' @examples
-#' @noRd
+#' pgp.vmodel <- new("VecchiaModel", n_neighbors = 25)
+#' pgp.fmodel <- new("FullModel")
+#' pgp.mmodel <- new("MultivariateVecchiaModel", n_neighbors = 25)
+#'
+#' @export PrestoGPModel
 PrestoGPModel <- setClass("PrestoGPModel",
   slots = list(
     covparams = "numeric",
@@ -46,8 +89,8 @@ PrestoGPModel <- setClass("PrestoGPModel",
     nscale = "numeric", # the number of scale parameters
     apanasovich = "logical", # should the Apanasovich model be used
     param_sequence = "matrix", # maps the indices of the various Matern parameters
-    logparams = "numeric"
-  ) # transformed version of the Matern parameters
+    logparams = "numeric" # transformed version of the Matern parameters
+  )
 )
 
 
@@ -67,16 +110,98 @@ setMethod("initialize", "PrestoGPModel", function(.Object, ...) {
   .Object
 })
 
-setGeneric("show_theta", function(object, Y_names) standardGeneric("show_theta"))
+setGeneric("show_theta", function(object, Y_names)
+    standardGeneric("show_theta"))
 setGeneric(
   "prestogp_fit",
   function(model, Y, X, locs, scaling = NULL, apanasovich = FALSE,
-    covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100, verbose = FALSE,
-    optim.method = "Nelder-Mead", optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
-    parallel = FALSE, foldid = NULL) {
-    standardGeneric("prestogp_fit")
+    covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100,
+    verbose = FALSE, optim.method = "Nelder-Mead",
+    optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
+    family = c("gaussian", "binomial"), nfolds = 10, foldid = NULL,
+    parallel = FALSE) {
+      standardGeneric("prestogp_fit")
   }
 )
+
+#' Prediction for PrestoGP models
+#'
+#' After fitting a PrestoGP model, this method can be used to make predictions
+#' on an independent test set (consisting of both new locations and new values
+#' of the predictor variables).
+#'
+#' @param model A PrestoGP model object obtained after running
+#' \code{link{prestogp_fit}}.
+#' @param X The values of the predictor variable(s) for which prediction will
+#' be performed. Should be a matrix for univariate models or a list for
+#' multivariate models.
+#' @param locs The locations where prediction will be performed. Should be a
+#' matrix for univariate models or a list for multivariate models.
+#' @param m The number of neighbors to condition on. If not specified, it will
+#' default to the value of m used to fit the model.
+#' @param ordering.pred Should "obspred" or "general" ordering be used for
+#' prediction? See \code{\link[GPvecchia]{vecchia_specify}} or
+#' \code{\link{vecchia_Mspecify}}. Defaults to "obspred".
+#' @param pred.cond Should prediction conditioning be "general" or
+#' "indepedent"? See \code{\link[GPvecchia]{vecchia_specify}} or
+#' \code{\link{vecchia_Mspecify}}. Defaults to "independent".
+#' @param return.values Values that should be returned. Possible values
+#' include "mean" and "meanvar". See
+#' \code{\link[GPvecchia]{vecchia_prediction}} or
+#' \code{\link{vecchia_Mprediction}}. Defaults to "mean".
+#'
+#' @details It is important to note that the variance estimates produced by
+#' this function assume that the Matern covariance parameters are fixed and
+#' known. It does not consider any variance resulting from estimating the
+#' covariance parameters or the regression coefficients in PrestoGP models.
+#' These variance estimates will be anticonservative in such cases (and a
+#' warning will be returned when these estimates are calculated).
+#'
+#' Prediction is currently not implemented for full models. This function
+#' will return an error if it is applied to a full model.
+#'
+#' @return A list containing the estimated mean values and (if requested)
+#' standard deviations for the predictions.
+#'
+#' @seealso \code{\link{PrestoGPModel-class}},\code{\link{prestogp_fit}},
+#' \code{\link[GPvecchia]{vecchia_prediction}},
+#' \code{\link{vecchia_Mprediction}}
+#'
+#' @references
+#' \itemize{
+#' \item Katzfuss, M., and Guinness, J. "A general framework for Vecchia
+#' approximations of Gaussian processes", Statistical Science (2021)
+#' 36(1):124-141.
+#' \item Katzfuss, M., Guinness, J., Gong, W. and Zilber, D. "Vecchia
+#' approximations of Gaussian-process predictions", Journal of Agricultural,
+#' Biological and Environmental Statistics (2020) 25:383-414.
+#' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
+#' land-use regression for ground-level nitrogen dioxide", The Annals of
+#' Applied Statistics (2021) 15(2):688-710.
+#' }
+#'
+#' @rdname prestogp_predict
+#' @export
+#'
+#' @examples
+#' data(soil, package="RandomFields")
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' y <- soil[,4]                   # predict moisture content
+#' X <- as.matrix(soil[,5:9])
+#' locs <- as.matrix(soil[,1:2])
+#'
+#' # Create training and test sets
+#' n <- length(y)
+#' otr <- rep(FALSE, n)
+#' otr[sample(1:n, size=floor(n/2))] <- TRUE
+#' otst <- !otr
+#'
+#' # Fit the model on the training set
+#' soil.vm <- new("VecchiaModel", n_neighbors = 10)
+#' soil.vm <- prestogp_fit(soil.vm, y[otr], X[otr,], locs[otr,])
+#'
+#' # Perform predictions on the test set
+#' soil.yhat <- prestogp_predict(soil.vm, X[otst,], locs[otst,])
 setGeneric(
   "prestogp_predict",
   function(model, X = "matrix", locs = "matrix", m = "numeric", ordering.pred = c("obspred", "general"),
@@ -86,10 +211,10 @@ setGeneric(
 )
 setGeneric("calc_covparams", function(model, locs, Y, covparams) standardGeneric("calc_covparams"))
 setGeneric("specify", function(model, ...) standardGeneric("specify"))
-setGeneric("compute_residuals", function(model, Y, Y.hat) standardGeneric("compute_residuals"))
+setGeneric("compute_residuals", function(model, Y, Y.hat, family) standardGeneric("compute_residuals"))
 setGeneric("transform_data", function(model, Y, X) standardGeneric("transform_data"))
 setGeneric("estimate_theta", function(model, locs, optim.control, method) standardGeneric("estimate_theta"))
-setGeneric("estimate_betas", function(model, parallel, foldid) standardGeneric("estimate_betas"))
+setGeneric("estimate_betas", function(model, family, nfolds, foldid, parallel) standardGeneric("estimate_betas"))
 setGeneric("compute_error", function(model, y, X) standardGeneric("compute_error"))
 setGeneric("scale_locs", function(model, locs) standardGeneric("scale_locs"))
 setGeneric("theta_names", function(model) standardGeneric("theta_names"))
@@ -180,46 +305,117 @@ setMethod(
 
 #' Train a PrestoGP model.
 #'
-#' This method fits any PrestoGP model given a matrix of locations, a matrix of independent variables, and a matrix of dependent variables.
+#' This method fits a PrestoGP model given a set of locations and predictor
+#' and outcome variables.
 #'
-#' @param model The model object being fit.
-#' @param Y A matrix containing training values for the dependent variable.
-#' @param X A matrix containing training values for the independent varaibles.
-#' @param locs A matrix containing the training spatial coordinates and times.
-#' @param covparams The initial covariance parameters to use (optional).
-#' @param beta.hat The initial beta parameters to use (optional).
-#' @param tol The model is considered converged when error isn't less than tol*previous_error (optional).
-#' @param m The number of neighboring datapoints to condition on in the likelihood function (optional).
-#' @param verbose If TRUE, additional information about model fit will be printed.
+#' @param model The PrestoGP model object being fit.
+#' @param Y The values of the response variable(s). Should be a matrix or
+#' vector for univariate models or a list for multivariate models.
+#' @param X The values of the predictor variable(s). Should be a matrix for
+#' univariate models or a list for multivariate models.
+#' @param locs The values of the locations. Should be a matrix for univariate
+#' models or a list for multivariate models.
+#' @param scaling A vector of consecutive positive integers that is used to
+#' specify which columns of locs should have the same scaling parameter. For
+#' example, in a spatiotemporal model with two spatial measures and a time
+#' measure, the value of scaling would be c(1, 1, 2). The length of scaling
+#' must match the number of columns of locs. If it is not specified, all
+#' columns of locs will have a common scale parameter.
+#' @param apanasovich Should the multivariate Matern model described in
+#' Apanasovich et al. (2012) be used? Defaults to TRUE if there is only one
+#' scale parameter for each outcome and FALSE otherwise.
+#' @param covparams The initial covariance parameters estimate (optional).
+#' @param beta.hat The initial beta parameters estimates (optional).
+#' @param tol The model is considered converged when error is not less than
+#' tol*previous_error (optional). Defaults to 0.999999.
+#' @param max_iters Maximum number of iterations for the model fitting
+#' procedure. Defaults to 100.
+#' @param verbose If TRUE, additional information about model fit will be
+#' printed. Defaults to FALSE.
+#' @param optim.method Optimization method to be used for the maximum
+#' likelihood estimation that is passed to optim. Defaults to "Nelder-Mead".
+#' See \code{\link[stats]{optim}}.
+#' @param optim.control Control parameter that is passed to optim. See
+#' \code{\link[stats]{optim}}.
+#' @param family Family parameter for the glmnet model. Currently only
+#' "gaussian" and "binomial" are supported. Defaults to "gaussian". See
+#' \code{\link[glmnet]{glmnet}}.
+#' @param nfolds Number of cross-validation folds for cv.glmnet. Defaults to
+#' 10. See \code{\link[glmnet]{cv.glmnet}}.
+#' @param foldid Optional vector of values between 1 and "nfolds" specifying
+#' what fold each observation should be assigned to in the cv.glmnet
+#' cross-validation. See \code{\link[glmnet]{cv.glmnet}}.
+#' @param parallel Should cv.glmnet use parallel "foreach" to fit each fold?
+#' Defaults to FALSE. See \code{\link[glmnet]{cv.glmnet}}.
 #'
-#' @return An object containing model parameters for spatiotemporal prediction.
+#' @return A PrestoGPModel object with slots updated based on the results of
+#' the model fitting procedure. See \code{\link{PrestoGPModel-class}} for
+#' details.
+#'
+#' @seealso \code{\link{PrestoGPModel-class}}, \code{\link[glmnet]{glmnet}}
+#'
+#' @references
+#' \itemize{
+#' \item Apanasovich, T.V., Genton, M.G. and Sun, Y. "A valid Matérn class of
+#' cross-covariance functions for multivariate random fields with any number
+#' of components", Journal of the American Statistical Association (2012)
+#' 107(497):180-193.
+#' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
+#' land-use regression for ground-level nitrogen dioxide", The Annals of
+#' Applied Statistics (2021) 15(2):688-710.
+#' }
+#'
+#' @aliases prestogp_fit
 #' @export
 #'
 #' @examples
+#' data(soil, package="RandomFields")
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' y <- soil[,4]                   # predict moisture content
+#' X <- as.matrix(soil[,5:9])
+#' locs <- as.matrix(soil[,1:2])
 #'
-#' US_NO2_Data <- read.csv("data/US_ST_NO2_Data.csv")
-#' lat <- US_NO2_Data$Latitude # Latitude
-#' lon <- US_NO2_Data$Longitude # Longitude
-#' logNO2 <- log(US_NO2_Data$Y) # ozone data
-#' logNO2 <- logNO2[1:1000, ]
-#' time <- US_NO2_Data$YearFrac # time in fractional years
-#' N <- length(logNO2)
-#' locs <- cbind(lon, lat, time) # Coordinates in R3 (x,y,t)
-#' locs <- locs[1:1000, ]
-#' X.Design <- US_NO2_Data[, 7:145] # Design matrix
-#' X.Design <- scale(X.Design)
-#' X <- X.Design[1:1000, ]
-#' model <- PrestoGPSpatiotemporalModel()
-#' model <- prestogp_fit(model, logNO2, X, locs)
-#' ...
+#' # Vecchia model
+#' soil.vm <- new("VecchiaModel", n_neighbors = 10)
+#' soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+#'
+#' # Full model
+#' soil.fm <- new("FullModel")
+#' soil.fm <- prestogp_fit(soil.fm, y, X, locs)
+#'
+#' # Multivariate model
+#' ym <- list()
+#' ym[[1]] <- soil[,5]             # predict two nitrogen concentration levels
+#' ym[[2]] <- soil[,7]
+#' Xm <- list()
+#' Xm[[1]] <- Xm[[2]] <- as.matrix(soil[,c(4,6,8,9)])
+#' locsm <- list()
+#' locsm[[1]] <- locsm[[2]] <- locs
+#'
+#' soil.mvm <-  new("MultivariateVecchiaModel", n_neighbors = 10)
+#' soil.mvm <- prestogp_fit(soil.mvm, ym, Xm, locsm)
+#'
+#' # Space/elevation model
+#' data(soil250, package="geoR")
+#' y2 <- soil250[,7]               # predict pH level
+#' X2 <- as.matrix(soil250[,c(4:6,8:22)])
+#' # columns 1+2 are location coordinates; column 3 is elevation
+#' locs2 <- as.matrix(soil250[,1:3])
+#'
+#' soil.vm2 <- new("VecchiaModel", n_neighbors = 10)
+#' # fit separate scale parameters for location and elevation
+#' soil.vm2 <- prestogp_fit(soil.vm2, y2, X2, locs2, scaling = c(1, 1, 2))
+
 setMethod(
   "prestogp_fit", "PrestoGPModel",
   function(model, Y, X, locs, scaling = NULL, apanasovich = NULL,
     covparams = NULL, beta.hat = NULL, tol = 0.999999,
     max_iters = 100, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
-    parallel = FALSE, foldid = NULL) {
+    family = c("gaussian", "binomial"),
+    nfolds = 10, foldid = NULL, parallel = FALSE) {
     model <- check_input(model, Y, X, locs)
+    family <- match.arg(family)
     if (!is.null(beta.hat)) {
       if (!is.vector(beta.hat) | !is.numeric(beta.hat)) {
         stop("beta.hat parameter must be a numeric vector")
@@ -263,6 +459,9 @@ setMethod(
     model@scaling <- scaling
     model@nscale <- nscale
     model@apanasovich <- apanasovich
+    if (model@apanasovich & (length(model@locs_train) > 1)) {
+      model@locs_train <- eliminate_dupes(model@locs_train)$locs
+    }
     if (!is.null(covparams)) {
       if (!is.vector(covparams) | !is.numeric(covparams)) {
         stop("covparams must be a numeric vector")
@@ -284,9 +483,13 @@ setMethod(
         parallel = parallel,
         foldid = foldid
       )
-      beta.hat <- as.matrix(predict(beta0.glmnet, type = "coefficients", s = beta0.glmnet$lambda.1se))
+      beta.hat <- as.matrix(predict(beta0.glmnet,
+          type = "coefficients", s = beta0.glmnet$lambda.1se))
     }
     Y.hat <- beta.hat[1, 1] + model@X_train %*% beta.hat[-1, ]
+    if (family == "binomial") {
+      Y.hat <- exp(Y.hat) / (1 + exp(Y.hat))
+    }
 
     # Begining algorithm (Algorithm 1 from Messier and Katzfuss 2020)
     model@converged <- FALSE
@@ -296,7 +499,7 @@ setMethod(
       cat("\n")
     }
     while (!model@converged && (iter < max_iters)) {
-      model <- compute_residuals(model, model@Y_train, Y.hat)
+      model <- compute_residuals(model, model@Y_train, Y.hat, family)
       res_matrix <- matrix(model@res, nrow = nrow(model@Y_train), ncol = ncol(model@Y_train))
       if (verbose) {
         cat("MSE: ", colMeans(res_matrix^2), "\n")
@@ -307,7 +510,7 @@ setMethod(
         model <- specify(model)
       }
       model <- transform_data(model, model@Y_train, model@X_train)
-      model <- estimate_betas(model, parallel, foldid)
+      model <- estimate_betas(model, family, nfolds, foldid, parallel)
       min.error <- compute_error(model)
       ### Check min-error against the previous error and tolerance
       if (min.error < prev.error * tol) {
@@ -315,8 +518,13 @@ setMethod(
         model@error <- prev.error
         beta.hat <- sparseToDenseBeta(model@linear_model)
         model@beta <- beta.hat
-        # Y.hat <- as.matrix(predict(model@linear_model,newx = X, s=model@linear_model$lambda[model@lambda_1se_idx]))
-        Y.hat <- as.matrix(predict(model@linear_model, newx = model@X_train, s = "lambda.1se"))
+        Y.hat <- as.matrix(
+          predict(
+            model@linear_model,
+            newx = model@X_train,
+            s = "lambda.1se",
+            type = "response")
+        )
         covparams.iter <- model@covparams
         Vecchia.SCAD.iter <- model@linear_model
       } else {
@@ -333,29 +541,32 @@ setMethod(
       iter <- iter + 1
     }
     return(model)
-    invisible(model)
   }
 )
 
-#' estimate_betas
-#'
-#' Estimate the beta coefficients for a model (not called by user)
-#'
-#' @param model the model to estimate coeffients for
-#'
-#' @return A model with updated coefficients
-setMethod("estimate_betas", "PrestoGPModel", function(model, parallel, foldid) {
+# estimate_betas
+#
+# Estimate the beta coefficients for a model (not called by user)
+#
+# @param model the model to estimate coeffients for
+#
+# @return A model with updated coefficients
+setMethod("estimate_betas", "PrestoGPModel", function(model, family, nfolds,
+  foldid, parallel) {
   if (ncol(model@Y_train) > 1) {
     model@linear_model <- cv.glmnet(
       as.matrix(model@X_tilde),
       as.matrix(model@y_tilde),
       family = "mgaussian",
       alpha = model@alpha,
-      parallel = parallel,
-      foldid = foldid
+      nfolds = nfolds,
+      foldid = foldid,
+      parallel = parallel
     )
   } else {
-    model@linear_model <- cv.glmnet(as.matrix(model@X_tilde), as.matrix(model@y_tilde), alpha = model@alpha, parallel = parallel, foldid = foldid)
+      model@linear_model <- cv.glmnet(as.matrix(model@X_tilde),
+        as.matrix(model@y_tilde), alpha = model@alpha, family = family,
+        fnolds = nfolds, foldid = foldid, parallel = parallel)
   }
   idmin <- which(model@linear_model$lambda == model@linear_model$lambda.min)
   semin <- model@linear_model$cvm[idmin] + model@linear_model$cvsd[idmin]
@@ -364,13 +575,13 @@ setMethod("estimate_betas", "PrestoGPModel", function(model, parallel, foldid) {
   invisible(model)
 })
 
-#' sparseToDenseBeta
-#'
-#' Convert the sparse beta coefficients matrix from glmnet to a dense matrix
-#'
-#' @param linear_model the glmnet model
-#'
-#' @return A dense matrix
+# sparseToDenseBeta
+#
+# Convert the sparse beta coefficients matrix from glmnet to a dense matrix
+#
+# @param linear_model the glmnet model
+#
+# @return A dense matrix
 sparseToDenseBeta <- function(linear_model) {
   coefs <- coef(linear_model)
   if (!is.list(coefs)) {
@@ -390,13 +601,13 @@ sparseToDenseBeta <- function(linear_model) {
   beta
 }
 
-#' compute_error
-#'
-#' Compute the error (log likelihood using the GP log likelihood and penalty from the beta coefficients)
-#'
-#' @param model the PrestoGP model object
-#'
-#' @return The total error used in the main optimization loop
+# compute_error
+#
+# Compute the error (log likelihood using the GP log likelihood and penalty from the beta coefficients)
+#
+# @param model the PrestoGP model object
+#
+# @return The total error used in the main optimization loop
 setMethod("compute_error", "PrestoGPModel", function(model) {
   ### Betas
   beta.iter <- sparseToDenseBeta(model@linear_model)
@@ -417,15 +628,15 @@ setMethod("compute_error", "PrestoGPModel", function(model) {
   error
 })
 
-#' calc_covparams
-#'
-#' Set initial value of covarariance parameters.
-#'
-#' @param model The model to set the covariance parameters of
-#' @param locs the locations matrix
-#' @param Y the dependent variable matrix
-#'
-#' @return a model with initial covariance parameters
+# calc_covparams
+#
+# Set initial value of covarariance parameters.
+#
+# @param model The model to set the covariance parameters of
+# @param locs the locations matrix
+# @param Y the dependent variable matrix
+#
+# @return a model with initial covariance parameters
 setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y, covparams) {
   if (!is.list(locs)) {
     P <- 1
@@ -501,14 +712,14 @@ setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y, covparams)
   invisible(model)
 })
 
-#' scale_locs
-#'
-#' Scale the locations matrix by the covariance parameters
-#'
-#' @param model The model with locations to scale
-#' @param locs the locations matrix
-#'
-#' @return a matrix with scaled locations
+# scale_locs
+#
+# Scale the locations matrix by the covariance parameters
+#
+# @param model The model with locations to scale
+# @param locs the locations matrix
+#
+# @return a matrix with scaled locations
 setMethod("scale_locs", "PrestoGPModel", function(model, locs) {
   if (model@apanasovich) {
     return(locs)
@@ -550,17 +761,24 @@ setMethod("transform_covariance_parameters", "PrestoGPModel", function(model) {
   invisible(model)
 })
 
-#' compute_residuals
-#'
-#' Compute residuals based on beta parameters
-#'
-#' @param model The model to compute the residual of
-#' @param Y the training dependent variable matrix
-#' @param Y.hat the predicted training dependent variable matrix based on beta hat
-#'
-#' @return a model with computed residuals
-setMethod("compute_residuals", "PrestoGPModel", function(model, Y, Y.hat) {
-  model@res <- as.double(Y - Y.hat)
+# compute_residuals
+#
+# Compute residuals based on beta parameters
+#
+# @param model The model to compute the residual of
+# @param Y the training dependent variable matrix
+# @param Y.hat the predicted training dependent variable matrix based on beta hat
+#
+# @return a model with computed residuals
+setMethod("compute_residuals", "PrestoGPModel", function(model, Y, Y.hat,
+  family) {
+  res <- as.double(Y - Y.hat)
+  if (family == "gaussian") {
+    model@res <- res
+  } else {
+    model@res <- sign(res) * sqrt(-2 * (Y * log(Y.hat) + (1 - Y) *
+          log(1 - Y.hat)))
+  }
   model@vecchia_approx$zord <- model@res[model@vecchia_approx$ord]
   invisible(model)
 })

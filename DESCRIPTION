@@ -1,7 +1,7 @@
 Package: PrestoGP
 Type: Package
 Title: Penalized Regression for Spatio-Temporal Outcomes via Gaussian Processes 
-Version: 0.2.0.9023
+Version: 0.2.0.9024
 Authors@R: c(
     person(given = "Eric",
            family = "Bair",
@@ -26,33 +26,24 @@ LinkingTo:
     Rcpp, RcppArmadillo
 Imports:
     GPvecchia,
-    Matrix,
     fields,
-    ncvreg,
-    readxl,
-    scoringRules,
-    MASS,
     aod,
-    knitr,
     dplyr,
     glmnet,
     gtools,
-    geoR,
     RANN,
-    stats,
-    methods,
     foreach,
     rlang,
     mvtnorm,
     spam,
     psych,
-    doParallel,
-    covr,
-    mvtnorm
+    MASS,
+    Matrix,
+    methods
 License: GPL-3
 Encoding: UTF-8
 VignetteBuilder: knitr 
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Collate: 
     'Log_Likelihood.R'
     'PrestoGP-package.R'
@@ -64,9 +55,12 @@ Collate:
     'PrestoGP_Util_Functions.R'
     'RcppExports.R'
     'Visualization.R'
-    'package.R'
     'utils-tidy-eval.R'
 Suggests: 
     roxygen2,
+    covr,
+    GpGp,
+    RandomFields,
+    geoR,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

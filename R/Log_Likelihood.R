@@ -1,17 +1,5 @@
-#' negloglik_vecchia_ST
-#'
-#' Spatiotemporal Vecchia negative loglikelihood.
-#'
-#' @param logparms
-#' @param locs
-#' @param res
-#' @param vecchia.approx
-#'
-#' @return
-#' @export
-#'
-#' @examples
-#' @noRd
+# Spatiotemporal Vecchia negative log likelihood.
+
 negloglik_vecchia_ST <- function(logparms, res, vecchia.approx, param.seq, scaling, nscale) {
   parms <- unlog.params(logparms, param.seq, 1)
   locs.scaled <- vecchia.approx$locsord
@@ -29,20 +17,8 @@ negloglik_vecchia_ST <- function(logparms, res, vecchia.approx, param.seq, scali
   )
 }
 
-#' negloglik_vecchia
-#'
-#' Spatial Vecchia negative loglikelihood.
-#'
-#' @param logparms
-#' @param locs
-#' @param res
-#' @param vecchia.approx
-#'
-#' @return
-#' @export
-#'
-#' @examples
-#' @noRd
+# Spatial Vecchia negative log likelihood.
+
 negloglik_vecchia <- function(logparms, res, vecchia.approx, param.seq) {
   parms <- unlog.params(logparms, param.seq, 1)
   -vecchia_likelihood(
@@ -51,20 +27,8 @@ negloglik_vecchia <- function(logparms, res, vecchia.approx, param.seq) {
   )
 }
 
-#' negloglik_full_ST
-#'
-#' Spatiotemporal Full Kriging negative loglikelihood.
-#'
-#' @param logparms
-#' @param locs
-#' @param y
-#' @param N
-#'
-#' @return
-#' @export
-#'
-#' @examples
-#' @noRd
+# Spatiotemporal Full Kriging negative log likelihood.
+
 negloglik_full_ST <- function(logparms, locs, y, param.seq, scaling, nscale) {
   parms <- unlog.params(logparms, param.seq, 1)
   locs.scaled <- locs
@@ -82,23 +46,10 @@ negloglik_full_ST <- function(logparms, locs, y, param.seq, scaling, nscale) {
   return(-1 * mvtnorm::dmvnorm(y, rep(0, N), cov.mat, log = TRUE))
 }
 
-#' negloglik.full
-#'
-#' Spatial Full Kriging negative loglikelihood
-#'
-#' @param logparms
-#' @param locs
-#' @param y
-#' @param N
-#'
-#' @return
-#' @export
-#'
-#' @examples
-#' @noRd
+# Spatial Full Kriging negative log likelihood
+
 negloglik.full <- function(logparams, d, y, param.seq) {
   params <- unlog.params(logparams, param.seq, 1)
-  #    d <- fields::rdist(locs)
   N <- nrow(d)
   cov.mat <- params[1] * fields::Matern(d,
     range = params[2],
@@ -106,6 +57,60 @@ negloglik.full <- function(logparams, d, y, param.seq) {
   ) +
     params[4] * diag(N)
   return(-1 * mvtnorm::dmvnorm(y, rep(0, N), cov.mat, log = TRUE))
+}
+
+#' Evaluation of the multivariate Vecchia likelihood
+#'
+#' This function is used to evaluate the multivariate Vecchia likelihood. 
+#'
+#' @param z The observed data.
+#' @param vecchia.approx A Vecchia object returned by
+#' \code{\link{vecchia_Mspecify}}.
+#' @param covparams Vector of covariance parameters. See
+#' \code{\link{create.param.sequence}} or the examples below for details
+#' about the format of this vector.
+#'
+#' @return The log likelihood implies by the multivariate Vecchia
+#' approximation.
+#'
+#' @seealso \code{\link[GPvecchia]{vecchia_likelihood}},
+#' \code{\link{vecchia_Mspecify}}, \code{\link{create.param.sequence}}
+#'
+#' @references
+#' \itemize{
+#' \item Katzfuss, M., and Guinness, J. "A general framework for Vecchia
+#' approximations of Gaussian processes", Statistical Science (2021)
+#' 36(1):124-141.
+#' }
+#'
+#' @export
+#' @examples
+#' data(soil, package="RandomFields")
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' locs <- as.matrix(soil[,1:2])
+#' locsm <- list()
+#' locsm[[1]] <- locsm[[2]] <- locs
+#' soil.va <- vecchia_Mspecify(locsm, m=10)
+#' 
+#' pseq <- create.param.sequence(2)
+#' # Initialize the vector of covariance parameters
+#' params <- rep(NA, pseq[5,2])
+#' # Sigma parameters:
+#' params[pseq[1,1]:pseq[1,2]] <- c(100, 80)
+#' # Scale parameters:
+#' params[pseq[2,1]:pseq[2,2]] <- c(60, 50)
+#' # Smoothness parameters:
+#' params[pseq[3,1]:pseq[3,2]] <- c(0.5, 0.5)
+#' # Nuggets:
+#' params[pseq[4,1]:pseq[4,2]] <- c(30, 30)
+#' # Correlation:
+#' params[pseq[5,1]:pseq[5,2]] <- -0.9
+#' 
+#' vecchia_Mlikelihood(rnorm(nrow(locs)), soil.va, params)
+vecchia_Mlikelihood <- function(z, vecchia.approx, covparams) {
+  U.obj <- createUMultivariate(vecchia.approx, covparams)
+  vecchia_likelihood_U <- getFromNamespace("vecchia_likelihood_U", "GPvecchia")
+  vecchia_likelihood_U(z, U.obj)
 }
 
 
@@ -133,8 +138,7 @@ mvnegloglik <- function(logparams, vecchia.approx, y, param.seq, P) {
   # P <- length(y)
   # transform the postively constrained parameters from log-space to normal-space
   params <- unlog.params(logparams, param.seq, P)
-  U.obj <- createUMultivariate(vecchia.approx, params)
-  -1 * GPvecchia:::vecchia_likelihood_U(y, U.obj)
+  -1 * vecchia_Mlikelihood(y, vecchia.approx, params)  
 }
 
 ##############################################################################
@@ -171,12 +175,11 @@ mvnegloglik_ST <- function(logparams, vecchia.approx, y, param.seq, P, scaling, 
   }
   vecchia.approx$locsord <- locs.scaled
 
-  U.obj <- createUMultivariate(vecchia.approx, c(
+  -1 * vecchia_Mlikelihood(y, vecchia.approx, c(
     params[1:param.seq[1, 2]],
     rep(1, param.seq[2, 2] - param.seq[2, 1] + 1),
     params[param.seq[3, 1]:param.seq[5, 2]]
   ))
-  -1 * GPvecchia:::vecchia_likelihood_U(y, U.obj)
 }
 
 ##############################################################################
@@ -294,14 +297,14 @@ cat.covariances <- function(locs.list, sig2, range, smoothness, nugget) {
     # Calculate the covariance matrix - if/then based on its location in the super-matrix
     N <- nrow(d)
     if (i == j) { # To accomodate varying size outcomes- the nugget is not included on cross-covariances
-      cov.mat.ij <- sig2[i, j] * geoR::matern(d,
-        phi = range[i, j], kappa =
+      cov.mat.ij <- sig2[i, j] * fields::Matern(d,
+        range = range[i, j], smoothness =
           smoothness[i, j]
       ) +
         nugget[i, j] * diag(N)
     } else {
-      cov.mat.ij <- sig2[i, j] * geoR::matern(d,
-        phi = range[i, j], kappa =
+      cov.mat.ij <- sig2[i, j] * fields::Matern(d,
+        range = range[i, j], smoothness =
           smoothness[i, j]
       )
     }

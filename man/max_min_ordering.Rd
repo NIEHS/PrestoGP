@@ -2,18 +2,47 @@
 % Please edit documentation in R/PrestoGP_CreateU_Multivariate.R
 \name{max_min_ordering}
 \alias{max_min_ordering}
-\title{max_min_ordering}
+\title{Maximum minimum distance ordering}
 \usage{
-max_min_ordering(locs, dist_func)
+max_min_ordering(locs, dist.func = NULL)
 }
 \arguments{
-\item{locs}{A matrix with one row per location and any number of columns (x, y, time, etc).}
+\item{locs}{A matrix with one row per location and any number of columns
+(x, y, time, etc.).}
 
-\item{dist_func}{Any distance function with a signature of dist(query_location, locations_matrix)}
+\item{dist.func}{Any distance function with a signature of
+dist(query_location, locations_matrix). Defaults to Euclidean distance.}
 }
 \value{
-A vector containing the index of locations from sparse to dense
+A vector of indices giving the ordering. Element i of this vector
+is the index of the ith location.
 }
 \description{
-Determine an ordering of locations that uses the max-min method to get a sparse covering of the location space.
+Returns the indices of an exact maximum-minimum distance ordering. This is
+similar to the \code{\link[GPvecchia]{order_maxmin_exact}} function. The
+main difference is that it allows the user to specify a distance function.
+}
+\details{
+For Euclidean distance, this function will return the same
+results as \code{\link[GPvecchia]{order_maxmin_exact}}, but will be much
+slower for large data sets. \code{\link[GPvecchia]{order_maxmin_exact}}
+should be used instead of this function when the distance function is
+Euclidean.
+}
+\examples{
+data(weather, package="RandomFields")
+locs <- weather[,3:4]
+max_min_ordering(locs)
+}
+\references{
+\itemize{
+\item Katzfuss, M., and Guinness, J. "A general framework for Vecchia
+approximations of Gaussian processes", Statistical Science (2021)
+36(1):124-141.
+\item Guiness, J. "Permutation methods for sharpening Gaussian process
+approximations", Technometrics (2018) 60(4):415-429.
+}
+}
+\seealso{
+\code{\link[GPvecchia]{order_maxmin_exact}}
 }
