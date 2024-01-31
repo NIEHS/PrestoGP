@@ -14,7 +14,7 @@ vecchia_Mspecify(
 )
 }
 \arguments{
-\item{locs.list}{List of observed locationss. Each each element should be a
+\item{locs.list}{List of observed locations. Each each element should be a
 matrix containing the locs for the corresponding outcome variable.}
 
 \item{m}{Number of nearby points to condition on.}
@@ -52,7 +52,7 @@ it has fewer options. We recommend that
 \code{\link[GPvecchia]{vecchia_specify}} be used in the univariate case.
 }
 \examples{
-data(soil, package="RandomFields")
+data(soil)
 soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 locs <- as.matrix(soil[,1:2])
 locsm <- list()

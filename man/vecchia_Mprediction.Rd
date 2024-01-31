@@ -40,7 +40,7 @@ models. It is a multivariate version of
 \code{\link[GPvecchia]{vecchia_prediction}}.
 }
 \examples{
-data(soil, package="RandomFields")
+data(soil)
 soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 locs <- as.matrix(soil[,1:2])
 locsm <- list()

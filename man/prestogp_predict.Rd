@@ -96,7 +96,7 @@ Prediction is currently not implemented for full models. This function
 will return an error if it is applied to a full model.
 }
 \examples{
-data(soil, package="RandomFields")
+data(soil)
 soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 y <- soil[,4]                   # predict moisture content
 X <- as.matrix(soil[,5:9])

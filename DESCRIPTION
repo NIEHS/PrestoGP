@@ -1,7 +1,7 @@
 Package: PrestoGP
 Type: Package
 Title: Penalized Regression for Spatio-Temporal Outcomes via Gaussian Processes 
-Version: 0.2.0.9024
+Version: 0.2.0.9025
 Authors@R: c(
     person(given = "Eric",
            family = "Bair",
@@ -55,13 +55,13 @@ Collate:
     'PrestoGP_Util_Functions.R'
     'RcppExports.R'
     'Visualization.R'
+    'datadocs.R'
     'utils-tidy-eval.R'
 Suggests: 
     roxygen2,
     covr,
     knitr,
     GpGp,
-    RandomFields,
     geoR,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

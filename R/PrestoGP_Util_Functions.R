@@ -32,7 +32,7 @@ glmnet_penalty <- function(beta, lambda, alpha) {
   return(lambda * ((1 - alpha) * sqrt(sum(beta^2)) + alpha * sum(abs(beta))))
 }
 
-# Ordinary Spatiotemporal Kriging Prediction with a Local S-T neigborhood.
+# Ordinary Spatiotemporal Kriging Prediction with a Local S-T neighborhood.
 #
 # @param new_coords Locations to predict
 # @param obs_coords Training locations
@@ -76,7 +76,7 @@ glmnet_penalty <- function(beta, lambda, alpha) {
 
 # ST_Krig_Param_Avg
 #
-# Spatiotemporal Kriging Maximum Likelihood Estiamtion based on an average of multiple random subsets.
+# Spatiotemporal Kriging Maximum Likelihood Estimtion based on an average of multiple random subsets.
 #
 # @param Y A vector containing training values for the dependent variable.
 # @param locs A matrix containing the training spatial coordinates and times.
@@ -253,7 +253,7 @@ revMat <- function(mat) {
 #'
 #' @export
 #' @examples
-#' data(soil, package="RandomFields")
+#' data(soil)
 #' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 #' locs <- as.matrix(soil[,1:2])
 #' locsm <- list()

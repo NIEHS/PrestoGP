@@ -35,7 +35,7 @@ doing. See Apanasovich et al. (2012) for a description of how the
 cross-covariances are computed.
 }
 \examples{
-data(soil, package="RandomFields")
+data(soil)
 soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 locs <- as.matrix(soil[,1:2])
 locsm <- list()

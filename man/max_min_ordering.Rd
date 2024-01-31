@@ -30,7 +30,7 @@ should be used instead of this function when the distance function is
 Euclidean.
 }
 \examples{
-data(weather, package="RandomFields")
+data(weather)
 locs <- weather[,3:4]
 max_min_ordering(locs)
 }

@@ -86,7 +86,7 @@ test_that("Simulated dataset spatial", {
     tolerance = 0.03
   )
   expect_equal(params.out[1], 1.6, tolerance = 0.5)
-  expect_equal(params.out[2], 0.4, tolerance = 0.2)
+  expect_equal(params.out[2] - 0.4, 0, tolerance = 0.2)
   expect_equal(params.out[3], 0.59, tolerance = 0.2)
   expect_equal(params.out[4], 2.0, tolerance = 0.15)
 

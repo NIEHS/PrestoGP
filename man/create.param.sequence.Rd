@@ -7,7 +7,7 @@
 create.param.sequence(P, ns = 1)
 }
 \arguments{
-\item{P}{Number of outcomes variables}
+\item{P}{Number of outcome variables}
 
 \item{ns}{Number of scale parameters}
 }
@@ -49,7 +49,7 @@ soil2.params[pseq[3,1]:pseq[3,2]]
 soil2.params[pseq[4,1]:pseq[4,2]]
 
 # Multivariate model
-data(soil, package="RandomFields")
+data(soil)
 soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 ym <- list()
 ym[[1]] <- soil[,5]             # predict two nitrogen concentration levels

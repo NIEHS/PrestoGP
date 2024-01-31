@@ -184,7 +184,7 @@ setGeneric(
 #' @export
 #'
 #' @examples
-#' data(soil, package="RandomFields")
+#' data(soil)
 #' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 #' y <- soil[,4]                   # predict moisture content
 #' X <- as.matrix(soil[,5:9])
@@ -369,7 +369,7 @@ setMethod(
 #' @export
 #'
 #' @examples
-#' data(soil, package="RandomFields")
+#' data(soil)
 #' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 #' y <- soil[,4]                   # predict moisture content
 #' X <- as.matrix(soil[,5:9])

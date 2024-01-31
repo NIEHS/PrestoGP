@@ -24,7 +24,7 @@ approximation.
 This function is used to evaluate the multivariate Vecchia likelihood.
 }
 \examples{
-data(soil, package="RandomFields")
+data(soil)
 soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 locs <- as.matrix(soil[,1:2])
 locsm <- list()

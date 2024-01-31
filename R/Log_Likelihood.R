@@ -61,7 +61,7 @@ negloglik.full <- function(logparams, d, y, param.seq) {
 
 #' Evaluation of the multivariate Vecchia likelihood
 #'
-#' This function is used to evaluate the multivariate Vecchia likelihood. 
+#' This function is used to evaluate the multivariate Vecchia likelihood.
 #'
 #' @param z The observed data.
 #' @param vecchia.approx A Vecchia object returned by
@@ -85,13 +85,13 @@ negloglik.full <- function(logparams, d, y, param.seq) {
 #'
 #' @export
 #' @examples
-#' data(soil, package="RandomFields")
+#' data(soil)
 #' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 #' locs <- as.matrix(soil[,1:2])
 #' locsm <- list()
 #' locsm[[1]] <- locsm[[2]] <- locs
 #' soil.va <- vecchia_Mspecify(locsm, m=10)
-#' 
+#'
 #' pseq <- create.param.sequence(2)
 #' # Initialize the vector of covariance parameters
 #' params <- rep(NA, pseq[5,2])
@@ -105,7 +105,7 @@ negloglik.full <- function(logparams, d, y, param.seq) {
 #' params[pseq[4,1]:pseq[4,2]] <- c(30, 30)
 #' # Correlation:
 #' params[pseq[5,1]:pseq[5,2]] <- -0.9
-#' 
+#'
 #' vecchia_Mlikelihood(rnorm(nrow(locs)), soil.va, params)
 vecchia_Mlikelihood <- function(z, vecchia.approx, covparams) {
   U.obj <- createUMultivariate(vecchia.approx, covparams)
@@ -138,7 +138,7 @@ mvnegloglik <- function(logparams, vecchia.approx, y, param.seq, P) {
   # P <- length(y)
   # transform the postively constrained parameters from log-space to normal-space
   params <- unlog.params(logparams, param.seq, P)
-  -1 * vecchia_Mlikelihood(y, vecchia.approx, params)  
+  -1 * vecchia_Mlikelihood(y, vecchia.approx, params)
 }
 
 ##############################################################################
@@ -204,7 +204,7 @@ mvnegloglik.full <- function(logparams, locs, y, param.seq) {
   #           index locations of each parameter.
 
   # P <- length(y)
-  # transform the postively constrained parameters from log-space to normal-space
+  # transform the positively constrained parameters from log-space to normal-space
   P <- length(locs)
   params <- unlog.params(logparams, param.seq, P)
   sig2 <- params[param.seq[1, 1]:param.seq[1, 2]]
@@ -237,7 +237,7 @@ mvnegloglik.full <- function(logparams, locs, y, param.seq) {
 
 ##############################################################################
 create.cov.upper.flex <- function(P, marg.var, marg.range, marg.smooth, nugget, R.corr) {
-  # Create the symmetrical marginal+cross-covariance flexible matern from the
+  # Create the symmetrical marginal+cross-covariance flexible Matern from the
   # given parameters. Output is a list of the 4 Matern parameters as matrices
   sig2.mat <- diag(marg.var, P, P)
   range.mat <- diag(marg.range, P, P)
@@ -274,7 +274,7 @@ create.cov.upper.flex <- function(P, marg.var, marg.range, marg.smooth, nugget, 
 ### Calculate the Matern marginal and cross-covariance super-matrix #########
 
 cat.covariances <- function(locs.list, sig2, range, smoothness, nugget) {
-  # cat.covariance: This functions takes the locations and flexible matern parameters
+  # cat.covariance: This functions takes the locations and flexible Matern parameters
   #                 and pieces together the marginal+cross-covariance matrix
   #
   #   Inputs: locs- P dimension list of the locations,
@@ -296,7 +296,7 @@ cat.covariances <- function(locs.list, sig2, range, smoothness, nugget) {
     d <- fields::rdist(locs.list[[i]], locs.list[[j]])
     # Calculate the covariance matrix - if/then based on its location in the super-matrix
     N <- nrow(d)
-    if (i == j) { # To accomodate varying size outcomes- the nugget is not included on cross-covariances
+    if (i == j) { # To accommodate varying size outcomes- the nugget is not included on cross-covariances
       cov.mat.ij <- sig2[i, j] * fields::Matern(d,
         range = range[i, j], smoothness =
           smoothness[i, j]

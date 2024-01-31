@@ -3,7 +3,7 @@
 #' This function is used to obtain specific Matern parameters (e.g.,
 #' range or smoothness) from the covparams slot of a PrestoGPModel object.
 #'
-#' @param P Number of outcomes variables
+#' @param P Number of outcome variables
 #' @param ns Number of scale parameters
 #'
 #' @return A matrix with five rows and two columns as described below:
@@ -52,7 +52,7 @@
 #' soil2.params[pseq[4,1]:pseq[4,2]]
 #'
 #' # Multivariate model
-#' data(soil, package="RandomFields")
+#' data(soil)
 #' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 #' ym <- list()
 #' ym[[1]] <- soil[,5]             # predict two nitrogen concentration levels
@@ -125,7 +125,7 @@ create.param.sequence <- function(P, ns = 1) {
 #'
 #' @export
 #' @examples
-#' data(weather, package="RandomFields")
+#' data(weather)
 #' locs <- weather[,3:4]
 #' max_min_ordering(locs)
 max_min_ordering <- function(locs, dist.func = NULL) {
@@ -308,7 +308,7 @@ calc.q <- function(nn.obj, firstind.pred) {
 #' function is a multivariate version of
 #' \code{\link[GPvecchia]{vecchia_specify}}.
 #'
-#' @param locs.list List of observed locationss. Each each element should be a
+#' @param locs.list List of observed locations. Each each element should be a
 #' matrix containing the locs for the corresponding outcome variable.
 #' @param m Number of nearby points to condition on.
 #' @param locs.list.pred List of locations at which to make predictions. Each
@@ -342,7 +342,7 @@ calc.q <- function(nn.obj, firstind.pred) {
 #'
 #' @export
 #' @examples
-#' data(soil, package="RandomFields")
+#' data(soil)
 #' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 #' locs <- as.matrix(soil[,1:2])
 #' locsm <- list()
@@ -492,17 +492,17 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
 #' approximations of Gaussian processes", Statistical Science (2021)
 #' 36(1):124-141.
 #' }
-#' 
+#'
 #' @useDynLib PrestoGP
 #' @export
 #' @examples
-#' data(soil, package="RandomFields")
+#' data(soil)
 #' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 #' locs <- as.matrix(soil[,1:2])
 #' locsm <- list()
 #' locsm[[1]] <- locsm[[2]] <- locs
 #' soil.va <- vecchia_Mspecify(locsm, m=10)
-#' 
+#'
 #' pseq <- create.param.sequence(2)
 #' # Initialize the vector of covariance parameters
 #' params <- rep(NA, pseq[5,2])
@@ -516,7 +516,7 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
 #' params[pseq[4,1]:pseq[4,2]] <- c(30, 30)
 #' # Correlation:
 #' params[pseq[5,1]:pseq[5,2]] <- -0.9
-#' 
+#'
 #' soil.u <- createUMultivariate(soil.va, params)
 createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
   if (is.null(cov_func)) {

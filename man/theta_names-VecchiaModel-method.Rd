@@ -10,7 +10,7 @@
 \item{model}{The model to estimate theta for}
 }
 \value{
-a vector with the namems of the covariance parameterss
+a vector with the names of the covariance parameters
 }
 \description{
 Return a vector specifying the names of the different covariance parameters (used for show method)

@@ -251,7 +251,7 @@ setMethod("transform_data", "VecchiaModel", function(model, Y, X) {
 #'
 #' @param model The model to estimate theta for
 #'
-#' @return a vector with the namems of the covariance parameterss
+#' @return a vector with the names of the covariance parameters
 setMethod("theta_names", "VecchiaModel", function(model) {
   c("Marginal Variance", "Spatial Range", "Temporal Range", "Nugget")
 })
