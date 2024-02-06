@@ -31,7 +31,7 @@ prediction? See \code{\link[GPvecchia]{vecchia_specify}}. Defaults to
 "obspred".}
 
 \item{pred.cond}{Should prediction conditioning be "general" or
-"indepedent"? See \code{\link[GPvecchia]{vecchia_specify}}. Defaults to
+"independent"? See \code{\link[GPvecchia]{vecchia_specify}}. Defaults to
 "independent".}
 }
 \value{

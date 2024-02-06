@@ -50,7 +50,7 @@ of the list corresponds to a different outcome. (The list will have length
 \item{\code{linear_model}}{The glmnet model. See \code{\link[glmnet]{glmnet}} and
 \code{\link[glmnet]{cv.glmnet}}.}
 
-\item{\code{converged}}{Did the model fitting process converge?}
+\item{\code{converged}}{Did the model fitting process converge (boolean)?}
 
 \item{\code{LL_Vecchia_krig}}{The value of the negative log likelihood function
 after optimization.}

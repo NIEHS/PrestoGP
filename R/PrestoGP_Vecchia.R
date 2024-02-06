@@ -141,15 +141,14 @@ setMethod("check_input_pred", "VecchiaModel", function(model, X, locs) {
   invisible(model)
 })
 
-# specify
-#
-# Specify the conditioning set using m nearest neighbors.
-#
-# @param model The model to specify
-# @param locs the locations matrix
-# @param m the number of neighbors to condition on
-#
-# @return a model with a specified conditioning set
+#' specify
+#'
+#' Specify the conditioning set using m nearest neighbors.
+#'
+#' @param model The model to specify
+#'
+#' @return a model with a specified conditioning set
+#' @noRd
 setMethod("specify", "VecchiaModel", function(model) {
   locs.scaled <- scale_locs(model, model@locs_train)
   model@vecchia_approx <- vecchia_specify(locs.scaled[[1]], model@n_neighbors)
@@ -164,14 +163,15 @@ setMethod("specify", "VecchiaModel", function(model) {
   invisible(model)
 })
 
-# estimate_theta
-#
-# Estimate covariance parameters during a single round of model optimization
-#
-# @param model The model to estimate theta for
-# @param locs the locations matrix
-#
-# @return a model with an updated covariance parameters estimate
+#' estimate_theta
+#'
+#' Estimate covariance parameters during a single round of model optimization
+#'
+#' @param model The model to estimate theta for
+#' @param locs the locations matrix
+#'
+#' @return a model with an updated covariance parameters estimate
+#' @noRd
 setMethod("estimate_theta", "VecchiaModel", function(model, locs, optim.control, method) {
   if (model@apanasovich) {
     vecchia.result <- optim(
@@ -203,15 +203,16 @@ setMethod("estimate_theta", "VecchiaModel", function(model, locs, optim.control,
   invisible(model)
 })
 
-# transform_data
-#
-# Transform data to be independent, identically distributed
-#
-# @param model The model to estimate theta for
-# @param Y the dependent variable matrix
-# @param X the independent variable matrix
-#
-# @return a model with i.i.d. data
+#' transform_data
+#'
+#' Transform data to be independent, identically distributed
+#'
+#' @param model The model to estimate theta for
+#' @param Y the dependent variable matrix
+#' @param X the independent variable matrix
+#'
+#' @return a model with i.i.d. data
+#' @noRd
 setMethod("transform_data", "VecchiaModel", function(model, Y, X) {
   vecchia.approx <- model@vecchia_approx
   params <- model@covparams
@@ -252,6 +253,7 @@ setMethod("transform_data", "VecchiaModel", function(model, Y, X) {
 #' @param model The model to estimate theta for
 #'
 #' @return a vector with the names of the covariance parameters
+#' @noRd
 setMethod("theta_names", "VecchiaModel", function(model) {
   c("Marginal Variance", "Spatial Range", "Temporal Range", "Nugget")
 })

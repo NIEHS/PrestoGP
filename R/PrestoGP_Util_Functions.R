@@ -28,6 +28,7 @@
 #' @param alpha the L1 vs L2 coefficient (0 means all L2, 1 means all L1)
 #'
 #' @return a penalty score
+#' @noRd
 glmnet_penalty <- function(beta, lambda, alpha) {
   return(lambda * ((1 - alpha) * sqrt(sum(beta^2)) + alpha * sum(abs(beta))))
 }

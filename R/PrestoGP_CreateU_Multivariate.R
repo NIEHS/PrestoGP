@@ -109,8 +109,8 @@ create.param.sequence <- function(P, ns = 1) {
 #' should be used instead of this function when the distance function is
 #' Euclidean.
 #'
-#' @return A vector of indices giving the ordering. Element i of this vector
-#' is the index of the ith location.
+#' @return A vector of indices giving the ordering. Element \emph{i} of this
+#' vector is the index of the \emph{i}th location.
 #'
 #' @seealso \code{\link[GPvecchia]{order_maxmin_exact}}
 #'
@@ -162,16 +162,17 @@ max_min_ordering <- function(locs, dist.func = NULL) {
   order
 }
 
-# knn_indices
-#
-# Find the index of K nearest neighbors within a set of locations for a given query and distance function
-#
-# @param ordered_locs A matrix with one row per location, where locations are ordered using max_min ordering.
-# @param query Find the nearest neighbors to this location
-# @param n_neighbors The number of neighbors to find (K)
-# @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
-#
-# @return A vector containing the indices of the neighbors
+#' knn_indices
+#'
+#' Find the index of K nearest neighbors within a set of locations for a given query and distance function
+#'
+#' @param ordered_locs A matrix with one row per location, where locations are ordered using max_min ordering.
+#' @param query Find the nearest neighbors to this location
+#' @param n_neighbors The number of neighbors to find (K)
+#' @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
+#'
+#' @return A vector containing the indices of the neighbors
+#' @noRd
 knn_indices <- function(ordered_locs, query, n_neighbors, dist_func, dist_func_code) {
   if (dist_func_code == "custom") {
     dists <- dist_func(query, ordered_locs)
@@ -187,16 +188,17 @@ knn_indices <- function(ordered_locs, query, n_neighbors, dist_func, dist_func_c
   }
 }
 
-# sparseNN
-#
-# Find the index of K nearest neighbors within a set of locations for a given query and distance function
-#
-# @param ordered_locs A matrix with one row per location, where locations are ordered using max_min ordering.
-# @param n_neighbors The number of neighbors to find (K) for each location
-# @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
-#
-# @return A list containing two matrices, each with one row per location:
-# an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
+#' sparseNN
+#'
+#' Find the index of K nearest neighbors within a set of locations for a given query and distance function
+#'
+#' @param ordered_locs A matrix with one row per location, where locations are ordered using max_min ordering.
+#' @param n_neighbors The number of neighbors to find (K) for each location
+#' @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
+#'
+#' @return A list containing two matrices, each with one row per location:
+#' an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
+#' @noRd
 sparseNN <- function(ordered_locs, n_neighbors, dist_func, dist_func_code, ordered_locs_pred = NULL) {
 #  ee <- min(apply(ordered_locs, 2, stats::sd))
 #  n <- nrow(ordered_locs)
@@ -320,7 +322,7 @@ calc.q <- function(nn.obj, firstind.pred) {
 #' prediction? See \code{\link[GPvecchia]{vecchia_specify}}. Defaults to
 #' "obspred".
 #' @param pred.cond Should prediction conditioning be "general" or
-#' "indepedent"? See \code{\link[GPvecchia]{vecchia_specify}}. Defaults to
+#' "independent"? See \code{\link[GPvecchia]{vecchia_specify}}. Defaults to
 #' "independent".
 #'
 #' @details This function should produce identical results to

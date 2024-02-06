@@ -223,14 +223,15 @@ setMethod("specify", "MultivariateVecchiaModel", function(model) {
   invisible(model)
 })
 
-# estimate_theta
+#' estimate_theta
+#'
+#' Estimate covariance parameters during a single round of model optimization
 #
-# Estimate covariance parameters during a single round of model optimization
-#
-# @param model The model to estimate theta for
-# @param locs the locations matrix
-#
-# @return a model with an updated covariance parameters estimate
+#' @param model The model to estimate theta for
+#' @param locs the locations matrix
+#'
+#' @return a model with an updated covariance parameters estimate
+#' @noRd
 setMethod("estimate_theta", "MultivariateVecchiaModel", function(model, locs, optim.control, method) {
   P <- length(locs)
   if (model@apanasovich) {

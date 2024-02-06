@@ -14,8 +14,8 @@ max_min_ordering(locs, dist.func = NULL)
 dist(query_location, locations_matrix). Defaults to Euclidean distance.}
 }
 \value{
-A vector of indices giving the ordering. Element i of this vector
-is the index of the ith location.
+A vector of indices giving the ordering. Element \emph{i} of this
+vector is the index of the \emph{i}th location.
 }
 \description{
 Returns the indices of an exact maximum-minimum distance ordering. This is

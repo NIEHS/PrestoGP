@@ -17,7 +17,7 @@ vecchia_Mlikelihood(z, vecchia.approx, covparams)
 about the format of this vector.}
 }
 \value{
-The log likelihood implies by the multivariate Vecchia
+The log likelihood implied by the multivariate Vecchia
 approximation.
 }
 \description{

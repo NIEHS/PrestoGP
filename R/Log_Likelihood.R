@@ -70,7 +70,7 @@ negloglik.full <- function(logparams, d, y, param.seq) {
 #' \code{\link{create.param.sequence}} or the examples below for details
 #' about the format of this vector.
 #'
-#' @return The log likelihood implies by the multivariate Vecchia
+#' @return The log likelihood implied by the multivariate Vecchia
 #' approximation.
 #'
 #' @seealso \code{\link[GPvecchia]{vecchia_likelihood}},

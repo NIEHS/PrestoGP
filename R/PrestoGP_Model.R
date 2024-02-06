@@ -30,7 +30,7 @@ setOldClass("cv.glmnet")
 #' @slot res A numeric vector of the residuals.
 #' @slot linear_model The glmnet model. See \code{\link[glmnet]{glmnet}} and
 #' \code{\link[glmnet]{cv.glmnet}}.
-#' @slot converged Did the model fitting process converge?
+#' @slot converged Did the model fitting process converge (boolean)?
 #' @slot LL_Vecchia_krig The value of the negative log likelihood function
 #' after optimization.
 #' @slot error Penalized model error. See References for details.
@@ -544,13 +544,14 @@ setMethod(
   }
 )
 
-# estimate_betas
-#
-# Estimate the beta coefficients for a model (not called by user)
-#
-# @param model the model to estimate coeffients for
-#
-# @return A model with updated coefficients
+#' estimate_betas
+#'
+#' Estimate the beta coefficients for a model (not called by user)
+#'
+#' @param model the model to estimate coeffients for
+#'
+#' @return A model with updated coefficients
+#' @noRd
 setMethod("estimate_betas", "PrestoGPModel", function(model, family, nfolds,
   foldid, parallel) {
   if (ncol(model@Y_train) > 1) {
@@ -575,13 +576,14 @@ setMethod("estimate_betas", "PrestoGPModel", function(model, family, nfolds,
   invisible(model)
 })
 
-# sparseToDenseBeta
-#
-# Convert the sparse beta coefficients matrix from glmnet to a dense matrix
-#
-# @param linear_model the glmnet model
-#
-# @return A dense matrix
+#' sparseToDenseBeta
+#'
+#' Convert the sparse beta coefficients matrix from glmnet to a dense matrix
+#'
+#' @param linear_model the glmnet model
+#'
+#' @return A dense matrix
+#' @noRd
 sparseToDenseBeta <- function(linear_model) {
   coefs <- coef(linear_model)
   if (!is.list(coefs)) {
@@ -601,13 +603,14 @@ sparseToDenseBeta <- function(linear_model) {
   beta
 }
 
-# compute_error
-#
-# Compute the error (log likelihood using the GP log likelihood and penalty from the beta coefficients)
-#
-# @param model the PrestoGP model object
-#
-# @return The total error used in the main optimization loop
+#' compute_error
+#'
+#' Compute the error (log likelihood using the GP log likelihood and penalty from the beta coefficients)
+#'
+#' @param model the PrestoGP model object
+#'
+#' @return The total error used in the main optimization loop
+#' @noRd
 setMethod("compute_error", "PrestoGPModel", function(model) {
   ### Betas
   beta.iter <- sparseToDenseBeta(model@linear_model)
@@ -628,15 +631,16 @@ setMethod("compute_error", "PrestoGPModel", function(model) {
   error
 })
 
-# calc_covparams
-#
-# Set initial value of covarariance parameters.
-#
-# @param model The model to set the covariance parameters of
-# @param locs the locations matrix
-# @param Y the dependent variable matrix
-#
-# @return a model with initial covariance parameters
+#' calc_covparams
+#'
+#' Set initial value of covarariance parameters.
+#'
+#' @param model The model to set the covariance parameters of
+#' @param locs the locations matrix
+#' @param Y the dependent variable matrix
+#'
+#' @return a model with initial covariance parameters
+#' @noRd
 setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y, covparams) {
   if (!is.list(locs)) {
     P <- 1
@@ -712,14 +716,15 @@ setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y, covparams)
   invisible(model)
 })
 
-# scale_locs
-#
-# Scale the locations matrix by the covariance parameters
-#
-# @param model The model with locations to scale
-# @param locs the locations matrix
-#
-# @return a matrix with scaled locations
+#' scale_locs
+#'
+#' Scale the locations matrix by the covariance parameters
+#'
+#' @param model The model with locations to scale
+#' @param locs the locations matrix
+#'
+#' @return a matrix with scaled locations
+#' @noRd
 setMethod("scale_locs", "PrestoGPModel", function(model, locs) {
   if (model@apanasovich) {
     return(locs)
@@ -761,15 +766,17 @@ setMethod("transform_covariance_parameters", "PrestoGPModel", function(model) {
   invisible(model)
 })
 
-# compute_residuals
-#
-# Compute residuals based on beta parameters
-#
-# @param model The model to compute the residual of
-# @param Y the training dependent variable matrix
-# @param Y.hat the predicted training dependent variable matrix based on beta hat
-#
-# @return a model with computed residuals
+#' compute_residuals
+#'
+#' Compute residuals based on beta parameters
+#'
+#' @param model The model to compute the residual of
+#' @param Y the training dependent variable matrix
+#' @param Y.hat the predicted training dependent variable matrix based on
+#' beta hat
+#'
+#' @return a model with computed residuals
+#' @noRd
 setMethod("compute_residuals", "PrestoGPModel", function(model, Y, Y.hat,
   family) {
   res <- as.double(Y - Y.hat)
