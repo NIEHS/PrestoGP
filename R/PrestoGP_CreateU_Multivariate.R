@@ -1,35 +1,141 @@
-##############################################################################
-### Create the parameter sequence indices for the likelihood function #########
-
-create.param.sequence <- function(P, nr = 1) {
-  # Input: P - number of multivariate outcome dimensions
-  # Assumes our version of the flexible multivariate matern model
+#' Extract specific Matern parameters from a parameter sequence
+#'
+#' This function is used to obtain specific Matern parameters (e.g.,
+#' range or smoothness) from the covparams slot of a PrestoGPModel object.
+#'
+#' @param P Number of outcome variables
+#' @param ns Number of scale parameters
+#'
+#' @return A matrix with five rows and two columns as described below:
+#' \describe{
+#' \item{Row 1:}{Starting and ending indices for the sigma parameter(s)}
+#' \item{Row 2:}{Starting and ending indices for the scale parameter(s)}
+#' \item{Row 3:}{Starting and ending indices for the smoothness parameter(s)}
+#' \item{Row 4:}{Starting and ending indices for the nugget(s)}
+#' \item{Row 5:}{Starting and ending indices for the correlation parameter(s)}
+#' }
+#'
+#' @seealso \code{\link{PrestoGPModel-class}}
+#'
+#' @references
+#' \itemize{
+#' \item Apanasovich, T.V., Genton, M.G. and Sun, Y. "A valid Matérn class of
+#' cross-covariance functions for multivariate random fields with any number
+#' of components", Journal of the American Statistical Association (2012)
+#' 107(497):180-193.
+#' \item Genton, M.G. "Classes of kernels for machine learning: a statistics
+#' perspective", The Journal of Machine Learning Research (2001) 2:299-312.
+#' }
+#'
+#' @export
+#' @examples
+#' # Space/elevation model
+#' data(soil250, package="geoR")
+#' y2 <- soil250[,7]               # predict pH level
+#' X2 <- as.matrix(soil250[,c(4:6,8:22)])
+#' # columns 1+2 are location coordinates; column 3 is elevation
+#' locs2 <- as.matrix(soil250[,1:3])
+#'
+#' soil.vm2 <- new("VecchiaModel", n_neighbors = 10)
+#' # fit separate scale parameters for location and elevation
+#' soil.vm2 <- prestogp_fit(soil.vm2, y2, X2, locs2, scaling = c(1, 1, 2))
+#'
+#' pseq <- create.param.sequence(1, 2)
+#' soil2.params <- soil.vm2@covparams
+#' # sigma
+#' soil2.params[pseq[1,1]:pseq[1,2]]
+#' # scale parameters
+#' soil2.params[pseq[2,1]:pseq[2,2]]
+#' # smoothness parameter
+#' soil2.params[pseq[3,1]:pseq[3,2]]
+#' # nugget
+#' soil2.params[pseq[4,1]:pseq[4,2]]
+#'
+#' # Multivariate model
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' ym <- list()
+#' ym[[1]] <- soil[,5]             # predict two nitrogen concentration levels
+#' ym[[2]] <- soil[,7]
+#' Xm <- list()
+#' Xm[[1]] <- Xm[[2]] <- as.matrix(soil[,c(4,6,8,9)])
+#' locsm <- list()
+#' locsm[[1]] <- locsm[[2]] <- as.matrix(soil[,1:2])
+#'
+#' soil.mvm <-  new("MultivariateVecchiaModel", n_neighbors = 10)
+#' soil.mvm <- prestogp_fit(soil.mvm, ym, Xm, locsm)
+#'
+#' pseq <- create.param.sequence(2, 1)
+#' soil.params <- soil.mvm@covparams
+#' # sigmas
+#' soil.params[pseq[1,1]:pseq[1,2]]
+#' # scale parameters
+#' soil.params[pseq[2,1]:pseq[2,2]]
+#' # smoothness parameters
+#' soil.params[pseq[3,1]:pseq[3,2]]
+#' # nuggets
+#' soil.params[pseq[4,1]:pseq[4,2]]
+#' # correlation
+#' soil.corr <- diag(2) / 2
+#' soil.corr[upper.tri(soil.corr)] <- soil.params[pseq[5,1]:pseq[5,2]]
+#' soil.corr <- soil.corr + t(soil.corr)
+create.param.sequence <- function(P, ns = 1) {
   nk <- choose(P, 2)
   if (nk == 0) {
     nk <- 1 # univariate case
   }
 
-  #    param.sequence.begin <- c(seq(1,P*4,by=P),seq(P*4+1,(P*4)+(nk),by=nk))
-  param.sequence.begin <- c(1, P + 1, seq(P * (nr + 1) + 1, length = 3, by = P))
-  param.sequence.end <- c(P, nr * P, P, P, nk) %>% cumsum()
+  param.sequence.begin <- c(1, P + 1, seq(P * (ns + 1) + 1, length = 3, by = P))
+  param.sequence.end <- c(P, ns * P, P, P, nk) %>% cumsum()
   param.sequence <- cbind(param.sequence.begin, param.sequence.end)
-
 
   return(param.sequence)
 }
 
-#' max_min_ordering
+#' Maximum minimum distance ordering
 #'
-#' Determine an ordering of locations that uses the max-min method to get a sparse covering of the location space.
+#' Returns the indices of an exact maximum-minimum distance ordering. This is
+#' similar to the \code{\link[GPvecchia]{order_maxmin_exact}} function. The
+#' main difference is that it allows the user to specify a distance function.
 #'
-#' @param locs A matrix with one row per location and any number of columns (x, y, time, etc).
-#' @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
+#' @param locs A matrix with one row per location and any number of columns
+#' (x, y, time, etc.).
+#' @param dist.func Any distance function with a signature of
+#' dist(query_location, locations_matrix). Defaults to Euclidean distance.
 #'
-#' @return A vector containing the index of locations from sparse to dense
-max_min_ordering <- function(locs, dist_func) {
+#' @details For Euclidean distance, this function will return the same
+#' results as \code{\link[GPvecchia]{order_maxmin_exact}}, but will be much
+#' slower for large data sets. \code{\link[GPvecchia]{order_maxmin_exact}}
+#' should be used instead of this function when the distance function is
+#' Euclidean.
+#'
+#' @return A vector of indices giving the ordering. Element \emph{i} of this
+#' vector is the index of the \emph{i}th location.
+#'
+#' @seealso \code{\link[GPvecchia]{order_maxmin_exact}}
+#'
+#' @references
+#' \itemize{
+#' \item Katzfuss, M., and Guinness, J. "A general framework for Vecchia
+#' approximations of Gaussian processes", Statistical Science (2021)
+#' 36(1):124-141.
+#' \item Guiness, J. "Permutation methods for sharpening Gaussian process
+#' approximations", Technometrics (2018) 60(4):415-429.
+#' }
+#'
+#' @export
+#' @examples
+#' data(weather)
+#' locs <- weather[,3:4]
+#' max_min_ordering(locs)
+max_min_ordering <- function(locs, dist.func = NULL) {
+  if (is.null(dist.func)) {
+    dist.func <- fields::rdist
+    dist.func.code <- "rdist"
+  }
   center <- matrix(colMeans(locs), ncol = ncol(locs))
   # find the point closest to the mean of all points
-  dists <- dist_func(center, locs)
+  dists <- dist.func(center, locs)
   first <- which.min(dists)
   unsolved <- seq_len(nrow(locs))
   unsolved <- unsolved[-first]
@@ -43,7 +149,7 @@ max_min_ordering <- function(locs, dist_func) {
     for (i in unsolved) {
       loc_i <- locs[i, ]
       dim(loc_i) <- c(1, ncol(locs))
-      dists <- dist_func(loc_i, in_order)
+      dists <- dist.func(loc_i, in_order)
       candiate_dist <- min(dists) # min distance from loc(i) to already ordered points
       if (candiate_dist > max_min) {
         max_min <- candiate_dist # loc(i) has a larger minimum distance from already ordered points
@@ -66,6 +172,7 @@ max_min_ordering <- function(locs, dist_func) {
 #' @param dist_func Any distance function with a signature of dist(query_location, locations_matrix)
 #'
 #' @return A vector containing the indices of the neighbors
+#' @noRd
 knn_indices <- function(ordered_locs, query, n_neighbors, dist_func, dist_func_code) {
   if (dist_func_code == "custom") {
     dists <- dist_func(query, ordered_locs)
@@ -91,14 +198,16 @@ knn_indices <- function(ordered_locs, query, n_neighbors, dist_func, dist_func_c
 #'
 #' @return A list containing two matrices, each with one row per location:
 #' an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
+#' @noRd
 sparseNN <- function(ordered_locs, n_neighbors, dist_func, dist_func_code, ordered_locs_pred = NULL) {
-  ee <- min(apply(ordered_locs, 2, stats::sd))
-  n <- nrow(ordered_locs)
-  ordered_locs <- ordered_locs + matrix(
-    ee * 1e-04 *
-      stats::rnorm(n * ncol(ordered_locs)),
-    n, ncol(ordered_locs)
-  )
+#  ee <- min(apply(ordered_locs, 2, stats::sd))
+#  n <- nrow(ordered_locs)
+#  ordered_locs <- ordered_locs + matrix(
+#    ee * 1e-04 *
+#      stats::rnorm(n * ncol(ordered_locs)),
+#    n, ncol(ordered_locs)
+#  )
+  ordered_locs <- noise_locs(ordered_locs)
   indices_matrix <- matrix(
     data = NA, nrow = nrow(ordered_locs),
     ncol = n_neighbors
@@ -193,7 +302,54 @@ calc.q <- function(nn.obj, firstind.pred) {
   return(list(q.y = q.y, q.z = q.z))
 }
 
+#' Specify a multivariate Vecchia approximation
+#'
+#' Specifies a multivariate Vecchia approximation for later use in likelihood
+#' evaluation or prediction. This function does not depend on parameter values,
+#' and only has to be run once before repeated likelihood evaluations. This
+#' function is a multivariate version of
+#' \code{\link[GPvecchia]{vecchia_specify}}.
+#'
+#' @param locs.list List of observed locations. Each each element should be a
+#' matrix containing the locs for the corresponding outcome variable.
+#' @param m Number of nearby points to condition on.
+#' @param locs.list.pred List of locations at which to make predictions. Each
+#' element should be a matrix containing the locs for the corresponding outcome
+#' variable.
+#' @param dist.func Any distance function with a signature of
+#' dist(query_location, locations_matrix). Defaults to Euclidean distance.
+#' @param ordering.pred Should "obspred" or "general" ordering be used for
+#' prediction? See \code{\link[GPvecchia]{vecchia_specify}}. Defaults to
+#' "obspred".
+#' @param pred.cond Should prediction conditioning be "general" or
+#' "independent"? See \code{\link[GPvecchia]{vecchia_specify}}. Defaults to
+#' "independent".
+#'
+#' @details This function should produce identical results to
+#' \code{\link[GPvecchia]{vecchia_specify}} for univariate problems, although
+#' it has fewer options. We recommend that
+#' \code{\link[GPvecchia]{vecchia_specify}} be used in the univariate case.
+#'
+#' @return An object that specifies the multivariate Vecchia approximation for
+#' later use in likelihood evaluation or prediction.
+#'
+#' @seealso \code{\link[GPvecchia]{vecchia_specify}}
+#'
+#' @references
+#' \itemize{
+#' \item Katzfuss, M., and Guinness, J. "A general framework for Vecchia
+#' approximations of Gaussian processes", Statistical Science (2021)
+#' 36(1):124-141.
+#' }
+#'
 #' @export
+#' @examples
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' locs <- as.matrix(soil[,1:2])
+#' locsm <- list()
+#' locsm[[1]] <- locsm[[2]] <- locs
+#' soil.va <- vecchia_Mspecify(locsm, m=10)
 vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
   dist.func = NULL,
   ordering.pred = c("obspred", "general"),
@@ -301,17 +457,69 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
   ))
 }
 
-# This function computes the U matrix for a Vecchia approximation similar
-# to the createU function from the GPvecchia package. The critical
-# difference is that it can handle multivariate input data.
-#
-# locs.list is a list of coordinates (one for each outcome variable)
-# params is a vector of parameters that is split into its relevant
-# parts using the create.param.sequence function. Note that currently
-# it allows only one scale parameter per outcome. This needs to be
-# fixed.
+#' Create the sparse triangular matrix U for multivariate Vecchia models
+#'
+#' This creates the sparse triangular matrix U for multivariate Vecchia
+#' models. This matrix can be used to estimate the likelihood or transform
+#' the data to be iid. This function is a multivariate version of
+#' \code{\link[GPvecchia]{createU}}.
+#'
+#' @param vec.approx Object returned by \code{\link{vecchia_Mspecify}}.
+#' @param params Vector of covariance parameters. See
+#' \code{\link{create.param.sequence}} or the examples below for details
+#' about the format of this vector.
+#' @param cov_func The function used to compute the covariance between two
+#' observations. Defaults to a Matern model.
+#'
+#' @details This function will be much slower if a non-default cov_func is
+#' specified. More importantly, there is no guarantee that the resulting
+#' covariance matrices will be positive definite. We recommend using the
+#' default (Matern) covariance function unless you know exactly what you are
+#' doing. See Apanasovich et al. (2012) for a description of how the
+#' cross-covariances are computed.
+#'
+#' @return A list containing the sparse upper trianguler U, plus additional
+#' objects required for other functions.
+#'
+#' @seealso \code{\link[GPvecchia]{createU}}, \code{\link{vecchia_Mspecify}},
+#' \code{\link{create.param.sequence}}
+#'
+#' @references
+#' \itemize{
+#' \item Apanasovich, T.V., Genton, M.G. and Sun, Y. "A valid Matérn class of
+#' cross-covariance functions for multivariate random fields with any number
+#' of components", Journal of the American Statistical Association (2012)
+#' 107(497):180-193.
+#' \item Katzfuss, M., and Guinness, J. "A general framework for Vecchia
+#' approximations of Gaussian processes", Statistical Science (2021)
+#' 36(1):124-141.
+#' }
+#'
 #' @useDynLib PrestoGP
 #' @export
+#' @examples
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' locs <- as.matrix(soil[,1:2])
+#' locsm <- list()
+#' locsm[[1]] <- locsm[[2]] <- locs
+#' soil.va <- vecchia_Mspecify(locsm, m=10)
+#'
+#' pseq <- create.param.sequence(2)
+#' # Initialize the vector of covariance parameters
+#' params <- rep(NA, pseq[5,2])
+#' # Sigma parameters:
+#' params[pseq[1,1]:pseq[1,2]] <- c(100, 80)
+#' # Scale parameters:
+#' params[pseq[2,1]:pseq[2,2]] <- c(60, 50)
+#' # Smoothness parameters:
+#' params[pseq[3,1]:pseq[3,2]] <- c(0.5, 0.5)
+#' # Nuggets:
+#' params[pseq[4,1]:pseq[4,2]] <- c(30, 30)
+#' # Correlation:
+#' params[pseq[5,1]:pseq[5,2]] <- -0.9
+#'
+#' soil.u <- createUMultivariate(soil.va, params)
 createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
   if (is.null(cov_func)) {
     cov_func <- fields::Matern
