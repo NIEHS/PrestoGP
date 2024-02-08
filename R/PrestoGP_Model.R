@@ -110,8 +110,7 @@ setMethod("initialize", "PrestoGPModel", function(.Object, ...) {
   .Object
 })
 
-setGeneric("show_theta", function(object, Y_names)
-    standardGeneric("show_theta"))
+setGeneric("show_theta", function(object, Y_names) standardGeneric("show_theta"))
 setGeneric(
   "prestogp_fit",
   function(model, Y, X, locs, scaling = NULL, apanasovich = FALSE,
@@ -120,7 +119,7 @@ setGeneric(
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     family = c("gaussian", "binomial"), nfolds = 10, foldid = NULL,
     parallel = FALSE) {
-      standardGeneric("prestogp_fit")
+    standardGeneric("prestogp_fit")
   }
 )
 
@@ -565,9 +564,9 @@ setMethod("estimate_betas", "PrestoGPModel", function(model, family, nfolds,
       parallel = parallel
     )
   } else {
-      model@linear_model <- cv.glmnet(as.matrix(model@X_tilde),
-        as.matrix(model@y_tilde), alpha = model@alpha, family = family,
-        fnolds = nfolds, foldid = foldid, parallel = parallel)
+    model@linear_model <- cv.glmnet(as.matrix(model@X_tilde),
+      as.matrix(model@y_tilde), alpha = model@alpha, family = family,
+      fnolds = nfolds, foldid = foldid, parallel = parallel)
   }
   idmin <- which(model@linear_model$lambda == model@linear_model$lambda.min)
   semin <- model@linear_model$cvm[idmin] + model@linear_model$cvsd[idmin]

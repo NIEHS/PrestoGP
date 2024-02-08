@@ -52,18 +52,18 @@ glmnet_penalty <- function(beta, lambda, alpha) {
 #  df_obs <- obs_coords_scaled
 
 #  for (i in seq_len(nrow(new_coords))) {
-    # print(i)
+# print(i)
 #    locs.test.i <- rep.row(df_new[i, ], nrow(df_obs))
 #    dist.op <- fields::rdist.vec(locs.test.i, df_obs)
 #    Sigma.op <- cov.pars[1] * fields::Exponential(dist.op, range = 1)
 #    s.op <- sort(dist.op, index.return = TRUE)
 #    s.idx <- s.op$ix[1:NN]
-    # Get the closest "NN" observations
+# Get the closest "NN" observations
 #    dist.oo <- fields::rdist(df_obs[s.idx, ], df_obs[s.idx, ])
 #    Sigma.oo <- cov.pars[4] * diag(NN) +
 #      cov.pars[1] * fields::Exponential(dist.oo, range = 1)
 #    oo <- Y_obs[s.idx]
-    ## kriging predictor (posterior mean)
+## kriging predictor (posterior mean)
 #    mean_trend <- mean(oo)
 #    Kr.prediction[i] <- mean_trend + t(Sigma.op[s.idx]) %*% solve(Sigma.oo, oo - mean_trend)
 #
@@ -327,22 +327,22 @@ noise_locs <- function(locs, eps = 1e-4) {
 # eliminate_dupes
 #
 # Eliminates duplicate locs by adding noise if needed
-eliminate_dupes <- function(locs, locs.pred=NULL) {
+eliminate_dupes <- function(locs, locs.pred = NULL) {
   locs.all <- NULL
-  for (i in 1:length(locs)) {
+  for (i in seq_along(locs)) {
     locs.all <- rbind(locs.all, locs[[i]])
   }
   if (!is.null(locs.pred)) {
-    for (i in 1:length(locs.pred)) {
+    for (i in seq_along(locs.pred)) {
       locs.all <- rbind(locs.all, locs.pred[[i]])
     }
   }
   if (sum(duplicated(locs.all)) > 0) {
-    for (i in 1:length(locs)) {
+    for (i in seq_along(locs)) {
       locs[[i]] <- noise_locs(locs[[i]])
     }
     if (!is.null(locs.pred)) {
-      for (i in 1:length(locs.pred)) {
+      for (i in seq_along(locs.pred)) {
         locs.pred[[i]] <- noise_locs(locs.pred[[i]])
       }
     }

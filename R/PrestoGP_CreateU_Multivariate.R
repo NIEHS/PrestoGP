@@ -131,7 +131,6 @@ create.param.sequence <- function(P, ns = 1) {
 max_min_ordering <- function(locs, dist.func = NULL) {
   if (is.null(dist.func)) {
     dist.func <- fields::rdist
-    dist.func.code <- "rdist"
   }
   center <- matrix(colMeans(locs), ncol = ncol(locs))
   # find the point closest to the mean of all points
@@ -200,13 +199,13 @@ knn_indices <- function(ordered_locs, query, n_neighbors, dist_func, dist_func_c
 #' an indices matrix with the indices of nearest neighbors for each location, and a distance matrix with the associated distances
 #' @noRd
 sparseNN <- function(ordered_locs, n_neighbors, dist_func, dist_func_code, ordered_locs_pred = NULL) {
-#  ee <- min(apply(ordered_locs, 2, stats::sd))
-#  n <- nrow(ordered_locs)
-#  ordered_locs <- ordered_locs + matrix(
-#    ee * 1e-04 *
-#      stats::rnorm(n * ncol(ordered_locs)),
-#    n, ncol(ordered_locs)
-#  )
+  #  ee <- min(apply(ordered_locs, 2, stats::sd))
+  #  n <- nrow(ordered_locs)
+  #  ordered_locs <- ordered_locs + matrix(
+  #    ee * 1e-04 *
+  #      stats::rnorm(n * ncol(ordered_locs)),
+  #    n, ncol(ordered_locs)
+  #  )
   ordered_locs <- noise_locs(ordered_locs)
   indices_matrix <- matrix(
     data = NA, nrow = nrow(ordered_locs),
