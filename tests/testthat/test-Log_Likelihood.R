@@ -287,6 +287,43 @@ test_that("mvnegloglik.full", {
     param.rho, 3
   )
 
+  params.init.flex.test <- c(
+    log(c(param.marg.var, param.marg.scale)),
+    gtools::logit(param.marg.smooth, 0, 2.5),
+    log(param.marg.nugget), atanh(param.rho)
+  )
+
+  # Check create.initial.values.flex:
+  expect_equal(params.init, params.init.flex.test, tolerance = 1e-3)
+
+  cov.list.init <- create.cov.upper.flex(
+    3,
+    param.marg.var,
+    param.marg.scale,
+    param.marg.smooth,
+    param.marg.nugget,
+    param.rho)
+
+  cov.mat.init <- cat.covariances(
+    locs.list, cov.list.init$variance,
+    cov.list.init$range,
+    cov.list.init$smoothness,
+    cov.list.init$nugget)
+
+  # Check create.cov.upper.flex:
+  cov.list.true <- readRDS("covlist.rds")
+  expect_equal(cov.list.init$variance,
+    cov.list.true$variance, tolerance = 1e-3)
+  expect_equal(cov.list.init$range,
+    cov.list.true$range, tolerance = 1e-3)
+  expect_equal(cov.list.init$smoothness,
+    cov.list.true$smoothness, tolerance = 1e-3)
+  expect_equal(cov.list.init$nugget,
+    cov.list.true$nugget, tolerance = 1e-3)
+  # Check cat.covariances:
+  cov.mat.true <- readRDS("covmat.rds")
+  expect_equal(cov.mat.init, cov.mat.true, tolerance = 1e-3)
+
   res.optim.NM <- optim(
     par = params.init, fn = mvnegloglik.full,
     locs = locs.list, y = unlist(y.list),
@@ -302,25 +339,7 @@ test_that("mvnegloglik.full", {
 
   param.seq.begin <- pseq[, 1]
   param.seq.end <- pseq[, 2]
-  params.init.final <- res.optim.NM$par
-  params.init.final.t <- c(
-    exp(params.init.final[param.seq.begin[1]:param.seq.end[2]]),
-    gtools::inv.logit(params.init.final[
-      param.seq.begin[3]:param.seq.end[3]
-    ], 0, 2.5),
-    exp(params.init.final[param.seq.begin[4]:param.seq.end[4]]),
-    tanh(params.init.final[
-      param.seq.begin[5]:param.seq.end[5]
-    ])
-  )
-
-  params.final.flex.test <- create.initial.values.flex(
-    params.init.final.t[param.seq.begin[1]:param.seq.end[1]],
-    params.init.final.t[param.seq.begin[2]:param.seq.end[2]],
-    params.init.final.t[param.seq.begin[3]:param.seq.end[3]],
-    params.init.final.t[param.seq.begin[4]:param.seq.end[4]],
-    params.init.final.t[param.seq.begin[5]:param.seq.end[5]], 3
-  )
+  params.init.final.t <- unlog.params(res.optim.NM$par, pseq, 3)
 
   cov.list <- create.cov.upper.flex(
     3,
@@ -352,15 +371,4 @@ test_that("mvnegloglik.full", {
   expect_equal(LL.full.calc, LL.full.mv, tolerance = 1e-3)
   # Full likelihood should equal the Vecchia likelihood
   expect_equal(LL.full.mv, LL.vecchia.mv, tolerance = 1e-3)
-  # Check create.initial.values.flex:
-  expect_equal(params.init.final, params.final.flex.test, tolerance = 1e-3)
-  # Check create.cov.upper.flex:
-  cov.list.true <- readRDS("covlist.rds")
-  expect_equal(cov.list$variance, cov.list.true$variance, tolerance = 1e-3)
-  expect_equal(cov.list$range, cov.list.true$range, tolerance = 1e-3)
-  expect_equal(cov.list$smoothness, cov.list.true$smoothness, tolerance = 1e-3)
-  expect_equal(cov.list$nugget, cov.list.true$nugget, tolerance = 1e-3)
-  # Check cat.covariances:
-  cov.mat.true <- readRDS("covmat.rds")
-  expect_equal(cov.mat, cov.mat.true, tolerance = 1e-3)
 })

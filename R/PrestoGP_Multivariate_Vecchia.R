@@ -1,12 +1,16 @@
-#' Title
+#' Multivariate Vecchia PrestoGP model class
 #'
-#' @slot model PrestoGPModel.
+#' This class is used to create multivariate models with a likelihood function
+#' conditioned on a subset of the observations (i.e., Vecchia models). See
+#' \code{\link{PrestoGPModel}} for a description of the slots.
+#'
+#' @seealso \code{\link{PrestoGPModel}}
 #'
 #' @export MultivariateVecchiaModel
 #'
 #' @examples
+#' pgp.mmodel <- new("MultivariateVecchiaModel", n_neighbors = 25)
 #' @include PrestoGP_Model.R
-#' @noRd
 MultivariateVecchiaModel <- setClass("MultivariateVecchiaModel",
   contains = "PrestoGPModel"
 )
@@ -27,24 +31,7 @@ setMethod("initialize", "MultivariateVecchiaModel", function(.Object, n_neighbor
   .Object
 })
 
-#' Make predictions using a previously fit spatiotemporal model.
-#'
-#' @param model A model object returned by prestogp_fit.
-#' @param X Independent variable matrix for prediction.
-#' @param locs Locations matrix for which the value is predicted.
-#' @param m The number of neighbors to condition on (if not provided, training value of m will be used).
-#'
-#' @return predicted values for the dependent variable
-#' @export
-#'
-#' @examples
-#'
-#' ...
-#' model <- SpatiotemporalModel()
-#' model <- prestogp_fit(model, logNO2, X, locs)
-#' prediction <- prestogp_predict(model, X.test, locs.test)
-#' Vec.mean <- prediction[[1]]
-#' Vec.sds <- prediction[[2]]
+#' @rdname prestogp_predict
 setMethod("prestogp_predict", "MultivariateVecchiaModel",
   function(model, X, locs, m = NULL, ordering.pred = c("obspred", "general"), pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
     # validate parameters
@@ -73,6 +60,11 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
 
     locs.train.scaled <- scale_locs(model, model@locs_train)
     locs.scaled <- scale_locs(model, locs)
+    if (model@apanasovich & (length(model@locs_train) > 1)) {
+      locs.nd <- eliminate_dupes(locs.train.scaled, locs.scaled)
+      locs.train.scaled <- locs.nd$locs
+      locs.scaled <- locs.nd$locs.pred
+    }
     vec.approx.test <- vecchia_Mspecify(locs.train.scaled, m,
       locs.list.pred = locs.scaled,
       ordering.pred = ordering.pred,
@@ -232,11 +224,12 @@ setMethod("specify", "MultivariateVecchiaModel", function(model) {
 #' estimate_theta
 #'
 #' Estimate covariance parameters during a single round of model optimization
-#'
+#
 #' @param model The model to estimate theta for
 #' @param locs the locations matrix
 #'
 #' @return a model with an updated covariance parameters estimate
+#' @noRd
 setMethod("estimate_theta", "MultivariateVecchiaModel", function(model, locs, optim.control, method) {
   P <- length(locs)
   if (model@apanasovich) {
