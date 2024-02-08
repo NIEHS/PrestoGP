@@ -77,9 +77,6 @@ code/mitchell_tests/
 # Insang's negative value exploration script
 tools/negative_exploration
 
-# data files
-data
-
 # Automatic Emacs backup files
 **/*~
 

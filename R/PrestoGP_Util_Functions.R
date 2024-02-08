@@ -1,23 +1,23 @@
 ################################################################################
 # SCAD Penalty value
 ################################################################################
-SCAD_Penalty_Loglike <- function(beta.in, lambda) {
-  penalty <- matrix(NA, nrow = nrow(beta.in), ncol = ncol(beta.in))
-  for (j in seq_len(nrow(beta.in))) {
-    beta.j <- beta.in[j, ]
-    idx1 <- abs(beta.j) <= lambda
-    idx2 <- abs(beta.j) > lambda & abs(beta.j) <= 3.7 * lambda
-    idx3 <- abs(beta.j) > 3.7 * lambda
-    penalty[j, idx1] <- lambda[idx1] * beta.j[idx1]
-    penalty[j, idx2] <- -(abs(beta.j[idx2])^2 - 7.4 * lambda[idx2] * abs(beta.j[idx2]) + lambda[idx2]^2) / (5.4)
-    penalty[j, idx3] <- (3.7 * lambda[idx3]^2 + lambda[idx3]^2) / 2
-  }
-
-
-  loglik.penalty <- lambda * colSums(penalty)
-
-  return(loglik.penalty)
-}
+#SCAD_Penalty_Loglike <- function(beta.in, lambda) {
+#  penalty <- matrix(NA, nrow = nrow(beta.in), ncol = ncol(beta.in))
+#  for (j in seq_len(nrow(beta.in))) {
+#    beta.j <- beta.in[j, ]
+#    idx1 <- abs(beta.j) <= lambda
+#    idx2 <- abs(beta.j) > lambda & abs(beta.j) <= 3.7 * lambda
+#    idx3 <- abs(beta.j) > 3.7 * lambda
+#    penalty[j, idx1] <- lambda[idx1] * beta.j[idx1]
+#    penalty[j, idx2] <- -(abs(beta.j[idx2])^2 - 7.4 * lambda[idx2] * abs(beta.j[idx2]) + lambda[idx2]^2) / (5.4)
+#    penalty[j, idx3] <- (3.7 * lambda[idx3]^2 + lambda[idx3]^2) / 2
+#  }
+#
+#
+#  loglik.penalty <- lambda * colSums(penalty)
+#
+#  return(loglik.penalty)
+#}
 
 #' glmnet_penalty
 #'
@@ -28,103 +28,96 @@ SCAD_Penalty_Loglike <- function(beta.in, lambda) {
 #' @param alpha the L1 vs L2 coefficient (0 means all L2, 1 means all L1)
 #'
 #' @return a penalty score
+#' @noRd
 glmnet_penalty <- function(beta, lambda, alpha) {
   return(lambda * ((1 - alpha) * sqrt(sum(beta^2)) + alpha * sum(abs(beta))))
 }
 
-#' Ordinary Spatiotemporal Kriging Prediction with a Local S-T neigborhood.
-#'
-#' @param new_coords Locations to predict
-#' @param obs_coords Training locations
-#' @param Y_obs Training dependent variable vector
-#' @param cov.pars Estimated covariance parameters
-#' @param NN number of nearest neighbors to use
-#'
-#' @return A dataframe with predicted means and variances
-#' @export
-#'
-#' @examples
-#' @noRd
-Kr_pred <- function(new_coords, obs_coords, Y_obs, cov.pars, NN) {
-  Kr.prediction <- matrix(NA, nrow = nrow(new_coords), ncol = 1)
-  Kr.Var <- matrix(NA, nrow = nrow(new_coords), ncol = 1)
+# Ordinary Spatiotemporal Kriging Prediction with a Local S-T neighborhood.
+#
+# @param new_coords Locations to predict
+# @param obs_coords Training locations
+# @param Y_obs Training dependent variable vector
+# @param cov.pars Estimated covariance parameters
+# @param NN number of nearest neighbors to use
+#
+# @return A dataframe with predicted means and variances
+#Kr_pred <- function(new_coords, obs_coords, Y_obs, cov.pars, NN) {
+#  Kr.prediction <- matrix(NA, nrow = nrow(new_coords), ncol = 1)
+#  Kr.Var <- matrix(NA, nrow = nrow(new_coords), ncol = 1)
+#
+#  new_coords_scaled <- cbind(new_coords[, 1] / cov.pars[2], new_coords[, 2] / cov.pars[2], new_coords[, 3] / cov.pars[3])
+#  obs_coords_scaled <- cbind(obs_coords[, 1] / cov.pars[2], obs_coords[, 2] / cov.pars[2], obs_coords[, 3] / cov.pars[3])
+#  df_new <- new_coords_scaled
+#  df_obs <- obs_coords_scaled
 
-  new_coords_scaled <- cbind(new_coords[, 1] / cov.pars[2], new_coords[, 2] / cov.pars[2], new_coords[, 3] / cov.pars[3])
-  obs_coords_scaled <- cbind(obs_coords[, 1] / cov.pars[2], obs_coords[, 2] / cov.pars[2], obs_coords[, 3] / cov.pars[3])
-  df_new <- new_coords_scaled
-  df_obs <- obs_coords_scaled
-
-  for (i in seq_len(nrow(new_coords))) {
+#  for (i in seq_len(nrow(new_coords))) {
     # print(i)
-    locs.test.i <- rep.row(df_new[i, ], nrow(df_obs))
-    dist.op <- fields::rdist.vec(locs.test.i, df_obs)
-    Sigma.op <- cov.pars[1] * fields::Exponential(dist.op, range = 1)
-    s.op <- sort(dist.op, index.return = TRUE)
-    s.idx <- s.op$ix[1:NN]
+#    locs.test.i <- rep.row(df_new[i, ], nrow(df_obs))
+#    dist.op <- fields::rdist.vec(locs.test.i, df_obs)
+#    Sigma.op <- cov.pars[1] * fields::Exponential(dist.op, range = 1)
+#    s.op <- sort(dist.op, index.return = TRUE)
+#    s.idx <- s.op$ix[1:NN]
     # Get the closest "NN" observations
-    dist.oo <- fields::rdist(df_obs[s.idx, ], df_obs[s.idx, ])
-    Sigma.oo <- cov.pars[4] * diag(NN) +
-      cov.pars[1] * fields::Exponential(dist.oo, range = 1)
-    oo <- Y_obs[s.idx]
+#    dist.oo <- fields::rdist(df_obs[s.idx, ], df_obs[s.idx, ])
+#    Sigma.oo <- cov.pars[4] * diag(NN) +
+#      cov.pars[1] * fields::Exponential(dist.oo, range = 1)
+#    oo <- Y_obs[s.idx]
     ## kriging predictor (posterior mean)
-    mean_trend <- mean(oo)
-    Kr.prediction[i] <- mean_trend + t(Sigma.op[s.idx]) %*% solve(Sigma.oo, oo - mean_trend)
+#    mean_trend <- mean(oo)
+#    Kr.prediction[i] <- mean_trend + t(Sigma.op[s.idx]) %*% solve(Sigma.oo, oo - mean_trend)
+#
+#    Kr.Var[i] <- cov.pars[1] - t(Sigma.op[s.idx]) %*% solve(Sigma.oo, Sigma.op[s.idx])
+#  }
+#
+#  Kr.Data <- data.frame(Kr.prediction, Kr.Var)
+#
+#  return(Kr.Data)
+#}
 
-    Kr.Var[i] <- cov.pars[1] - t(Sigma.op[s.idx]) %*% solve(Sigma.oo, Sigma.op[s.idx])
-  }
-
-  Kr.Data <- data.frame(Kr.prediction, Kr.Var)
-
-  return(Kr.Data)
-}
-
-#' ST_Krig_Param_Avg
-#'
-#' Spatiotemporal Kriging Maximum Likelihood Estiamtion based on an average of multiple random subsets.
-#'
-#' @param Y A vector containing training values for the dependent variable.
-#' @param locs A matrix containing the training spatial coordinates and times.
-#' @param p The number of data points to sample with each iteration.
-#' @param k The number of optimization iterations.
-#'
-#' @return a vector containing the covariance parameters
-#' @export
-#'
-#' @examples
-#' @noRd
-ST_Krig_Param_Avg <- function(Y, locs, p, k = 10) {
-  n <- length(Y)
-  mdl.geo.fit.avg <- list()
-  mdl.geo.fit.avg <- matrix(NA, nrow = k, ncol = 4)
-
-  for (i in 1:k) {
-    set.seed(i)
-    OK.fold <- sample(1:n, p, replace = FALSE)
-    Y.train <- Y[OK.fold]
-    locs.train <- locs[OK.fold, ]
-    D.sample <- rdist(locs.train[, 1:2])
-    t.sample <- rdist(locs.train[, 3])
-    theta.hat <- c(.9 * var(Y.train), mean(D.sample) / 4, mean(t.sample) / 4, 0.1 * var(Y.train)) # var,s-range,t-range,nugget
-    full.result <- optim(
-      par = log(theta.hat), fn = negloglik_full_ST,
-      locs = locs.train, y = Y.train, N = p,
-      control = list(trace = FALSE, maxit = 400)
-    )
-    mdl.geo.fit.avg[i, ] <- full.result$par
-  }
-
-  covparam <- exp(apply(mdl.geo.fit.avg, 2, mean))
-
-  return(covparam)
-}
+# ST_Krig_Param_Avg
+#
+# Spatiotemporal Kriging Maximum Likelihood Estimtion based on an average of multiple random subsets.
+#
+# @param Y A vector containing training values for the dependent variable.
+# @param locs A matrix containing the training spatial coordinates and times.
+# @param p The number of data points to sample with each iteration.
+# @param k The number of optimization iterations.
+#
+# @return a vector containing the covariance parameters
+#ST_Krig_Param_Avg <- function(Y, locs, p, k = 10) {
+#  n <- length(Y)
+#  mdl.geo.fit.avg <- list()
+#  mdl.geo.fit.avg <- matrix(NA, nrow = k, ncol = 4)
+#
+#  for (i in 1:k) {
+#    set.seed(i)
+#    OK.fold <- sample(1:n, p, replace = FALSE)
+#    Y.train <- Y[OK.fold]
+#    locs.train <- locs[OK.fold, ]
+#    D.sample <- rdist(locs.train[, 1:2])
+#    t.sample <- rdist(locs.train[, 3])
+#    theta.hat <- c(.9 * var(Y.train), mean(D.sample) / 4, mean(t.sample) / 4, 0.1 * var(Y.train)) # var,s-range,t-range,nugget
+#    full.result <- optim(
+#      par = log(theta.hat), fn = negloglik_full_ST,
+#      locs = locs.train, y = Y.train, N = p,
+#      control = list(trace = FALSE, maxit = 400)
+#    )
+#    mdl.geo.fit.avg[i, ] <- full.result$par
+#  }
+#
+#  covparam <- exp(apply(mdl.geo.fit.avg, 2, mean))
+#
+#  return(covparam)
+#}
 
 
 ################################################################################
 ## replicate rows, helps with vector distance
 ################################################################################
-rep.row <- function(x, n) {
-  matrix(rep(x, each = n), nrow = n)
-}
+#rep.row <- function(x, n) {
+#  matrix(rep(x, each = n), nrow = n)
+#}
 
 
 ################################################################################
@@ -158,9 +151,6 @@ transform_iid <- function(data, vecchia.approx, covparms, nuggets) {
 transform_miid <- function(data, vecchia.approx, params) {
   # compute required matrices
   U.obj <- createUMultivariate(vecchia.approx, params)
-  if (sum(is.na(U.obj$U)) > 0) {
-    browser()
-  }
   V.ord <- U2V(U.obj)
   U.z <- U.obj$U[!U.obj$latent, ]
   U.y <- U.obj$U[U.obj$latent, ]
@@ -227,14 +217,77 @@ revMat <- function(mat) {
   mat[row_seq, col_seq, drop = FALSE]
 }
 
+#' Multivariate Vecchia prediction
+#'
+#' This function is used to make predictions based on multivariate Vecchia
+#' models. It is a multivariate version of
+#' \code{\link[GPvecchia]{vecchia_prediction}}.
+#'
+#' @param z The observed data.
+#' @param vecchia.approx A Vecchia object returned by
+#' \code{\link{vecchia_Mspecify}}.
+#' @param covparms Vector of covariance parameters. See
+#' \code{\link{create.param.sequence}} or the examples below for details
+#' about the format of this vector.
+#' @param var.exact Should prediction variances by computed exactly, or is a
+#' (faster) approximation acceptable? See
+#' \code{\link[GPvecchia]{vecchia_prediction}}.
+#' @param return.values Values that should be returned. Possible values
+#' include "mean", "meanvar", "meanmat", and "all". See
+#' \code{\link[GPvecchia]{vecchia_prediction}}. Defaults to "mean".
+#'
+#' @return The posterior means/variances/V matrices at the observed and
+#' unobserved locations. See \code{\link[GPvecchia]{vecchia_prediction}}.
+#'
+#' @seealso \code{\link[GPvecchia]{vecchia_prediction}},
+#' \code{\link{vecchia_Mspecify}}, \code{\link{create.param.sequence}}
+#'
+#' @references
+#' \itemize{
+#' \item Katzfuss, M., and Guinness, J. "A general framework for Vecchia
+#' approximations of Gaussian processes", Statistical Science (2021)
+#' 36(1):124-141.
+#' \item Katzfuss, M., Guinness, J., Gong, W. and Zilber, D. "Vecchia
+#' approximations of Gaussian-process predictions", Journal of Agricultural,
+#' Biological and Environmental Statistics (2020) 25:383-414.
+#' }
+#'
 #' @export
+#' @examples
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' locs <- as.matrix(soil[,1:2])
+#' locsm <- list()
+#' locsm[[1]] <- locsm[[2]] <- locs
+#' locsp <- locsm
+#' locsp[[1]] <- locsp[[1]] + 0.5
+#' locsp[[2]] <- locsp[[2]] - 0.5
+#' soil.vap <- vecchia_Mspecify(locsm, m=10, locs.list.pred=locsp)
+#'
+#' pseq <- create.param.sequence(2)
+#' # Initialize the vector of covariance parameters
+#' params <- rep(NA, pseq[5,2])
+#' # Sigma parameters:
+#' params[pseq[1,1]:pseq[1,2]] <- c(100, 80)
+#' # Scale parameters:
+#' params[pseq[2,1]:pseq[2,2]] <- c(60, 50)
+#' # Smoothness parameters:
+#' params[pseq[3,1]:pseq[3,2]] <- c(0.5, 0.5)
+#' # Nuggets:
+#' params[pseq[4,1]:pseq[4,2]] <- c(30, 30)
+#' # Correlation:
+#' params[pseq[5,1]:pseq[5,2]] <- -0.9
+#'
+#' soil.yhat <- vecchia_Mprediction(rnorm(nrow(locs)), soil.vap, params)
 vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL, return.values = "mean") {
-  GPvecchia:::removeNAs()
+  removeNAs <- getFromNamespace("removeNAs", "GPvecchia")
+  removeNAs()
   U.obj <- createUMultivariate(vecchia.approx, covparms)
   V.ord <- U2V(U.obj)
   #    if (length(U.obj$zero.nugg) > 0)
   #        warning("Rows/cols of V have been removed for data with zero noise")
-  vecchia.mean <- GPvecchia:::vecchia_mean(z, U.obj, V.ord)
+  vecchia_mean <- getFromNamespace("vecchia_mean", "GPvecchia")
+  vecchia.mean <- vecchia_mean(z, U.obj, V.ord)
   return.list <- list(
     mu.pred = vecchia.mean$mu.pred, mu.obs = vecchia.mean$mu.obs,
     var.pred = NULL, var.obs = NULL, V.ord = NULL, U.obj = NULL
@@ -247,9 +300,52 @@ vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL, r
     if (is.null(var.exact)) {
       var.exact <- (sum(!vecchia.approx$obs) < 4 * 10000)
     }
-    vars.vecchia <- GPvecchia:::vecchia_var(U.obj, V.ord, exact = var.exact)
+    vecchia_var <- getFromNamespace("vecchia_var", "GPvecchia")
+    vars.vecchia <- vecchia_var(U.obj, V.ord, exact = var.exact)
     return.list$var.pred <- vars.vecchia$vars.pred
     return.list$var.obs <- vars.vecchia$vars.obs
   }
   return(return.list)
+}
+
+# noise_locs
+#
+# Adds a small amount of noise to the locs to avoid numeric issues related
+# to duplicated locs
+noise_locs <- function(locs, eps = 1e-4) {
+  ee <- min(apply(locs, 2, stats::sd))
+  n <- nrow(locs)
+  p <- ncol(locs)
+  locs <- locs + matrix(
+    ee * eps *
+      stats::rnorm(n * p),
+    n, p
+  )
+  return(locs)
+}
+
+# eliminate_dupes
+#
+# Eliminates duplicate locs by adding noise if needed
+eliminate_dupes <- function(locs, locs.pred=NULL) {
+  locs.all <- NULL
+  for (i in 1:length(locs)) {
+    locs.all <- rbind(locs.all, locs[[i]])
+  }
+  if (!is.null(locs.pred)) {
+    for (i in 1:length(locs.pred)) {
+      locs.all <- rbind(locs.all, locs.pred[[i]])
+    }
+  }
+  if (sum(duplicated(locs.all)) > 0) {
+    for (i in 1:length(locs)) {
+      locs[[i]] <- noise_locs(locs[[i]])
+    }
+    if (!is.null(locs.pred)) {
+      for (i in 1:length(locs.pred)) {
+        locs.pred[[i]] <- noise_locs(locs.pred[[i]])
+      }
+    }
+  }
+  return(list(locs = locs, locs.pred = locs.pred))
 }

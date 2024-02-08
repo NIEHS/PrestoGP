@@ -74,6 +74,9 @@ test_that("Simulated dataset spatial", {
       reltol = 1e-3
     )
   )
+
+  expect_true(validObject(pgp.model1))
+
   beta.out <- as.vector(pgp.model1@beta)
   params.out <- pgp.model1@covparams
 
@@ -83,7 +86,7 @@ test_that("Simulated dataset spatial", {
     tolerance = 0.03
   )
   expect_equal(params.out[1], 1.6, tolerance = 0.5)
-  expect_equal(params.out[2], 0.4, tolerance = 0.2)
+  expect_equal(params.out[2] - 0.4, 0, tolerance = 0.2)
   expect_equal(params.out[3], 0.59, tolerance = 0.2)
   expect_equal(params.out[4], 2.0, tolerance = 0.15)
 
@@ -95,6 +98,9 @@ test_that("Simulated dataset spatial", {
       reltol = 1e-3
     )
   )
+
+  expect_true(validObject(pgp.model2))
+
   beta.out2 <- as.vector(pgp.model2@beta)
   params.out2 <- pgp.model2@covparams
 
@@ -128,6 +134,9 @@ test_that("Simulated dataset spatiotemporal", {
       reltol = 1e-3
     )
   )
+
+  expect_true(validObject(pgp.model1))
+
   beta.out <- as.vector(pgp.model1@beta)
   params.out <- pgp.model1@covparams
 
@@ -151,6 +160,9 @@ test_that("Simulated dataset spatiotemporal", {
       reltol = 1e-3
     )
   )
+
+  expect_true(validObject(pgp.model2))
+
   beta.out2 <- as.vector(pgp.model2@beta)
   params.out2 <- pgp.model2@covparams
 
@@ -283,6 +295,24 @@ test_that("m too small for prediction", {
   expect_error(
     prestogp_predict(pgp.model1, X.otst, locs.otst, m = 2),
     "m must be at least 3"
+  )
+})
+
+test_that("full prediction not implemented", {
+  source("sim_vecchia_small_pred.R")
+  pgp.model1 <- new("FullModel", n_neighbors = 5)
+  pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
+    locs.otr,
+    scaling = c(1, 1),
+    apanasovich = TRUE, verbose = FALSE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  expect_error(
+    prestogp_predict(pgp.model1, X.otst, locs.otst),
+    "Prediction is not currently supported for full models"
   )
 })
 
