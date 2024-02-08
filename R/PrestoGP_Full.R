@@ -20,7 +20,7 @@ validityFullModel <- function(object) {
 }
 setValidity("FullModel", validityFullModel)
 
-setMethod("initialize", "FullModel", function(.Object, n_neighbors=0, ...) {
+setMethod("initialize", "FullModel", function(.Object, n_neighbors = 0, ...) {
   .Object <- callNextMethod()
   .Object@n_neighbors <- 0
   .Object@min_m <- 0
