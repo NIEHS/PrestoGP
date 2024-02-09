@@ -1,12 +1,16 @@
-#' Model created with a likelihood function conditioned on all observations.
+#' Univariate full PrestoGP model class
 #'
-#' @slot model VecchiaModel
+#' This class is used to create univariate models created with a likelihood
+#' function conditioned on all observations. See \code{\link{PrestoGPModel}}
+#' for a description of the slots.
+#'
+#' @seealso \code{\link{PrestoGPModel}}
 #'
 #' @export FullModel
 #'
 #' @examples
+#' pgp.model <- new("FullModel")
 #' @include PrestoGP_Vecchia.R
-#' @noRd
 FullModel <- setClass("FullModel",
   contains = "VecchiaModel"
 )
@@ -15,7 +19,8 @@ validityFullModel <- function(object) {
   TRUE
 }
 setValidity("FullModel", validityFullModel)
-setMethod("initialize", "FullModel", function(.Object, ...) {
+
+setMethod("initialize", "FullModel", function(.Object, n_neighbors = 0, ...) {
   .Object <- callNextMethod()
   .Object@n_neighbors <- 0
   .Object@min_m <- 0
@@ -23,7 +28,9 @@ setMethod("initialize", "FullModel", function(.Object, ...) {
   .Object
 })
 
-setMethod("prestogp_predict", "FullModel", function(model, X, locs, m = NULL) {
+#' @rdname prestogp_predict
+setMethod("prestogp_predict", "FullModel", function(model,
+  X, locs, m = NULL, ordering.pred = c("obspred", "general"), pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
   stop("Prediction is not currently supported for full models")
 })
 
@@ -33,18 +40,6 @@ setMethod("specify", "FullModel", function(model) {
 
 setMethod("compute_residuals", "FullModel", function(model, Y, Y.hat) {
   model@res <- as.double(Y - Y.hat)
-  invisible(model)
-})
-
-setMethod("estimate_theta", "FullModel", function(model, locs) {
-  n <- length(model@Y_train)
-  full.result <- optim(
-    par = log(model@covparams), fn = negloglik_full_ST,
-    y = model@res, locs = locs, N = n, method = "Nelder-Mead",
-    control = list(trace = 0)
-  )
-  model@covparams <- exp(full.result$par)
-  model@LL_Vecchia_krig <- full.result$value
   invisible(model)
 })
 
