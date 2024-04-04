@@ -56,6 +56,28 @@ test_that("locs/X length mismatch", {
   )
 })
 
+test_that("Invalid lod input", {
+  model <- new("MultivariateVecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, list(1:3), list(as.matrix(1:3)),
+      list(as.matrix(1:3)), lod = 1:2
+    ),
+    "lod must be a list for multivariate models"
+  )
+})
+
+test_that("locs/lod length mismatch", {
+  model <- new("MultivariateVecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, list(1:3), list(as.matrix(1:3)),
+      list(as.matrix(1:3)), lod = list(1, 2)
+    ),
+    "locs and lod must have the same length"
+  )
+})
+
 test_that("locs not a matrix", {
   model <- new("MultivariateVecchiaModel")
   expect_error(
@@ -131,6 +153,61 @@ test_that("nrow(Y) != nrow(X)", {
       list(as.matrix(1:3)), list(as.matrix(1:4))
     ),
     "Each Y must have the same number of rows as X"
+  )
+})
+
+test_that("NA's in X", {
+  model <- new("MultivariateVecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, list(as.matrix(1:4)), list(as.matrix(c(1:3, NA))),
+      list(as.matrix(1:4))
+    ),
+    "X must not contain NA's"
+  )
+})
+
+test_that("NA's in locs", {
+  model <- new("MultivariateVecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, list(as.matrix(1:4)), list(as.matrix(1:4)),
+      list(as.matrix(c(1:3, NA)))
+    ),
+    "locs must not contain NA's"
+  )
+})
+
+test_that("NA's in Y", {
+  model <- new("MultivariateVecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, list(as.matrix(c(1:3, NA))), list(as.matrix(1:4)),
+      list(as.matrix(1:4))
+    ),
+    "Y contains NA's and impute.y is FALSE. Set impute.y=TRUE to impute missing Y's."
+  )
+})
+
+test_that("lod not numeric", {
+  model <- new("MultivariateVecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, list(as.matrix(c(1:4))), list(as.matrix(1:4)),
+      list(as.matrix(1:4)), lod = list("foo")
+    ),
+    "Each lod must be numeric"
+  )
+})
+
+test_that("length(lod) != 1", {
+  model <- new("MultivariateVecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, list(as.matrix(c(1:4))), list(as.matrix(1:4)),
+      list(as.matrix(1:4)), lod = list(1:2)
+    ),
+    "Each lod must have length 1"
   )
 })
 

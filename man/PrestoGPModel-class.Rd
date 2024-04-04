@@ -35,6 +35,10 @@ the glmnet model. See \code{\link[glmnet]{glmnet}}.}
 
 \item{\code{Y_train}}{A column matrix containing the original response values.}
 
+\item{\code{Y_bar}}{A vector containing the means of each outcome.}
+
+\item{\code{Y_obs}}{A logical vector used to track which values of Y are non-missing.}
+
 \item{\code{X_tilde}}{The matrix of transformed predictors.}
 
 \item{\code{y_tilde}}{The column matrix containing the transformed response values.}

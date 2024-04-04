@@ -81,7 +81,8 @@ setMethod("prestogp_predict", "VecchiaModel",
 
     # prediction function can return both mean and sds
     # returns a list with elements mu.pred,mu.obs,var.pred,var.obs,V.ord
-    Vec.mean <- pred$mu.pred + Vecchia.Pred # residual + mean trend
+    # residual + mean trend
+    Vec.mean <- model@Y_bar + pred$mu.pred + Vecchia.Pred
     if (return.values == "mean") {
       return.list <- list(means = Vec.mean)
     } else {
@@ -94,7 +95,7 @@ setMethod("prestogp_predict", "VecchiaModel",
   }
 )
 
-setMethod("check_input", "VecchiaModel", function(model, Y, X, locs) {
+setMethod("check_input", "VecchiaModel", function(model, Y, X, locs, center.y, impute.y, lod) {
   if (!is.matrix(locs)) {
     stop("locs must be a matrix")
   }
@@ -115,6 +116,35 @@ setMethod("check_input", "VecchiaModel", function(model, Y, X, locs) {
   }
   if (nrow(Y) != nrow(X)) {
     stop("Y must have the same number of rows as X")
+  }
+  if (sum(is.na(X)) > 0) {
+    stop("X must not contain NA's")
+  }
+  if (sum(is.na(locs)) > 0) {
+    stop("locs must not contain NA's")
+  }
+  if (sum(is.na(Y)) > 0 & !impute.y) {
+    stop("Y contains NA's and impute.y is FALSE. Set impute.y=TRUE to impute missing Y's.")
+  }
+  if (!is.null(lod)) {
+    if (!is.numeric(lod)) {
+      stop("lod must be numeric")
+    }
+    if (length(lod) != 1) {
+      stop("lod must have length 1")
+    }
+  }
+  model@Y_obs <- !is.na(as.vector(Y))
+  if (!is.null(lod)) {
+    Y[!model@Y_obs] <- lod / 2
+  }
+  if (center.y) {
+    model@Y_bar <- mean(Y, na.rm = TRUE)
+    Y <- Y - model@Y_bar
+    Y[is.na(Y)] <- 0
+  } else {
+    model@Y_bar <- 0
+    Y[is.na(Y)] <- mean(Y, na.rm = TRUE)
   }
   model@X_train <- X
   model@Y_train <- Y
@@ -137,6 +167,47 @@ setMethod("check_input_pred", "VecchiaModel", function(model, X, locs) {
   }
   if (ncol(X) != ncol(model@X_train)) {
     stop("X and X_train must have the same number of predictors")
+  }
+  invisible(model)
+})
+
+setMethod("impute_y", "VecchiaModel", function(model) {
+  if (sum(!model@Y_obs) > 0) {
+    Vecchia.Pred <- predict(model@linear_model,
+      newx = model@X_train[!model@Y_obs, ],
+      s = model@linear_model$lambda[model@lambda_1se_idx])
+    Vecchia.hat <- predict(model@linear_model,
+      newx = model@X_train[model@Y_obs, ],
+      s = model@linear_model$lambda[model@lambda_1se_idx])
+
+    # Test set prediction
+    res <- model@Y_train[model@Y_obs] - Vecchia.hat
+
+    locs.scaled <- scale_locs(model, model@locs_train)[[1]]
+    vec.approx.test <- vecchia_specify(locs.scaled[model@Y_obs, ],
+      model@n_neighbors,
+      locs.pred = locs.scaled[!model@Y_obs, ],
+      ordering.pred = "obspred", pred.cond = "independent")
+
+    ## carry out prediction
+    if (!model@apanasovich) {
+      pred <- vecchia_prediction(
+        res,
+        vec.approx.test,
+        c(model@covparams[1], 1, model@covparams[3]),
+        model@covparams[4],
+        return.values = "mean"
+      )
+    } else {
+      pred <- vecchia_prediction(
+        res,
+        vec.approx.test,
+        c(model@covparams[1], model@covparams[2], model@covparams[3]),
+        model@covparams[4], return.values = "mean"
+      )
+    }
+
+    model@Y_train[!model@Y_obs] <- pred$mu.pred + Vecchia.Pred
   }
   invisible(model)
 })

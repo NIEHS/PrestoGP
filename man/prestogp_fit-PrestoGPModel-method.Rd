@@ -16,6 +16,7 @@
   beta.hat = NULL,
   tol = 0.999999,
   max_iters = 100,
+  impute.y = FALSE,
   verbose = FALSE,
   optim.method = "Nelder-Mead",
   optim.control = list(trace = 0, reltol = 0.001, maxit = 5000),

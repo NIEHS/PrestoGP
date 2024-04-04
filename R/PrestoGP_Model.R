@@ -21,6 +21,8 @@ setOldClass("cv.glmnet")
 #' "super matrix" for multivariate models. See
 #' \code{\link[psych]{superMatrix}}.
 #' @slot Y_train A column matrix containing the original response values.
+#' @slot Y_bar A vector containing the means of each outcome.
+#' @slot Y_obs A logical vector used to track which values of Y are non-missing.
 #' @slot X_tilde The matrix of transformed predictors.
 #' @slot y_tilde The column matrix containing the transformed response values.
 #' @slot res numeric.
@@ -78,6 +80,8 @@ PrestoGPModel <- setClass("PrestoGPModel",
     linear_model = "cv.glmnet", # the linear model
     X_train = "matrix", # the original independent variable matrix
     Y_train = "matrix", # the original dependent variable matrix
+    Y_bar = "numeric", # the means of each outcome variable
+    Y_obs = "logical", # a logical vector indicating whether the ith observation was observed
     locs_train = "list", # the location / temporal matrix
     converged = "logical", # a logical variable that is true if the model fitting process has converged
     LL_Vecchia_krig = "numeric", # the value of the negative log likelihood function after optimization
@@ -115,7 +119,8 @@ setGeneric(
   "prestogp_fit",
   function(model, Y, X, locs, scaling = NULL, apanasovich = FALSE,
     covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100,
-    verbose = FALSE, optim.method = "Nelder-Mead",
+    center.y = NULL, impute.y = FALSE, lod = NULL, verbose = FALSE,
+    optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     family = c("gaussian", "binomial"), nfolds = 10, foldid = NULL,
     parallel = FALSE) {
@@ -214,11 +219,12 @@ setGeneric("compute_residuals", function(model, Y, Y.hat, family) standardGeneri
 setGeneric("transform_data", function(model, Y, X) standardGeneric("transform_data"))
 setGeneric("estimate_theta", function(model, locs, optim.control, method) standardGeneric("estimate_theta"))
 setGeneric("estimate_betas", function(model, family, nfolds, foldid, parallel) standardGeneric("estimate_betas"))
+setGeneric("impute_y", function(model) standardGeneric("impute_y"))
 setGeneric("compute_error", function(model, y, X) standardGeneric("compute_error"))
 setGeneric("scale_locs", function(model, locs) standardGeneric("scale_locs"))
 setGeneric("theta_names", function(model) standardGeneric("theta_names"))
 setGeneric("transform_covariance_parameters", function(model) standardGeneric("transform_covariance_parameters"))
-setGeneric("check_input", function(model, Y, X, locs) standardGeneric("check_input"))
+setGeneric("check_input", function(model, Y, X, locs, center.y, impute.y, lod) standardGeneric("check_input"))
 setGeneric("check_input_pred", function(model, X, locs) standardGeneric("check_input_pred"))
 
 #' show
@@ -329,6 +335,14 @@ setMethod(
 #' tol*previous_error (optional). Defaults to 0.999999.
 #' @param max_iters Maximum number of iterations for the model fitting
 #' procedure. Defaults to 100.
+#' @param center.y Should the Y's be mean centered before fitting the model?
+#' Defaults to TRUE for gaussian models and FALSE for binomial models.
+#' @param impute.y Should missing Y's be imputed? Defaults to FALSE.
+#' @param lod Limit of detection value(s). Any Y value less than lod is
+#' assumed to be missing when performing missing data imputation. Should be
+#' numeric for univariate models and a list for multivariate models, where
+#' each element of the list corresponds to an outcome. If not specified, it
+#' is assumed that no limit of detection exists. Ignored if impute.y is FALSE.
 #' @param verbose If TRUE, additional information about model fit will be
 #' printed. Defaults to FALSE.
 #' @param optim.method Optimization method to be used for the maximum
@@ -408,13 +422,33 @@ setMethod(
 setMethod(
   "prestogp_fit", "PrestoGPModel",
   function(model, Y, X, locs, scaling = NULL, apanasovich = NULL,
-    covparams = NULL, beta.hat = NULL, tol = 0.999999,
-    max_iters = 100, verbose = FALSE, optim.method = "Nelder-Mead",
+    covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100,
+    center.y = NULL, impute.y = FALSE, lod = NULL, verbose = FALSE,
+    optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     family = c("gaussian", "binomial"),
     nfolds = 10, foldid = NULL, parallel = FALSE) {
-    model <- check_input(model, Y, X, locs)
     family <- match.arg(family)
+    if (is.null(center.y)) {
+      if (family == "gaussian") {
+        center.y <- TRUE
+      } else {
+        center.y <- FALSE
+      }
+    }
+    model <- check_input(model, Y, X, locs, center.y, impute.y, lod)
+    if (is.null(lod)) {
+      lodv <- rep(Inf, nrow(model@Y_train))
+    } else {
+      if (is.numeric(lod)) {
+        lod <- list(lod)
+      }
+      lodv <- NULL
+      for (i in seq_along(lod)) {
+        lodv <- c(lodv, rep(lod[[i]] - model@Y_bar[i],
+            nrow(model@locs_train[[i]])))
+      }
+    }
     if (!is.null(beta.hat)) {
       if (!is.vector(beta.hat) | !is.numeric(beta.hat)) {
         stop("beta.hat parameter must be a numeric vector")
@@ -524,6 +558,9 @@ setMethod(
             s = "lambda.1se",
             type = "response")
         )
+        model <- impute_y(model)
+        alod <- !model@Y_obs & model@Y_train > lodv
+        model@Y_train[alod] <- lodv[alod]
         covparams.iter <- model@covparams
         Vecchia.SCAD.iter <- model@linear_model
       } else {
@@ -653,7 +690,7 @@ setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y, covparams)
     col.vars <- rep(NA, P)
     D.sample.bar <- rep(NA, model@nscale * P)
     for (i in 1:P) {
-      col.vars[i] <- var(Y[[i]])
+      col.vars[i] <- var(Y[[i]], na.rm = TRUE)
       N <- length(Y[[i]])
       # TODO find a better way to compute initial spatial range
       for (j in 1:model@nscale) {
