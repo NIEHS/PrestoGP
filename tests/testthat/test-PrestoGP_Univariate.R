@@ -64,6 +64,61 @@ test_that("nrow(Y) != nrow(X)", {
   )
 })
 
+test_that("NA's in X", {
+  model <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, as.matrix(1:4), as.matrix(c(1:3, NA)),
+      as.matrix(1:4)
+    ),
+    "X must not contain NA's"
+  )
+})
+
+test_that("NA's in locs", {
+  model <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, as.matrix(1:4), as.matrix(1:4),
+      as.matrix(c(1:3, NA))
+    ),
+    "locs must not contain NA's"
+  )
+})
+
+test_that("NA's in Y", {
+  model <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, as.matrix(c(1:3, NA)), as.matrix(1:4),
+      as.matrix(1:4)
+    ),
+    "Y contains NA's and impute.y is FALSE. Set impute.y=TRUE to impute missing Y's."
+  )
+})
+
+test_that("lod not numeric", {
+  model <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, as.matrix(c(1:4)), as.matrix(1:4),
+      as.matrix(1:4), impute.y = TRUE, lod = "foo",
+    ),
+    "lod must be numeric"
+  )
+})
+
+test_that("length(lod) != 1", {
+  model <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, as.matrix(c(1:4)), as.matrix(1:4),
+      as.matrix(1:4), impute.y = TRUE, lod = 1:2,
+    ),
+    "lod must have length 1"
+  )
+})
+
 test_that("Simulated dataset spatial", {
   load("sim_vecchia.RData")
   pgp.model1 <- new("VecchiaModel", n_neighbors = 25)
