@@ -5,6 +5,8 @@
 [![cov](https://NIEHS.github.io/PrestoGP/badges/coverage.svg)](https://github.com/NIEHS/PrestoGP/actions)
 [![lint](https://github.com/NIEHS/PrestoGP/actions/workflows/lint.yaml/badge.svg)](https://github.com/NIEHS/PrestoGP/actions/workflows/lint.yaml)
 [![pkgdown](https://github.com/NIEHS/PrestoGP/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/NIEHS/PrestoGP/actions/workflows/pkgdown.yaml)
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
 <img src="inst/figures/prestoGP_logo.png" alt="PrestoGP Logo" width="33%">
 
