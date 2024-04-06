@@ -6,7 +6,7 @@
 [![lint](https://github.com/NIEHS/PrestoGP/actions/workflows/lint.yaml/badge.svg)](https://github.com/NIEHS/PrestoGP/actions/workflows/lint.yaml)
 [![pkgdown](https://github.com/NIEHS/PrestoGP/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/NIEHS/PrestoGP/actions/workflows/pkgdown.yaml)
 
-![](inst/figures/prestoGP_logo.png){width=33%}
+<img src="inst/figures/prestoGP_logo.png" alt="PrestoGP Logo" width="33%">
 
 # Overview
 
