@@ -8,7 +8,7 @@
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
-<img src="inst/figures/prestoGP_logo.png" alt="PrestoGP Logo" width="33%">
+<img src="man/figures/prestoGP-logo.png" alt="PrestoGP Logo" width="33%">
 
 # Overview
 
