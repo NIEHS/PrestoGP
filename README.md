@@ -43,15 +43,15 @@ The manuscript is in progress and expected to be submitted soon. Please check ba
 - Kyle P Messier<sup>1,2</sup>
 - Insang Song<sup>1,2</sup>
 - Matt W Wheeler<sup>2</sup>
-- Myeongjon Kang<sup>4</sup>
-- Matthias Katzfuss<sup>4</sup>
-- Ruchir R Shah<sup>3</sup>
-- Deepak Mav<sup>3</sup>
-- Brian Kidd<sup>3</sup>
-- Eric Bair<sup>3</sup>
+- Myeongjon Kang<sup>3</sup>
+- Matthias Katzfuss<sup>3</sup>
+- Ruchir R Shah<sup>4</sup>
+- Deepak Mav<sup>4</sup>
+- Brian Kidd<sup>4</sup>
+- Eric Bair<sup>4</sup>
 
 ### Affiliations
 1. National Institute of Environmental Health Sciences, Division of the National Toxicology Program, Predictive Toxicology Branch
 2. National Institute of Environmental Health Sciences, Division of Intramural Research, Biostatistics and Computational Biology Branch
-3. Sciome, LLC
-4. University of Wisconsin, Department of Statistics
+3. University of Wisconsin, Department of Statistics
+4. Sciome, LLC
