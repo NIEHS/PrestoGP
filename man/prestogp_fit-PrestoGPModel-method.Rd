@@ -16,7 +16,9 @@
   beta.hat = NULL,
   tol = 0.999999,
   max_iters = 100,
+  center.y = NULL,
   impute.y = FALSE,
+  lod = NULL,
   verbose = FALSE,
   optim.method = "Nelder-Mead",
   optim.control = list(trace = 0, reltol = 0.001, maxit = 5000),
@@ -58,6 +60,17 @@ tol*previous_error (optional). Defaults to 0.999999.}
 
 \item{max_iters}{Maximum number of iterations for the model fitting
 procedure. Defaults to 100.}
+
+\item{center.y}{Should the Y's be mean centered before fitting the model?
+Defaults to TRUE for gaussian models and FALSE for binomial models.}
+
+\item{impute.y}{Should missing Y's be imputed? Defaults to FALSE.}
+
+\item{lod}{Limit of detection value(s). Any Y value less than lod is
+assumed to be missing when performing missing data imputation. Should be
+numeric for univariate models and a list for multivariate models, where
+each element of the list corresponds to an outcome. If not specified, it
+is assumed that no limit of detection exists. Ignored if impute.y is FALSE.}
 
 \item{verbose}{If TRUE, additional information about model fit will be
 printed. Defaults to FALSE.}
