@@ -38,7 +38,9 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
     ordering.pred <- match.arg(ordering.pred)
     pred.cond <- match.arg(pred.cond)
     return.values <- match.arg(return.values)
-    X <- check_input_pred(model, X, locs)
+    pred.list <- check_input_pred(model, X, locs)
+    X <- pred.list$X
+    Y_bar <- pred.list$Y_bar
     if (is.null(m)) { # m defaults to the value used for training
       m <- model@n_neighbors
     }
@@ -91,7 +93,7 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
 
     # prediction function can return both mean and sds
     # returns a list with elements mu.pred,mu.obs,var.pred,var.obs,V.ord
-    Vec.mean <- pred$mu.pred + Vecchia.Pred # residual + mean trend
+    Vec.mean <- Y_bar + pred$mu.pred + Vecchia.Pred # residual + mean trend
     if (return.values == "mean") {
       return.list <- list(means = Vec.mean)
     } else {
@@ -112,7 +114,7 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
   }
 )
 
-setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs) {
+setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs, center.y, impute.y, lod) {
   if (!is.list(locs)) {
     stop("locs must be a list for multivariate models")
   }
@@ -127,6 +129,14 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs)
   }
   if (length(locs) != length(X)) {
     stop("locs and X must have the same length")
+  }
+  if (!is.null(lod)) {
+    if (!is.list(lod)) {
+      stop("lod must be a list for multivariate models")
+    }
+    if (length(locs) != length(lod)) {
+      stop("locs and lod must have the same length")
+    }
   }
   for (i in seq_along(locs)) {
     if (!is.matrix(locs[[i]])) {
@@ -155,9 +165,44 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs)
     if (nrow(Y[[i]]) != nrow(X[[i]])) {
       stop("Each Y must have the same number of rows as X")
     }
+    if (sum(is.na(X[[i]])) > 0) {
+      stop("X must not contain NA's")
+    }
+    if (sum(is.na(locs[[i]])) > 0) {
+      stop("locs must not contain NA's")
+    }
+    if (sum(is.na(Y[[i]])) > 0 & !impute.y) {
+      stop("Y contains NA's and impute.y is FALSE. Set impute.y=TRUE to impute missing Y's.")
+    }
+    if (!is.null(lod[[i]])) {
+      if (!is.numeric(lod[[i]])) {
+        stop("Each lod must be numeric")
+      }
+      if (length(lod[[i]]) != 1) {
+        stop("Each lod must have length 1")
+      }
+    }
   }
+  Y_bar <- rep(NA, length(Y))
+  Y_obs <- NULL
+  for (i in seq_along(Y)) {
+    Y_obs <- c(Y_obs, !is.na(Y[[i]]))
+    if (!is.null(lod)) {
+      Y[[i]][is.na(Y[[i]])] <- lod[[i]] / 2
+    }
+    if (center.y) {
+      Y_bar[i] <- mean(Y[[i]], na.rm = TRUE)
+      Y[[i]] <- Y[[i]] - Y_bar[i]
+      Y[[i]][is.na(Y[[i]])] <- 0
+    } else {
+      Y[[i]][is.na(Y[[i]])] <- mean(Y[[i]], na.rm = TRUE)
+      Y_bar[i] <- 0
+    }
+  }
+  model@Y_bar <- Y_bar
   model@locs_train <- locs
   model@Y_train <- as.matrix(unlist(Y))
+  model@Y_obs <- Y_obs
   if (length(X) == 1) {
     model@X_train <- X[[1]]
   } else {
@@ -195,13 +240,76 @@ setMethod("check_input_pred", "MultivariateVecchiaModel", function(model, X, loc
   }
   if (length(X) == 1) {
     X <- X[[1]]
+    Y_bar <- rep(model@Y_bar[1], nrow(X))
   } else {
+    Y_bar <- NULL
+    for (i in seq_along(X)) {
+      Y_bar <- c(Y_bar, rep(model@Y_bar[i], nrow(X[[i]])))
+    }
     X <- psych::superMatrix(X)
   }
   if (ncol(X) != ncol(model@X_train)) {
     stop("X and X_train must have the same number of predictors")
   }
-  return(X)
+  return(list(X = X, Y_bar = Y_bar))
+})
+
+setMethod("impute_y", "MultivariateVecchiaModel", function(model) {
+  if (sum(!model@Y_obs) > 0) {
+    Vecchia.Pred <- predict(model@linear_model,
+      newx = model@X_train[!model@Y_obs, ],
+      s = model@linear_model$lambda[model@lambda_1se_idx])
+    Vecchia.hat <- predict(model@linear_model,
+      newx = model@X_train[model@Y_obs, ],
+      s = model@linear_model$lambda[model@lambda_1se_idx])
+
+    # Test set prediction
+    res <- model@Y_train[model@Y_obs] - Vecchia.hat
+
+    locs.scaled <- scale_locs(model, model@locs_train)
+    all.obs <- model@Y_obs
+    locs.otr <- list()
+    locs.otst <- list()
+    for (i in seq_along(model@locs_train)) {
+      nl <- nrow(locs.scaled[[i]])
+      cur.obs <- all.obs[1:nl]
+      locs.otr[[i]] <- locs.scaled[[i]][cur.obs, ]
+      locs.otst[[i]] <- locs.scaled[[i]][!cur.obs, ]
+      all.obs <- all.obs[-(1:nl)]
+    }
+
+    if (model@apanasovich & (length(model@locs_train) > 1)) {
+      locs.nd <- eliminate_dupes(locs.otr, locs.otst)
+      locs.otr <- locs.nd$locs
+      locs.otst <- locs.nd$locs.pred
+    }
+    vec.approx.test <- vecchia_Mspecify(locs.otr, model@n_neighbors,
+      locs.list.pred = locs.otst,
+      ordering.pred = "obspred",
+      pred.cond = "independent"
+    )
+
+    ## carry out prediction
+    if (!model@apanasovich) {
+      params <- model@covparams
+      param.seq <- model@param_sequence
+      pred <- vecchia_Mprediction(res, vec.approx.test,
+        c(
+          params[1:param.seq[1, 2]],
+          rep(1, param.seq[2, 2] - param.seq[2, 1] + 1),
+          params[param.seq[3, 1]:param.seq[5, 2]]
+        ),
+        return.values = "mean"
+      )
+    } else {
+      pred <- vecchia_Mprediction(res, vec.approx.test, model@covparams,
+        return.values = "mean"
+      )
+    }
+
+    model@Y_train[!model@Y_obs] <- pred$mu.pred + Vecchia.Pred
+  }
+  invisible(model)
 })
 
 setMethod("specify", "MultivariateVecchiaModel", function(model) {
