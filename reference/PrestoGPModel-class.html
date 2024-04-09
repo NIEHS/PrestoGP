@@ -18,7 +18,7 @@ the appropriate inherited class for the type of model they are fitting."><!-- ma
     
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9026</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9029</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,7 +73,7 @@ Matern parameters (used internally for likelihood calculations).</p></dd>
 
 <dt><code>lambda_1se_idx</code></dt>
 <dd><p>Stores the index of the optimal tuning parameter for
-the glmnet model. See <code><a href="https://rdrr.io/pkg/glmnet/man/glmnet.html" class="external-link">glmnet</a></code>.</p></dd>
+the glmnet model. See <code><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet</a></code>.</p></dd>
 
 
 <dt><code>vecchia_approx</code></dt>
@@ -89,6 +89,14 @@ the glmnet model. See <code><a href="https://rdrr.io/pkg/glmnet/man/glmnet.html"
 
 <dt><code>Y_train</code></dt>
 <dd><p>A column matrix containing the original response values.</p></dd>
+
+
+<dt><code>Y_bar</code></dt>
+<dd><p>A vector containing the means of each outcome.</p></dd>
+
+
+<dt><code>Y_obs</code></dt>
+<dd><p>A logical vector used to track which values of Y are non-missing.</p></dd>
 
 
 <dt><code>X_tilde</code></dt>
@@ -114,8 +122,8 @@ of the list corresponds to a different outcome. (The list will have length
 
 
 <dt><code>linear_model</code></dt>
-<dd><p>The glmnet model. See <code><a href="https://rdrr.io/pkg/glmnet/man/glmnet.html" class="external-link">glmnet</a></code> and
-<code><a href="https://rdrr.io/pkg/glmnet/man/cv.glmnet.html" class="external-link">cv.glmnet</a></code>.</p></dd>
+<dd><p>The glmnet model. See <code><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet</a></code> and
+<code><a href="https://glmnet.stanford.edu/reference/cv.glmnet.html" class="external-link">cv.glmnet</a></code>.</p></dd>
 
 
 <dt><code>converged</code></dt>
@@ -141,7 +149,7 @@ approximation. Ignored for full models.</p></dd>
 
 
 <dt><code>alpha</code></dt>
-<dd><p>Parameter alpha for glmnet. See <code><a href="https://rdrr.io/pkg/glmnet/man/glmnet.html" class="external-link">glmnet</a></code>.</p></dd>
+<dd><p>Parameter alpha for glmnet. See <code><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet</a></code>.</p></dd>
 
 
 <dt><code>scaling</code></dt>
