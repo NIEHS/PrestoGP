@@ -85,3 +85,4 @@ src/*.so
 src/*.o
 /doc/
 /Meta/
+docs

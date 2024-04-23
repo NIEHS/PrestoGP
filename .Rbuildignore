@@ -7,3 +7,7 @@
 ^Meta$
 ^\.lintr
 ^\.github
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$

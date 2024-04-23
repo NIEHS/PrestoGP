@@ -128,7 +128,6 @@ soil.yhat <- prestogp_predict(soil.vmp, X[otst,], locs[otst,])
 
 This package is currently under development. Please report any issues on the [Issues page](https://github.com/NIEHS/PrestoGP/issues)
 
-
 ### Multivariate and Censored Geospatial Models For External Exposomics of Data-Sparse Chemicals: United States Chlorotriazine Groundwater Distributions from 1990-2022
 
 The manuscript is in progress and expected to be submitted soon. Please check back for updates or contact Kyle Messier for more information.
