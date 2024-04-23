@@ -1,161 +1,151 @@
-## PrestoGP: Penalized Regression on Spatiotemporal Outcomes using Gaussian Process
+## **PrestoGP**: **P**enalized **Re**gression on **S**patio-**T**emporal **O**utcomes using **G**aussian **P**rocess
 
-[![R-CMD-check](https://github.com/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/actions/workflows/check-standard.yaml)
-[![test-coverage](https://github.com/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/Spatiotemporal-Exposures-and-Toxicology/PrestoGP/actions/workflows/test-coverage.yaml)
-    
-# LURK-Vecchia
+[![R-CMD-check](https://github.com/NIEHS/PrestoGP/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/NIEHS/PrestoGP/actions/workflows/check-standard.yaml)
+[![test-coverage-local](https://github.com/NIEHS/PrestoGP/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/NIEHS/PrestoGP/actions/workflows/test-coverage.yaml)
+[![cov](https://NIEHS.github.io/PrestoGP/badges/coverage.svg)](https://github.com/NIEHS/PrestoGP/actions)
+[![lint](https://github.com/NIEHS/PrestoGP/actions/workflows/lint.yaml/badge.svg)](https://github.com/NIEHS/PrestoGP/actions/workflows/lint.yaml)
+[![pkgdown](https://github.com/NIEHS/PrestoGP/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/NIEHS/PrestoGP/actions/workflows/pkgdown.yaml)
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
-Simultaneous variable seletion and estimation of LUR models with spatiotemporally correlated errors that is scalable for big data
+<img src="man/figures/prestoGP-logo.png" alt="PrestoGP Logo" width="33%">
 
-# Citation
-Messier, K.P. & Katzfuss, M. (2020). Scalable penalized spatiotemporal land-use regression for ground-level nitrogen dioxide. https://arxiv.org/abs/2005.09210
+# Overview
 
-# Installation 
-Based on the package GPvecchia (https://cran.r-project.org/web/packages/GPvecchia/index.html) and
-ncvreg (https://cran.r-project.org/web/packages/ncvreg/index.html). 
-Install the following R packages: GPvecchia,ncvreg, fields, Matrix
+PrestoGP is an R package for scalable penalized regression on spatio-temporal outcomes using Gaussian processes. The package includes the methods described in the paper "Scalable penalized spatiotemporal land-use regression for ground-level nitrogen dioxide" by Messier and Katzfuss (2020). The package is designed to handle big data and is useful for large-scale geospatial exposure assessment and geophysical modeling. PrestoGP expands the methods in Messier and Katzfuss (2020) to include the following important feature:
 
-Download LURK_Functions.R to your local machine and use R to source:
-```
-source("/Location/of/your/functions/LURK_Functions.R") 
-``` 
+1. Multivariate spatiotemporal outcomes using multivariate Matern Gaussian process. The method is described in the paper "A valid Matérn class of cross-covariance functions for multivariate random fields with any number of components" by Apanasovich, Genton, and Sun (2012).
 
-# Data
+2. Simultaneous variable selection and estimation of the fixed effects (i.e. land-use regression variables) and the spatiotemporal random effects. The method is described in the paper "Scalable penalized spatiotemporal land-use regression for ground-level nitrogen dioxide" by Messier and Katzfuss (2020).
 
-## NO<sub>2</sub>
-The NO<sub>2</sub> analysis data are stored in a single csv file in the [data](https://github.com/NIEHS/LURK-Vecchia/tree/master/data) subfolder. 
+3. Imputation of missing outcome data, including outcome data that is missing due to limit of detection effects. 
 
-```
-US_ST_NO2_Data.csv
-```
+4. And as always, scalability of the Gaussian Process via the General Vecchia approximation as described in the paper "A general framework for Vecchia approximations of Gaussian processes" by Katzfuss and Guinness (2021).
 
-Columns 1 - 6 are latitude, longitude, date, NO2 concentration, and time in fractional years, respectively. Columns 7 - 145 make up the design matrix of covariates. The covariate names are followed by the distance hyperparameter (i.e. buffer, decay range).
-To see all of the field names, call: 
-```
-colnames(US_ST_NO2_Data)
+
+# Installation
+
+You can install the development version of PrestoGP from GitHub with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("NIEHS/PrestoGP")
 ```
 
-## Simulations
+# Usage and Examples
 
-The simulation analysis data are stored in Excel files in the [data](https://github.com/NIEHS/LURK-Vecchia/tree/master/data) subfolder. 
-There is an Excel file for each spatiotemporal parameter that is varied: nugget-to-sill ratio, total variance (sill), spatial range, and temporal range.
-For each spatiotemporal parameter there is a training set and test set, stored in separate files. The training and test sets are based on the same
-simulation.
+## Data Preprocessing
 
-```
-Vecchia_ST_Simulation_NUG2SILL5_20191107.xlsx
-Vecchia_ST_Simulation_NUG2SILL5_test_20191107.xlsx
-Vecchia_ST_Simulation_VARIANCE5_20191107.xlsx
-Vecchia_ST_Simulation_VARIANCE5_test_20191107.xlsx
-Vecchia_ST_Simulation_SPATIAL_RANGES5_20191107.xlsx
-Vecchia_ST_Simulation_SPATIAL_RANGES5_test_20191107.xlsx
-Vecchia_ST_Simulation_TEMPORAL_RANGES5_20191107.xlsx
-Vecchia_ST_Simulation_TEMPORAL_RANGES5_test_20191107.xlsx
-```
-Each Excel file contains a sheet for each simulation scenario - that is there are 20 sheets for 20 variations of the spatiotemporal parameter. 
-Each sheet is simply labeled "1", "2",..., etc. for the simulation scenario. 
-The first sheet also contains data for the true observations without measurement error and the covariates. 
-Hence, in each simulation you see differences for the first sheet. 
-
-Here we go through an **example** of reading in data and assigning variables to help demonstrate the data format:
-```
-data1 <- as.data.frame(read_excel("Vecchia_ST_Simulation_NUG2SILL5_20191107.xlsx", 
-                                  sheet = "1", col_names = FALSE))
-```
-The true data, without measurement error is read in:
-
-```
-# y true data
-Y.true <- as.matrix(data1[,1])
-```
-Columns 2 through 21 on the first sheet are the 20 simulation scenarios of y-observed (i.e. with measurement error). 
-The covariates are read in.
-```
-# covariates
-X <- as.matrix(data1[,22:144])
-```
-There is a separate sheet for the spatial coordiantes:
-```
-# longitude and latitude
-xyt <- as.matrix(read_excel("Vecchia_ST_Simulation_NUG2SILL5_20191107.xlsx", 
-                            sheet = "xy", col_names = FALSE))
-
-```
-The same information is also read in for the test set, which are 1000 other space-time observations from the same
-respective simulation. 
-```
-xy_test <- as.matrix(read_excel("Vecchia_ST_Simulation_NUG2SILL5_test_20191107.xlsx", 
-                                sheet = "1", col_names = FALSE))
-
-test_xyt <- as.matrix(read_excel("Vecchia_ST_Simulation_NUG2SILL5_test_20191107.xlsx", 
-                                 sheet = "xy", col_names = FALSE))
-y_test <- as.matrix(xy_test[,1])
-
-X_test <- as.matrix(xy_test[,22:144])
+``` r
+data(soil)
+soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+y <- soil[,4]                   # predict moisture content
+X <- as.matrix(soil[,5:9])
+locs <- as.matrix(soil[,1:2]) 
 ```
 
-The main simulations go through nested loops: The outer loop (i) goes through each parameter variation (e.g. differing nugget-to-sill ratio). The inner loop (j)
-goes through random simulations of the same parameter values. Example below:
-```
-for (i in 1:20){
-  
-  ### Read in the simulated data
-  Ydata <- read_excel("Vecchia_ST_Simulation_TEMPORAL_RANGES5_20191107.xlsx", 
-                      sheet = as.character(i), col_names = FALSE)
-  
-  test_data <- read_excel("Vecchia_ST_Simulation_TEMPORAL_RANGES5_test_20191107.xlsx", 
-                          sheet = as.character(i), col_names = FALSE)
-```
-The following if-else statement deals with the true data in column 1 of sheet 1.
+## Vecchia Model
 
-```
-  
-  if (i == 1){
-    Y.all <- Ydata[,2:21]
-    test_y <- test_data[,2:21]
-  }else{
-    Y.all <- Ydata[,1:20]
-    test_y <- test_data[1:20]
-  }
-  
-````
-Then the inner loop (j) goes through random realizations
-```  
-  for (j in 1:P){
-    
-
-    ########## Observed data for simulation j ############
-    Y.obs <- data.matrix(Y.all[,j])
-    n=length(Y.obs)
-    test_y_j <- data.matrix(test_y[,j])
+``` r
+soil.vm <- new("VecchiaModel", n_neighbors = 10)
+soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 ```
 
+## Impute Missing y's
 
-# Running the Simulation Analysis 
-
-## A runnable simulation example
-The beginning of the simulation contains one iteration of the paper's full simulations. This is
-included so that a user can run a simulation and produce the results in a timely manner. Due to the 
-number of simulations, the full paper simulations will take a long time. Note that the main simulations were sub-divided
-and ran on high-performance computing clusters.
-
-The runnable simulation is the first section of Analysis_Simulation.R. The header of the section starts with:
-```
-####################################################################################################
-### SECTION 1
-### A short simulation scenario that can be run in a few minutes
+``` r
+miss <- sample(1:nrow(soil), 20)
+y.miss <- y
+y.miss[miss] <- NA
+soil.vm2 <- new("VecchiaModel", n_neighbors = 10)
+soil.vm2 <- prestogp_fit(soil.vm, y, X, locs, impute.y = TRUE)
 ```
 
-## Replicating the paper simulations
+## Impute y's Missing Due to Limit of Detection
 
-The paper simulations have a section for each scenario. 
-- Section 2: Variations of the temporal range
-- Section 3: Variations of the spatial range
-- Section 4: Variations of the nugget-to-sill ratio
-- Section 5: Variations of the total variance 
-- Section 6: Convergence of estimated LUR coefficients (betas) with increasing m in the Vecchia approximation.
+``` r
+soil.lod <- quantile(y, 0.1)
+y.lod <- y
+y.lod[y.lod <= soil.lod] <- NA
+soil.vm3 <- new("VecchiaModel", n_neighbors = 10)
+soil.vm3 <- prestogp_fit(soil.vm, y, X, locs, impute.y = TRUE, lod = soil.lod)
+```
 
-# Running the NO<sub>2</sub> Analysis 
+## Full Model
 
-With the LURK_Functions sourced and the data accessible, run Analysis_NO2.R to replicate the 10-fold cross-validation
-NO<sub>2</sub> from the paper.
+``` r
+soil.fm <- new("FullModel")
+soil.fm <- prestogp_fit(soil.fm, y, X, locs)
+```
+
+## Multivariate Model
+
+``` r
+ym <- list()
+ym[[1]] <- soil[,5]             # predict two nitrogen concentration levels
+ym[[2]] <- soil[,7]
+Xm <- list()
+Xm[[1]] <- Xm[[2]] <- as.matrix(soil[,c(4,6,8,9)])
+locsm <- list()
+locsm[[1]] <- locsm[[2]] <- locs
+
+soil.mvm <-  new("MultivariateVecchiaModel", n_neighbors = 10)
+soil.mvm <- prestogp_fit(soil.mvm, ym, Xm, locsm)
+```
+
+## Space/Elevation Model
+
+``` r
+data(soil250, package="geoR")
+y2 <- soil250[,7]               # predict pH level
+X2 <- as.matrix(soil250[,c(4:6,8:22)])
+# columns 1+2 are location coordinates; column 3 is elevation
+locs2 <- as.matrix(soil250[,1:3])
+
+soil.vm2 <- new("VecchiaModel", n_neighbors = 10)
+# fit separate scale parameters for location and elevation
+soil.vm2 <- prestogp_fit(soil.vm2, y2, X2, locs2, scaling = c(1, 1, 2))
+```
+
+## Test Set Prediction
+
+``` r
+# Create training and test sets
+n <- length(y)
+otr <- rep(FALSE, n)
+otr[sample(1:n, size=floor(n/2))] <- TRUE
+otst <- !otr
+     
+# Fit the model on the training set
+soil.vmp <- new("VecchiaModel", n_neighbors = 10)
+soil.vmp <- prestogp_fit(soil.vm, y[otr], X[otr,], locs[otr,])
+     
+# Perform predictions on the test set
+soil.yhat <- prestogp_predict(soil.vmp, X[otst,], locs[otst,])
+```
+
+# Work In Progress
+
+This package is currently under development. Please report any issues on the [Issues page](https://github.com/NIEHS/PrestoGP/issues)
+
+
+### Multivariate and Censored Geospatial Models For External Exposomics of Data-Sparse Chemicals: United States Chlorotriazine Groundwater Distributions from 1990-2022
+
+The manuscript is in progress and expected to be submitted soon. Please check back for updates or contact Kyle Messier for more information.
+
+### Authors
+- Kyle P Messier<sup>1,2</sup>
+- Insang Song<sup>1,2</sup>
+- Matt W Wheeler<sup>2</sup>
+- Myeongjon Kang<sup>3</sup>
+- Matthias Katzfuss<sup>3</sup>
+- Ruchir R Shah<sup>4</sup>
+- Deepak Mav<sup>4</sup>
+- Brian Kidd<sup>4</sup>
+- Eric Bair<sup>4</sup>
+
+### Affiliations
+1. National Institute of Environmental Health Sciences, Division of the National Toxicology Program, Predictive Toxicology Branch
+2. National Institute of Environmental Health Sciences, Division of Intramural Research, Biostatistics and Computational Biology Branch
+3. University of Wisconsin, Department of Statistics
+4. Sciome, LLC

@@ -69,8 +69,11 @@ Defaults to TRUE for gaussian models and FALSE for binomial models.}
 \item{lod}{Limit of detection value(s). Any Y value less than lod is
 assumed to be missing when performing missing data imputation. Should be
 numeric for univariate models and a list for multivariate models, where
-each element of the list corresponds to an outcome. If not specified, it
-is assumed that no limit of detection exists. Ignored if impute.y is FALSE.}
+each element of the list corresponds to an outcome. The ith element of
+the lod is the limit of detection for observation i. Alternatively, one
+can specify a single limit of detection that is assumed to be the same for
+all observations. If not specified, it is assumed that no limit of
+detection exists. Ignored if impute.y is FALSE.}
 
 \item{verbose}{If TRUE, additional information about model fit will be
 printed. Defaults to FALSE.}
@@ -115,6 +118,20 @@ locs <- as.matrix(soil[,1:2])
 # Vecchia model
 soil.vm <- new("VecchiaModel", n_neighbors = 10)
 soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+
+# Impute missing y's
+miss <- sample(1:nrow(soil), 20)
+y.miss <- y
+y.miss[miss] <- NA
+soil.vm2 <- new("VecchiaModel", n_neighbors = 10)
+soil.vm2 <- prestogp_fit(soil.vm, y, X, locs, impute.y = TRUE)
+
+# Impute y's missing due to limit of detection
+soil.lod <- quantile(y, 0.1)
+y.lod <- y
+y.lod[y.lod <= soil.lod] <- NA
+soil.vm3 <- new("VecchiaModel", n_neighbors = 10)
+soil.vm3 <- prestogp_fit(soil.vm, y, X, locs, impute.y = TRUE, lod = soil.lod)
 
 # Full model
 soil.fm <- new("FullModel")

@@ -178,8 +178,8 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
       if (!is.numeric(lod[[i]])) {
         stop("Each lod must be numeric")
       }
-      if (length(lod[[i]]) != 1) {
-        stop("Each lod must have length 1")
+      if (length(lod[[i]]) != nrow(X[[i]]) & length(lod[[i]]) != 1) {
+        stop("Length of each lod must equal the number of observations")
       }
     }
   }
@@ -188,7 +188,7 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
   for (i in seq_along(Y)) {
     Y_obs <- c(Y_obs, !is.na(Y[[i]]))
     if (!is.null(lod)) {
-      Y[[i]][is.na(Y[[i]])] <- lod[[i]] / 2
+      Y[[i]][is.na(Y[[i]])] <- mean(lod[[i]]) / 2
     }
     if (center.y) {
       Y_bar[i] <- mean(Y[[i]], na.rm = TRUE)
@@ -206,6 +206,9 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
   if (length(X) == 1) {
     model@X_train <- X[[1]]
   } else {
+    for (i in 2:length(X)) {
+      X[[i]] <- cbind(rep(1, nrow(X[[i]])), X[[i]])
+    }
     model@X_train <- psych::superMatrix(X)
   }
   invisible(model)
@@ -245,6 +248,9 @@ setMethod("check_input_pred", "MultivariateVecchiaModel", function(model, X, loc
     Y_bar <- NULL
     for (i in seq_along(X)) {
       Y_bar <- c(Y_bar, rep(model@Y_bar[i], nrow(X[[i]])))
+    }
+    for (i in 2:length(X)) {
+      X[[i]] <- cbind(rep(1, nrow(X[[i]])), X[[i]])
     }
     X <- psych::superMatrix(X)
   }

@@ -108,14 +108,14 @@ test_that("lod not numeric", {
   )
 })
 
-test_that("length(lod) != 1", {
+test_that("length(lod) != nrow(X)", {
   model <- new("VecchiaModel")
   expect_error(
     prestogp_fit(
       model, as.matrix(c(1:4)), as.matrix(1:4),
       as.matrix(1:4), impute.y = TRUE, lod = 1:2,
     ),
-    "lod must have length 1"
+    "Length of lod must equal the number of observations"
   )
 })
 
@@ -176,6 +176,55 @@ test_that("Simulated dataset spatial", {
   expect_equal(params.out[2] - params.out2[2], 0, tolerance = 0.2)
   expect_equal(params.out[3], params.out2[3], tolerance = 0.3)
   expect_equal(params.out[4], params.out2[4], tolerance = 0.2)
+
+  # Missing data
+  set.seed(1234)
+  y.na <- y
+  y.na[sample(seq_along(y), floor(0.1 * length(y)))] <- NA
+
+  pgp.model3 <- new("VecchiaModel", n_neighbors = 25)
+  pgp.model3 <- prestogp_fit(pgp.model3, y.na, X, locs,
+    scaling = c(1, 1), apanasovich = TRUE, verbose = FALSE,
+    impute.y = TRUE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  beta.out3 <- as.vector(pgp.model3@beta)
+  params.out3 <- pgp.model3@covparams
+
+  # Results should be the same after imputation
+  expect_equal(beta.out, beta.out3, tolerance = 0.07)
+  expect_equal(params.out[1], params.out3[1], tolerance = 1.1)
+  expect_equal(params.out[2], params.out3[2], tolerance = 0.3)
+  expect_equal(params.out[3], params.out3[3], tolerance = 0.3)
+  expect_equal(params.out[4], params.out3[4], tolerance = 0.4)
+
+  # Missing data with lod
+  y.lod <- y + 10
+  lod.cut <- quantile(y.lod, 0.1)
+  y.na.lod <- y.lod
+  y.na.lod[y.na.lod <= lod.cut] <- NA
+
+  pgp.model4 <- new("VecchiaModel", n_neighbors = 25)
+  pgp.model4 <- prestogp_fit(pgp.model4, y.na.lod, X, locs,
+    scaling = c(1, 1), apanasovich = TRUE, verbose = FALSE,
+    impute.y = TRUE, lod = lod.cut,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  beta.out4 <- as.vector(pgp.model4@beta)
+  params.out4 <- pgp.model4@covparams
+
+  # Results should be the same after imputation
+  expect_equal(beta.out, beta.out4, tolerance = 0.09)
+  expect_equal(params.out[1], params.out3[1], tolerance = 1.3)
+  expect_equal(params.out[2], params.out3[2], tolerance = 0.8)
+  expect_equal(params.out[3], params.out3[3], tolerance = 0.7)
+  expect_equal(params.out[4], params.out3[4], tolerance = 1)
 })
 
 test_that("Simulated dataset spatiotemporal", {
