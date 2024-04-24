@@ -130,13 +130,13 @@ setMethod("check_input", "VecchiaModel", function(model, Y, X, locs, center.y, i
     if (!is.numeric(lod)) {
       stop("lod must be numeric")
     }
-    if (length(lod) != 1) {
-      stop("lod must have length 1")
+    if (length(lod) != nrow(X) & length(lod) != 1) {
+      stop("Length of lod must equal the number of observations")
     }
   }
   model@Y_obs <- !is.na(as.vector(Y))
   if (!is.null(lod)) {
-    Y[!model@Y_obs] <- lod / 2
+    Y[!model@Y_obs] <- mean(lod) / 2
   }
   if (center.y) {
     model@Y_bar <- mean(Y, na.rm = TRUE)
