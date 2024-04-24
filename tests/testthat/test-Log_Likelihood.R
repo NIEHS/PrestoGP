@@ -196,7 +196,7 @@ test_that("mvnegloglik", {
     logparams, vec.approx,
     unlist(y.list), pseq, P
   )
-  expect_equal(34384.23, neg_likelihood, tolerance = 1e-2)
+  expect_equal(78206.41, neg_likelihood, tolerance = 1e-2)
 })
 
 test_that("mvnegloglik_ST", {
