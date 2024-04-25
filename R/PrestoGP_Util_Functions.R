@@ -131,12 +131,12 @@ transform_iid <- function(data, vecchia.approx, covparms, nuggets) {
   U.y <- U.obj$U[U.obj$latent, ]
 
   # compute transformed data in parts
-  part1.ord <- Matrix::crossprod(U.z, data[U.obj$ord.z, ]) # C.hat^-1
+  part1.ord <- crossprod(U.z, data[U.obj$ord.z, ]) # C.hat^-1
   temp1 <- U.y %*% part1.ord
   revord <- rev(seq_len(nrow(temp1)))
-  temp2 <- spam::solve(V.ord, temp1[revord, ])
-  part2.rev <- spam::solve(Matrix::t(V.ord), temp2)
-  part2.ord <- spam::crossprod(U.y, part2.rev[revord, ])
+  temp2 <- solve(V.ord, temp1[revord, ])
+  part2.rev <- solve(Matrix::t(V.ord), temp2)
+  part2.ord <- crossprod(U.y, part2.rev[revord, ])
   transform.ord <- part1.ord - part2.ord
 
   # return to original ordering
@@ -156,12 +156,12 @@ transform_miid <- function(data, vecchia.approx, params) {
   U.y <- U.obj$U[U.obj$latent, ]
 
   # compute transformed data in parts
-  part1.ord <- Matrix::crossprod(U.z, data[U.obj$ord.z, ]) # C.hat^-1
+  part1.ord <- crossprod(U.z, data[U.obj$ord.z, ]) # C.hat^-1
   temp1 <- U.y %*% part1.ord #
   revord <- rev(seq_len(nrow(temp1)))
-  temp2 <- spam::solve(V.ord, temp1[revord, ])
-  part2.rev <- spam::solve(Matrix::t(V.ord), temp2)
-  part2.ord <- spam::crossprod(U.y, part2.rev[revord, ])
+  temp2 <- solve(V.ord, temp1[revord, ])
+  part2.rev <- solve(Matrix::t(V.ord), temp2)
+  part2.ord <- crossprod(U.y, part2.rev[revord, ])
   transform.ord <- part1.ord - part2.ord
 
   # return to original ordering
