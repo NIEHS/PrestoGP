@@ -8,6 +8,13 @@
 \description{
 Simultaneous variable seletion and estimation of LUR models with spatiotemporally correlated errors that is scalable for big data.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://niehs.github.io/PrestoGP/}
+}
+
+}
 \author{
 \strong{Maintainer}: Eric Bair \email{eric.bair@sciome.com}
 

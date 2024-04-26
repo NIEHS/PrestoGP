@@ -200,14 +200,14 @@ test_that("lod not numeric", {
   )
 })
 
-test_that("length(lod) != 1", {
+test_that("length(lod) != nrow(X)", {
   model <- new("MultivariateVecchiaModel")
   expect_error(
     prestogp_fit(
       model, list(as.matrix(c(1:4))), list(as.matrix(1:4)),
       list(as.matrix(1:4)), lod = list(1:2)
     ),
-    "Each lod must have length 1"
+    "Length of each lod must equal the number of observations"
   )
 })
 
@@ -224,29 +224,95 @@ test_that("Simulated dataset multivariate spatial", {
   beta.out <- as.vector(pgp.mmodel1@beta)
   params.out <- pgp.mmodel1@covparams
 
-  expect_length(beta.out, 31)
+  expect_length(beta.out, 33)
   expect_length(params.out, 15)
   expect_equal(beta.out, c(
-    0, 0.96, 0.93, 0.92, 0.89, rep(0, 2), 0.03,
-    rep(0, 3), 0.57, 0.72, 1.11, 1, 0, 0.06, rep(0, 4),
-    0.93, 0.87, 1.03, 0.92, 0.05, rep(0, 2), 0.01,
-    0.05, 0
-  ), tolerance = 0.05)
-  expect_equal(params.out[1], 1.7, tolerance = 2.5)
-  expect_equal(params.out[2], 2.9, tolerance = 3.3)
-  expect_equal(params.out[3], 3.2, tolerance = 5)
-  expect_equal(params.out[4], 0.71, tolerance = 10)
-  expect_equal(params.out[5], 0.56, tolerance = 2.8)
-  expect_equal(params.out[6], 0.4, tolerance = 1.7)
-  expect_equal(params.out[7], 0.63, tolerance = 1.3)
-  expect_equal(params.out[8], 0.47, tolerance = 1.2)
-  expect_equal(params.out[9], 0.74, tolerance = 1.1)
-  expect_equal(params.out[10], 1.8, tolerance = 1.4)
-  expect_equal(params.out[11], 2.6, tolerance = 2.4)
-  expect_equal(params.out[12], 1.4, tolerance = 0.8)
-  expect_equal(params.out[13], 0.15, tolerance = 0.6)
-  expect_equal(params.out[14], 0.32, tolerance = 0.4)
-  expect_equal(params.out[15], 0.17, tolerance = 0.3)
+    -0.01, 0.98, 0.97, 0.92, 0.96, rep(0, 3), 0.02,
+    rep(0, 3), 0.86, 1.0, 0.8, 0.98, rep(0, 3), 0.04,
+    rep(0, 3), 1, 0.99, 0.96, 0.94, rep(0, 6)
+  ), tolerance = 0.04)
+  expect_equal(params.out[1], 2.3, tolerance = 5.1)
+  expect_equal(params.out[2], 4.4, tolerance = 4.6)
+  expect_equal(params.out[3], 1.9, tolerance = 4.3)
+  expect_equal(params.out[4], 0.35, tolerance = 1.6)
+  expect_equal(params.out[5], 0.46, tolerance = 2.6)
+  expect_equal(params.out[6], 0.22, tolerance = 0.4)
+  expect_equal(params.out[7], 0.66, tolerance = 0.8)
+  expect_equal(params.out[8] - 0.63, 0, tolerance = 0.5)
+  expect_equal(params.out[9], 1, tolerance = 0.7)
+  expect_equal(params.out[10], 1, tolerance = 0.8)
+  expect_equal(params.out[11], 1.5, tolerance = 1.4)
+  expect_equal(params.out[12], 0.47, tolerance = 0.1)
+  expect_equal(params.out[13], 0.39, tolerance = 0.4)
+  expect_equal(params.out[14], 0.7, tolerance = 0.4)
+  expect_equal(params.out[15], 0.54, tolerance = 0.5)
+
+  # Missing data
+  set.seed(1234)
+  y.list.na <- y.list
+  y.list.lod <- y.list
+  lod.cut <- list()
+  for (i in seq_along(y.list)) {
+    y.list.na[[i]][sample(seq_along(y.list[[i]]),
+        floor(0.1 * length(y.list[[i]])))] <- NA
+    y.list.lod[[i]] <- y.list.lod[[i]] + 10
+    lod.cut[[i]] <- quantile(y.list.lod[[i]], 0.1)
+    y.list.lod[[i]][y.list.lod[[i]] <= lod.cut[[i]]] <- NA
+  }
+
+  pgp.mmodel2 <- new("MultivariateVecchiaModel", n_neighbors = 25)
+  pgp.mmodel2 <- prestogp_fit(pgp.mmodel2, y.list.na, X.st, locs.list,
+    scaling = c(1, 1), apanasovich = TRUE, verbose = FALSE,
+    impute.y = TRUE, optim.control = list(trace = 0, maxit = 5000,
+      reltol = 1e-3))
+  beta.out2 <- as.vector(pgp.mmodel2@beta)
+  params.out2 <- pgp.mmodel2@covparams
+
+  # Results should be the same after imputation
+  expect_equal(beta.out, beta.out2, tolerance = 0.05)
+  expect_equal(params.out[1], params.out2[1], tolerance = 6.8)
+  expect_equal(params.out[2], params.out2[2], tolerance = 10.0)
+  expect_equal(params.out[3], params.out2[3], tolerance = 5.2)
+  expect_equal(params.out[4], params.out2[4], tolerance = 2.5)
+  expect_equal(params.out[5], params.out2[5], tolerance = 1.9)
+  expect_equal(params.out[6], params.out2[6], tolerance = 0.6)
+  expect_equal(params.out[7], params.out2[7], tolerance = 1.4)
+  expect_equal(params.out[8], params.out2[8], tolerance = 1.1)
+  expect_equal(params.out[9], params.out2[9], tolerance = 1.0)
+  expect_equal(params.out[10], params.out2[10], tolerance = 0.9)
+  expect_equal(params.out[11], params.out2[11], tolerance = 1.4)
+  expect_equal(params.out[12], params.out2[12], tolerance = 0.2)
+  expect_equal(params.out[13], params.out2[13], tolerance = 0.6)
+  expect_equal(params.out[14] - params.out2[14], 0, tolerance = 0.4)
+  expect_equal(params.out[15], params.out2[15], tolerance = 0.5)
+
+  # Missing data with lod
+  pgp.mmodel3 <- new("MultivariateVecchiaModel", n_neighbors = 25)
+  pgp.mmodel3 <- prestogp_fit(pgp.mmodel3, y.list.lod, X.st, locs.list,
+    scaling = c(1, 1), apanasovich = TRUE, verbose = FALSE,
+    impute.y = TRUE, lod = lod.cut, optim.control = list(trace = 0,
+      maxit = 5000, reltol = 1e-3))
+  beta.out3 <- as.vector(pgp.mmodel3@beta)
+  params.out3 <- pgp.mmodel3@covparams
+
+  # Results should be the same after imputation
+  expect_equal(beta.out, beta.out3, tolerance = 0.04)
+  expect_equal(beta.out, beta.out2, tolerance = 0.05)
+  expect_equal(params.out[1], params.out3[1], tolerance = 7.5)
+  expect_equal(params.out[2], params.out3[2], tolerance = 7.2)
+  expect_equal(params.out[3], params.out3[3], tolerance = 7.1)
+  expect_equal(params.out[4], params.out3[4], tolerance = 3.7)
+  expect_equal(params.out[5], params.out3[5], tolerance = 1.7)
+  expect_equal(params.out[6], params.out3[6], tolerance = 0.4)
+  expect_equal(params.out[7], params.out3[7], tolerance = 1.0)
+  expect_equal(params.out[8], params.out3[8], tolerance = 0.8)
+  expect_equal(params.out[9], params.out3[9], tolerance = 1.0)
+  expect_equal(params.out[10], params.out3[10], tolerance = 0.8)
+  expect_equal(params.out[11], params.out3[11], tolerance = 1.6)
+  expect_equal(params.out[12], params.out3[12], tolerance = 0.3)
+  expect_equal(params.out[13], params.out3[13], tolerance = 0.5)
+  expect_equal(params.out[14], params.out3[14], tolerance = 0.4)
+  expect_equal(params.out[15], params.out3[15], tolerance = 0.6)
 })
 
 test_that("Simulated dataset multivariate spatiotemporal", {
@@ -262,13 +328,13 @@ test_that("Simulated dataset multivariate spatiotemporal", {
   beta.out <- as.vector(pgp.mmodel1@beta)
   params.out <- pgp.mmodel1@covparams
 
-  expect_length(beta.out, 31)
+  expect_length(beta.out, 33)
   expect_length(params.out, 18)
   expect_equal(beta.out, c(
-    0, 0.91, 0.86, 0.82, 0.97, rep(0, 6), 0.95,
-    0.97, 0.92, 0.78, rep(0, 6), 0.8, 0.97,
-    1.04, 0.81, rep(0, 6)
-  ), tolerance = 1.1)
+    0, 0.87, 0.88, 0.79, 0.99, rep(0, 7), 0.95,
+    1.04, 0.82, 0.83, rep(0, 7), 0.79, 0.98,
+    0.98, 0.82, rep(0, 6)
+  ), tolerance = 1)
 })
 
 test_that("Invalid locs input for prediction", {
