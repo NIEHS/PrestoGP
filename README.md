@@ -10,6 +10,8 @@
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
 
+
+
 # Overview
 
 PrestoGP is an R package for scalable penalized regression on spatio-temporal outcomes using Gaussian processes. The package includes the methods described in the paper "Scalable penalized spatiotemporal land-use regression for ground-level nitrogen dioxide" by Messier and Katzfuss (2020). The package is designed to handle big data and is useful for large-scale geospatial exposure assessment and geophysical modeling. PrestoGP expands the methods in Messier and Katzfuss (2020) to include the following important feature:
