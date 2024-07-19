@@ -1,4 +1,5 @@
-## **PrestoGP**: **P**enalized **Re**gression on **S**patio-**T**emporal **O**utcomes using **G**aussian **P**rocess
+# **PrestoGP**: **P**enalized **Re**gression on **S**patio-**T**emporal **O**utcomes using **G**aussian **P**rocess <a href="https://niehs.github.io/PrestoGP/index.html/"><img src="man/figures/prestoGP-logo.png" align="right" height="250" alt="penalized regression and Gaussian Process plots" /></a>
+
 
 [![R-CMD-check](https://github.com/NIEHS/PrestoGP/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/NIEHS/PrestoGP/actions/workflows/check-standard.yaml)
 [![test-coverage-local](https://github.com/NIEHS/PrestoGP/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/NIEHS/PrestoGP/actions/workflows/test-coverage.yaml)
@@ -8,7 +9,6 @@
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
-<img src="man/figures/prestoGP-logo.png" alt="PrestoGP Logo" width="33%">
 
 # Overview
 
