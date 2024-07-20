@@ -1,4 +1,8 @@
-# **PrestoGP**: **P**enalized **Re**gression on **S**patio-**T**emporal **O**utcomes using **G**aussian **P**rocess <a href="https://niehs.github.io/PrestoGP/index.html/"><img src="man/figures/prestoGP-logo.png" align="right" height="139" alt="penalized regression and Gaussian Process plots" /></a>
+ <a href="https://niehs.github.io/PrestoGP/index.html/"><img src="man/figures/prestoGP-logo.png" align="right" height="139" alt="penalized regression and Gaussian Process plots" /></a>
+ <br clear="left"/>
+ 
+# **PrestoGP**: **P**enalized **Re**gression on **S**patio-**T**emporal **O**utcomes using **G**aussian **P**rocess
+
 
 
 [![R-CMD-check](https://github.com/NIEHS/PrestoGP/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/NIEHS/PrestoGP/actions/workflows/check-standard.yaml)
@@ -11,8 +15,7 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 
 
 
-
-# Overview
+# Overview 
 
 PrestoGP is an R package for scalable penalized regression on spatio-temporal outcomes using Gaussian processes. The package includes the methods described in the paper "Scalable penalized spatiotemporal land-use regression for ground-level nitrogen dioxide" by Messier and Katzfuss (2020). The package is designed to handle big data and is useful for large-scale geospatial exposure assessment and geophysical modeling. PrestoGP expands the methods in Messier and Katzfuss (2020) to include the following important feature:
 
