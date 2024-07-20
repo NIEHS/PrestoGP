@@ -1,4 +1,9 @@
 url: https://niehs.github.io/PrestoGP/
 template:
   bootstrap: 5
+  bootswatch: minty
 
+navbar:
+  structure:
+    left:  [reference, articles, search]
+    right: [github]
