@@ -218,8 +218,9 @@ setGeneric("specify", function(model, ...) standardGeneric("specify"))
 setGeneric("compute_residuals", function(model, Y, Y.hat, family) standardGeneric("compute_residuals"))
 setGeneric("transform_data", function(model, Y, X) standardGeneric("transform_data"))
 setGeneric("estimate_theta", function(model, locs, optim.control, method) standardGeneric("estimate_theta"))
-setGeneric("estimate_betas", function(model, family, nfolds, foldid, parallel) standardGeneric("estimate_betas"))
+setGeneric("estimate_betas", function(model, family, nfolds, foldid, parallel, lodv) standardGeneric("estimate_betas"))
 setGeneric("impute_y", function(model) standardGeneric("impute_y"))
+setGeneric("impute_y_lod", function(model, lod, n.mi = 10, eps = 0.01, maxit = 5, family, nfolds, foldid, parallel) standardGeneric("impute_y_lod"))
 setGeneric("compute_error", function(model, y, X) standardGeneric("compute_error"))
 setGeneric("scale_locs", function(model, locs) standardGeneric("scale_locs"))
 setGeneric("theta_names", function(model) standardGeneric("theta_names"))
@@ -532,14 +533,20 @@ setMethod(
     model <- specify(model)
 
     if (is.null(beta.hat)) {
-      beta0.glmnet <- cv.glmnet(model@X_train, model@Y_train,
-        parallel = parallel,
-        foldid = foldid
-      )
-      beta.hat <- as.matrix(predict(beta0.glmnet,
-          type = "coefficients", s = beta0.glmnet$lambda.1se))
+      if (sum(!model@Y_obs) > 0 & min(lodv) < Inf) {
+        cur.mi <- lod_reg_mi(model@Y_train, model@X_train, lodv, !model@Y_obs,
+          parallel = parallel, foldid = foldid)
+        model@Y_train[!model@Y_obs] <- cur.mi$y.impute
+        beta.hat <- as.matrix(cur.mi$coef)
+      } else {
+        beta0.glmnet <- cv.glmnet(model@X_train, model@Y_train,
+          parallel = parallel, foldid = foldid)
+        beta.hat <- as.matrix(predict(beta0.glmnet,
+            type = "coefficients", s = beta0.glmnet$lambda.1se))
+      }
     }
     Y.hat <- beta.hat[1, 1] + model@X_train %*% beta.hat[-1, ]
+    model@beta <- beta.hat
     if (family == "binomial") {
       Y.hat <- exp(Y.hat) / (1 + exp(Y.hat))
     }
@@ -562,8 +569,14 @@ setMethod(
       if (!model@apanasovich) {
         model <- specify(model)
       }
+
+      if (sum(!model@Y_obs) > 0 & min(lodv) < Inf) {
+        model <- impute_y_lod(model, lodv, family = family, nfolds = nfolds,
+          foldid = foldid, parallel = parallel)
+      }
+
       model <- transform_data(model, model@Y_train, model@X_train)
-      model <- estimate_betas(model, family, nfolds, foldid, parallel)
+      model <- estimate_betas(model, family, nfolds, foldid, parallel, lodv)
       min.error <- compute_error(model)
       ### Check min-error against the previous error and tolerance
       if (min.error < prev.error * tol) {
@@ -578,9 +591,9 @@ setMethod(
             s = "lambda.1se",
             type = "response")
         )
-        model <- impute_y(model)
-        alod <- !model@Y_obs & model@Y_train > lodv
-        model@Y_train[alod] <- lodv[alod]
+        if (sum(!model@Y_obs) > 0 & sum(lodv < Inf) == 0) {
+          model <- impute_y(model)
+        }
         covparams.iter <- model@covparams
         Vecchia.SCAD.iter <- model@linear_model
       } else {
@@ -609,21 +622,15 @@ setMethod(
 #' @return A model with updated coefficients
 #' @noRd
 setMethod("estimate_betas", "PrestoGPModel", function(model, family, nfolds,
-  foldid, parallel) {
-  if (ncol(model@Y_train) > 1) {
-    model@linear_model <- cv.glmnet(
-      as.matrix(model@X_tilde),
-      as.matrix(model@y_tilde),
-      family = "mgaussian",
-      alpha = model@alpha,
-      nfolds = nfolds,
-      foldid = foldid,
-      parallel = parallel
-    )
+  foldid, parallel, lodv) {
+  if (min(lodv) < Inf) {
+    model@linear_model <- cv.glmnet(as.matrix(model@X_tilde),
+      as.matrix(model@y_tilde), alpha = model@alpha, family = family,
+      nfolds = nfolds, foldid = foldid, parallel = parallel)
   } else {
     model@linear_model <- cv.glmnet(as.matrix(model@X_tilde),
       as.matrix(model@y_tilde), alpha = model@alpha, family = family,
-      fnolds = nfolds, foldid = foldid, parallel = parallel)
+      nfolds = nfolds, foldid = foldid, parallel = parallel)
   }
   idmin <- which(model@linear_model$lambda == model@linear_model$lambda.min)
   semin <- model@linear_model$cvm[idmin] + model@linear_model$cvsd[idmin]
