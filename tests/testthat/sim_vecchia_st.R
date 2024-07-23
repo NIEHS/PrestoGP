@@ -4,7 +4,7 @@ p <- 10 # number of predictors for each response
 p.nz <- 4 # number of nonzero predictors for each y
 n.spatial.xy <- 15 # number of spatial coordinates per dimension
 
-beta1 <- c(rep(1, p.nz), rep(0,p - p.nz))
+beta1 <- c(rep(1, p.nz), rep(0, p - p.nz))
 
 Sigma.X <- exp(-rdist(sample(1:p)) / 3)
 X <- mvrnorm(n.spatial.xy^3, rep(0, p), Sigma.X)

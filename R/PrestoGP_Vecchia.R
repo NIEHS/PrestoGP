@@ -356,7 +356,6 @@ setMethod("transform_data", "VecchiaModel", function(model, Y, X) {
   vecchia.approx <- model@vecchia_approx
   params <- model@covparams
   if (!model@apanasovich) {
-    param.seq <- model@param_sequence
     vecchia.approx$locsord <- scale_locs(
       model,
       list(vecchia.approx$locsord)

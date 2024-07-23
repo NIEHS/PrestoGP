@@ -19,7 +19,7 @@ mean.trend.st <- X.all %*% beta.all
 
 n.rho <- choose(ny, 2)
 rho.vec <- runif(n.rho, 0.2, 0.8)
-rho <- matrix(0, nrow=ny, ncol=ny)
+rho <- matrix(0, nrow = ny, ncol = ny)
 rho[upper.tri(rho)] <- rho.vec
 rho <- rho + t(rho) + diag(1, ny)
 
