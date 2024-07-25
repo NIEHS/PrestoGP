@@ -1,6 +1,3 @@
- <a href="https://niehs.github.io/PrestoGP/index.html/"><img src="man/figures/prestoGP-logo.png" align="right" height="139" alt="penalized regression and Gaussian Process plots" /></a>
- <br clear="left"/>
- 
 # **PrestoGP**: **P**enalized **Re**gression on **S**patio-**T**emporal **O**utcomes using **G**aussian **P**rocess
 
 
