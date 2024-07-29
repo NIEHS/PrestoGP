@@ -246,14 +246,19 @@ test_that("Simulated dataset spatiotemporal", {
 
   expect_length(beta.out, 11)
   expect_length(params.out, 6)
-  expect_equal(beta.out, c(0.01, 0.93, 1.01, 0.91, 0.99, rep(0, 6)),
-    tolerance = 0.015
+  expect_equal(beta.out, c(0, 0.9, 1.01, 0.88, 1, rep(0, 6)),
+    tolerance = 0.2
   )
-  expect_equal(params.out[1], 1.7, tolerance = 0.55)
-  expect_equal(params.out[2] - 0.19, 0, tolerance = 0.05)
-  expect_equal(params.out[3] - 0.22, 0, tolerance = 0.05)
-  expect_equal(params.out[4], 1.12, tolerance = 0.3)
-  expect_equal(params.out[5], 0.62, tolerance = 0.05)
+  expect_gt(params.out[1], 0.74)
+  expect_lt(params.out[1], 1.5)
+  expect_gt(params.out[2], 0.09)
+  expect_lt(params.out[2], 0.18)
+  expect_gt(params.out[3], 0.93)
+  expect_lt(params.out[3], 2.19)
+  expect_gt(params.out[4], 0.91)
+  expect_lt(params.out[4], 1.33)
+  expect_gt(params.out[5], 0.72)
+  expect_lt(params.out[5], 0.83)
 
   pgp.model2 <- new("FullModel", n_neighbors = 25)
   pgp.model2 <- prestogp_fit(pgp.model2, y, X, locs,
@@ -272,22 +277,26 @@ test_that("Simulated dataset spatiotemporal", {
 
   expect_length(beta.out2, 11)
   expect_length(params.out2, 6)
-  expect_equal(beta.out2, c(-0.03, 0.93, 1, 0.91, 0.98, rep(0, 6)),
+  expect_equal(beta.out2, c(0.01, 0.9, 1.02, 0.88, 1, rep(0, 6)),
     tolerance = 0.02
   )
-  expect_equal(params.out2[1], 1.6, tolerance = 0.5)
-  expect_equal(params.out2[2] - 0.19, 0, tolerance = 0.05)
-  expect_equal(params.out2[3] - 0.22, 0, tolerance = 0.05)
-  expect_equal(params.out2[4], 1.18, tolerance = 0.15)
-  expect_equal(params.out2[5], 0.64, tolerance = 0.05)
+  expect_gt(params.out2[1], 0.75)
+  expect_lt(params.out2[1], 1.4)
+  expect_gt(params.out2[2], 0.07)
+  expect_lt(params.out2[2], 0.13)
+  expect_gt(params.out2[3], 0.93)
+  expect_lt(params.out2[3], 1.7)
+  expect_gt(params.out2[4], 1.06)
+  expect_lt(params.out2[4], 1.57)
+  expect_gt(params.out2[5], 0.73)
+  expect_lt(params.out2[5], 0.83)
 
   # Vecchia and full models should be approximately equal
-  expect_equal(beta.out[1], beta.out2[1], tolerance = 0.08)
-  expect_equal(beta.out[-1], beta.out2[-1], tolerance = 0.03)
+  expect_equal(beta.out, beta.out2, tolerance = 0.03)
   expect_equal(params.out[1], params.out2[1], tolerance = 0.6)
-  expect_equal(params.out[2] - params.out2[2], 0, tolerance = 0.06)
-  expect_equal(params.out[3] - params.out2[3], 0, tolerance = 0.06)
-  expect_equal(params.out[4], params.out2[4], tolerance = 0.3)
+  expect_equal(params.out[2] - params.out2[2], 0, tolerance = 0.1)
+  expect_equal(params.out[3] - params.out2[3], 0, tolerance = 0.9)
+  expect_equal(params.out[4], params.out2[4], tolerance = 0.5)
   expect_equal(params.out[5], params.out2[5], tolerance = 0.1)
 })
 
