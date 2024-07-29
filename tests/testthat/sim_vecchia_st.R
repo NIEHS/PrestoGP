@@ -6,8 +6,8 @@ n.spatial.xy <- 15 # number of spatial coordinates per dimension
 
 beta1 <- c(rep(1, p.nz), rep(0, p - p.nz))
 
-Sigma.X <- exp(-rdist(sample(1:p)) / 3)
-X <- mvrnorm(n.spatial.xy^3, rep(0, p), Sigma.X)
+Sigma.X <- exp(-1 * fields::rdist(sample(1:p)) / 3)
+X <- MASS::mvrnorm(n.spatial.xy^3, rep(0, p), Sigma.X)
 mean.trend.st <- as.vector(X %*% beta1)
 
 marg.smoothness <- 0.5 + rnorm(1, 0.1, 0.05)
@@ -29,7 +29,7 @@ locss <- locs
 locss[, 1:2] <- locss[, 1:2] / ranges1
 locss[, 3] <- locs[, 3] / ranges2
 
-Sigma.All <- marg.var * Matern(rdist(locss), range = 1,
+Sigma.All <- marg.var * Matern(fields::rdist(locss), range = 1,
   smoothness = marg.smoothness)
 L.C <- chol(Sigma.All)
 
