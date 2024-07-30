@@ -11,8 +11,8 @@ beta.all <- rep(beta1, ny)
 
 X.st <- list()
 for (i in 1:ny) {
-  Sigma.X <- exp(-rdist(sample(1:p)) / 3)
-  X.st[[i]] <- mvrnorm(n.spatial.xy^3,  rep(0, p), Sigma.X)
+  Sigma.X <- exp(-1 * fields::rdist(sample(1:p)) / 3)
+  X.st[[i]] <- MASS::mvrnorm(n.spatial.xy^3,  rep(0, p), Sigma.X)
 }
 X.all <- psych::superMatrix(X.st)
 mean.trend.st <- X.all %*% beta.all
