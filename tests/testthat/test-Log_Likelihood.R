@@ -219,7 +219,7 @@ test_that("mvnegloglik_ST", {
     logparams, vec.approx,
     unlist(y.list), pseq, P, c(1, 1, 2), 2
   )
-  expect_equal(35106.73, neg_likelihood, tolerance = 1e-2)
+  expect_equal(35797.9, neg_likelihood, tolerance = 1e-2)
 
   vec.approx2 <- vec.approx
   for (i in 1:P) {
@@ -246,7 +246,7 @@ test_that("mvnegloglik_ST", {
     logparams, vec.approx,
     unlist(y.list), pseq, P, c(1, 1, 2), 2
   )
-  expect_equal(36354.9, neg_likelihood, tolerance = 1e-2)
+  expect_equal(36984.82, neg_likelihood, tolerance = 1e-2)
 
   vec.approx2 <- vec.approx
   vec.approx2$locsord[vec.approx$ondx == 1, 1:2] <-

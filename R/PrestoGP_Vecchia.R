@@ -136,7 +136,11 @@ setMethod("check_input", "VecchiaModel", function(model, Y, X, locs, center.y, i
   }
   model@Y_obs <- !is.na(as.vector(Y))
   if (!is.null(lod)) {
-    Y[!model@Y_obs] <- mean(lod) / 2
+    if (length(lod) > 1) {
+      Y[!model@Y_obs] <- lod[!model@Y_obs]
+    } else {
+      Y[!model@Y_obs] <- lod
+    }
   }
   if (center.y) {
     model@Y_bar <- mean(Y, na.rm = TRUE)
@@ -172,43 +176,107 @@ setMethod("check_input_pred", "VecchiaModel", function(model, X, locs) {
 })
 
 setMethod("impute_y", "VecchiaModel", function(model) {
-  if (sum(!model@Y_obs) > 0) {
-    Vecchia.Pred <- predict(model@linear_model,
-      newx = model@X_train[!model@Y_obs, ],
-      s = model@linear_model$lambda[model@lambda_1se_idx])
-    Vecchia.hat <- predict(model@linear_model,
-      newx = model@X_train[model@Y_obs, ],
-      s = model@linear_model$lambda[model@lambda_1se_idx])
+  Vecchia.Pred <- predict(model@linear_model,
+    newx = model@X_train[!model@Y_obs, ],
+    s = model@linear_model$lambda[model@lambda_1se_idx])
+  Vecchia.hat <- predict(model@linear_model,
+    newx = model@X_train[model@Y_obs, ],
+    s = model@linear_model$lambda[model@lambda_1se_idx])
 
-    # Test set prediction
-    res <- model@Y_train[model@Y_obs] - Vecchia.hat
+  # Test set prediction
+  res <- model@Y_train[model@Y_obs] - Vecchia.hat
 
-    locs.scaled <- scale_locs(model, model@locs_train)[[1]]
-    vec.approx.test <- vecchia_specify(locs.scaled[model@Y_obs, ],
-      model@n_neighbors,
-      locs.pred = locs.scaled[!model@Y_obs, ],
-      ordering.pred = "obspred", pred.cond = "independent")
+  locs.scaled <- scale_locs(model, model@locs_train)[[1]]
+  vec.approx.test <- vecchia_specify(locs.scaled[model@Y_obs, ],
+    model@n_neighbors,
+    locs.pred = locs.scaled[!model@Y_obs, ],
+    ordering.pred = "obspred", pred.cond = "independent")
 
-    ## carry out prediction
-    if (!model@apanasovich) {
-      pred <- vecchia_prediction(
-        res,
-        vec.approx.test,
-        c(model@covparams[1], 1, model@covparams[3]),
-        model@covparams[4],
-        return.values = "mean"
-      )
-    } else {
-      pred <- vecchia_prediction(
-        res,
-        vec.approx.test,
-        c(model@covparams[1], model@covparams[2], model@covparams[3]),
-        model@covparams[4], return.values = "mean"
-      )
-    }
-
-    model@Y_train[!model@Y_obs] <- pred$mu.pred + Vecchia.Pred
+  ## carry out prediction
+  if (!model@apanasovich) {
+    pred <- vecchia_prediction(
+      res,
+      vec.approx.test,
+      c(model@covparams[1], 1, model@covparams[3]),
+      model@covparams[4],
+      return.values = "mean"
+    )
+  } else {
+    pred <- vecchia_prediction(
+      res,
+      vec.approx.test,
+      c(model@covparams[1], model@covparams[2], model@covparams[3]),
+      model@covparams[4], return.values = "mean"
+    )
   }
+
+  model@Y_train[!model@Y_obs] <- pred$mu.pred + Vecchia.Pred
+  invisible(model)
+})
+
+setMethod("impute_y_lod", "VecchiaModel", function(model, lod,
+  n.mi = 10, eps = 0.01, maxit = 5, family, nfolds, foldid, parallel) {
+  y <- model@Y_train
+  X <- model@X_train
+  miss <- !model@Y_obs
+  vecchia.approx <- model@vecchia_approx
+  params <- model@covparams
+  if (!model@apanasovich) {
+    vecchia.approx$locsord <- scale_locs(
+      model,
+      list(vecchia.approx$locsord)
+    )[[1]]
+    params <- c(params[1], 1, params[3:4])
+  }
+
+  U.obj <- createU(vecchia.approx, params[1:3], params[4])
+  Sigma.hat <- solve(U.obj$U %*% t(U.obj$U))
+  Sigma.hat <- Sigma.hat[U.obj$latent, U.obj$latent]
+  Sigma.hat <- Sigma.hat[order(U.obj$ord), order(U.obj$ord)]
+  Sigma.hat <- Sigma.hat + params[4] * diag(nrow = nrow(Sigma.hat))
+  cur.coef <- as.vector(model@beta)
+  last.coef <- rep(Inf, ncol(X) + 1)
+  itn <- 0
+  while (max(abs(cur.coef - last.coef)) > eps & itn <= maxit) {
+    itn <- itn + 1
+
+    yhat.ni <- X %*% cur.coef[-1]
+    yhat.ni <- yhat.ni + mean(y[!miss]) - mean(yhat.ni[!miss])
+
+    mu.miss <- as.vector(yhat.ni[miss] + Sigma.hat[miss, !miss] %*%
+        solve(Sigma.hat[!miss, !miss], y[!miss] - yhat.ni[!miss]))
+    Sigma.miss <- Sigma.hat[miss, miss] - Sigma.hat[miss, !miss] %*%
+      solve(Sigma.hat[!miss, !miss], Sigma.hat[!miss, miss])
+
+    y.na.mat <- rtmvnorm(n.mi, mean = mu.miss, sigma = Sigma.miss,
+      upper = lod[miss], algorithm = "gibbs")
+
+    coef.mat <- matrix(nrow = n.mi, ncol = (ncol(X) + 1))
+    for (i in 1:n.mi) {
+      y[miss] <- y.na.mat[i, ]
+      tiid <- transform_iid(cbind(y, X), vecchia.approx, params[1:3], params[4])
+      yt <- tiid[, 1]
+      Xt <- as.matrix(tiid[, -1])
+
+      cur.glmnet <- cv.glmnet(as.matrix(Xt), as.matrix(yt),
+        alpha = model@alpha, family = family, nfolds = nfolds, foldid = foldid,
+        parallel = parallel)
+      coef.mat[i, ] <- as.matrix(coef(cur.glmnet, cur.glmnet$lambda.min))
+    }
+    last.coef <- cur.coef
+    cur.coef <- colMeans(coef.mat)
+  }
+  yhat.ni <- X %*% cur.coef[-1]
+  yhat.ni <- yhat.ni + mean(y[!miss]) - mean(yhat.ni[!miss])
+
+  mu.miss <- as.vector(yhat.ni[miss] + Sigma.hat[miss, !miss] %*%
+      solve(Sigma.hat[!miss, !miss], y[!miss] - yhat.ni[!miss]))
+  Sigma.miss <- Sigma.hat[miss, miss] - Sigma.hat[miss, !miss] %*%
+    solve(Sigma.hat[!miss, !miss], Sigma.hat[!miss, miss])
+
+  y.na.mat <- rtmvnorm(100, mean = mu.miss, sigma = Sigma.miss,
+    upper = lod[miss], algorithm = "gibbs")
+  model@Y_train[miss] <- colMeans(y.na.mat)
   invisible(model)
 })
 
@@ -288,23 +356,13 @@ setMethod("transform_data", "VecchiaModel", function(model, Y, X) {
   vecchia.approx <- model@vecchia_approx
   params <- model@covparams
   if (!model@apanasovich) {
-    param.seq <- model@param_sequence
     vecchia.approx$locsord <- scale_locs(
       model,
       list(vecchia.approx$locsord)
     )[[1]]
     transformed.data <- transform_iid(cbind(Y, as.matrix(X)),
-      vecchia.approx = vecchia.approx,
-      c(
-        params[1:param.seq[1, 2]],
-        rep(
-          1,
-          param.seq[2, 2] - param.seq[2, 1] + 1
-        ),
-        params[param.seq[3, 1]]
-      ),
-      params[param.seq[4, 1]]
-    )
+      vecchia.approx = vecchia.approx, c(params[1], 1, params[3]),
+      params[4])
   } else {
     transformed.data <- transform_iid(cbind(Y, as.matrix(X)),
       vecchia.approx = vecchia.approx,

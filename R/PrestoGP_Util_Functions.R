@@ -349,3 +349,35 @@ eliminate_dupes <- function(locs, locs.pred = NULL) {
   }
   return(list(locs = locs, locs.pred = locs.pred))
 }
+
+lod_reg_mi <- function(y, X, lod, miss, n.mi = 10, eps = 0.01, maxit = 10,
+  parallel, foldid) {
+  lod <- lod[miss]
+  last.coef <- rep(Inf, ncol(X) + 1)
+  cur.glmnet <- cv.glmnet(X, y, parallel = parallel, foldid = foldid)
+  cur.coef <- as.matrix(predict(cur.glmnet, type = "coefficients",
+      s = cur.glmnet$lambda.1se))
+  itn <- 0
+  while (max(abs(cur.coef - last.coef)) > eps && itn <= maxit) {
+    itn <- itn + 1
+    last.coef <- cur.coef
+    miss.means <- X[miss, ] %*% last.coef[-1] + last.coef[1]
+    obs.means <- X[!miss, ] %*% last.coef[-1] + last.coef[1]
+    cur.resid <- obs.means - y[!miss]
+    cur.sd <- sqrt(sum(cur.resid^2) / (sum(!miss) - length(last.coef)))
+    coef.mat <- matrix(nrow = n.mi, ncol = length(cur.coef))
+    for (i in 1:n.mi) {
+      y[miss] <- rtruncnorm(sum(miss), b = lod, mean = miss.means, sd = cur.sd)
+      cur.glmnet <- cv.glmnet(X, y, parallel = parallel, foldid = foldid)
+      coef.mat[i, ] <- as.matrix(predict(cur.glmnet, type = "coefficients",
+          s = cur.glmnet$lambda.1se))
+    }
+    cur.coef <- colMeans(coef.mat)
+  }
+  miss.means <- X[miss, ] %*% cur.coef[-1] + cur.coef[1]
+  obs.means <- X[!miss, ] %*% cur.coef[-1] + cur.coef[1]
+  cur.resid <- obs.means - y[!miss]
+  cur.sd <- sqrt(sum(cur.resid^2) / (sum(!miss) - length(last.coef)))
+  y.impute <- etruncnorm(b = lod, mean = miss.means, sd = cur.sd)
+  return(list(coef = cur.coef, y.impute = y.impute))
+}

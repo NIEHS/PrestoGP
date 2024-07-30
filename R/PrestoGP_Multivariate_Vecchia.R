@@ -188,7 +188,11 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
   for (i in seq_along(Y)) {
     Y_obs <- c(Y_obs, !is.na(Y[[i]]))
     if (!is.null(lod)) {
-      Y[[i]][is.na(Y[[i]])] <- mean(lod[[i]]) / 2
+      if (length(lod[[i]]) > 1) {
+        Y[[i]][is.na(Y[[i]])] <- lod[[i]][is.na(Y[[i]])]
+      } else {
+        Y[[i]][is.na(Y[[i]])] <- lod[[i]]
+      }
     }
     if (center.y) {
       Y_bar[i] <- mean(Y[[i]], na.rm = TRUE)
@@ -261,60 +265,141 @@ setMethod("check_input_pred", "MultivariateVecchiaModel", function(model, X, loc
 })
 
 setMethod("impute_y", "MultivariateVecchiaModel", function(model) {
-  if (sum(!model@Y_obs) > 0) {
-    Vecchia.Pred <- predict(model@linear_model,
-      newx = model@X_train[!model@Y_obs, ],
-      s = model@linear_model$lambda[model@lambda_1se_idx])
-    Vecchia.hat <- predict(model@linear_model,
-      newx = model@X_train[model@Y_obs, ],
-      s = model@linear_model$lambda[model@lambda_1se_idx])
+  Vecchia.Pred <- predict(model@linear_model,
+    newx = model@X_train[!model@Y_obs, ],
+    s = model@linear_model$lambda[model@lambda_1se_idx])
+  Vecchia.hat <- predict(model@linear_model,
+    newx = model@X_train[model@Y_obs, ],
+    s = model@linear_model$lambda[model@lambda_1se_idx])
 
-    # Test set prediction
-    res <- model@Y_train[model@Y_obs] - Vecchia.hat
+  # Test set prediction
+  res <- model@Y_train[model@Y_obs] - Vecchia.hat
 
-    locs.scaled <- scale_locs(model, model@locs_train)
-    all.obs <- model@Y_obs
-    locs.otr <- list()
-    locs.otst <- list()
-    for (i in seq_along(model@locs_train)) {
-      nl <- nrow(locs.scaled[[i]])
-      cur.obs <- all.obs[1:nl]
-      locs.otr[[i]] <- locs.scaled[[i]][cur.obs, ]
-      locs.otst[[i]] <- locs.scaled[[i]][!cur.obs, ]
-      all.obs <- all.obs[-(1:nl)]
-    }
-
-    if (model@apanasovich & (length(model@locs_train) > 1)) {
-      locs.nd <- eliminate_dupes(locs.otr, locs.otst)
-      locs.otr <- locs.nd$locs
-      locs.otst <- locs.nd$locs.pred
-    }
-    vec.approx.test <- vecchia_Mspecify(locs.otr, model@n_neighbors,
-      locs.list.pred = locs.otst,
-      ordering.pred = "obspred",
-      pred.cond = "independent"
-    )
-
-    ## carry out prediction
-    if (!model@apanasovich) {
-      params <- model@covparams
-      param.seq <- model@param_sequence
-      pred <- vecchia_Mprediction(res, vec.approx.test,
-        c(
-          params[1:param.seq[1, 2]],
-          rep(1, param.seq[2, 2] - param.seq[2, 1] + 1),
-          params[param.seq[3, 1]:param.seq[5, 2]]
-        ),
-        return.values = "mean"
-      )
-    } else {
-      pred <- vecchia_Mprediction(res, vec.approx.test, model@covparams,
-        return.values = "mean"
-      )
-    }
-
-    model@Y_train[!model@Y_obs] <- pred$mu.pred + Vecchia.Pred
+  locs.scaled <- scale_locs(model, model@locs_train)
+  all.obs <- model@Y_obs
+  locs.otr <- list()
+  locs.otst <- list()
+  for (i in seq_along(model@locs_train)) {
+    nl <- nrow(locs.scaled[[i]])
+    cur.obs <- all.obs[1:nl]
+    locs.otr[[i]] <- locs.scaled[[i]][cur.obs, ]
+    locs.otst[[i]] <- locs.scaled[[i]][!cur.obs, ]
+    all.obs <- all.obs[-(1:nl)]
   }
+
+  if (model@apanasovich & (length(model@locs_train) > 1)) {
+    locs.nd <- eliminate_dupes(locs.otr, locs.otst)
+    locs.otr <- locs.nd$locs
+    locs.otst <- locs.nd$locs.pred
+  }
+  vec.approx.test <- vecchia_Mspecify(locs.otr, model@n_neighbors,
+    locs.list.pred = locs.otst,
+    ordering.pred = "obspred",
+    pred.cond = "independent"
+  )
+
+  ## carry out prediction
+  if (!model@apanasovich) {
+    params <- model@covparams
+    param.seq <- model@param_sequence
+    pred <- vecchia_Mprediction(res, vec.approx.test,
+      c(
+        params[1:param.seq[1, 2]],
+        rep(1, length(model@locs_train)),
+        params[param.seq[3, 1]:param.seq[5, 2]]
+      ),
+      return.values = "mean"
+    )
+  } else {
+    pred <- vecchia_Mprediction(res, vec.approx.test, model@covparams,
+      return.values = "mean"
+    )
+  }
+
+  model@Y_train[!model@Y_obs] <- pred$mu.pred + Vecchia.Pred
+  invisible(model)
+})
+
+setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
+  n.mi = 10, eps = 0.01, maxit = 5, family, nfolds, foldid, parallel) {
+  y <- model@Y_train
+  X <- model@X_train
+  miss <- !model@Y_obs
+  vecchia.approx <- model@vecchia_approx
+  params <- model@covparams
+  param.seq <- model@param_sequence
+  if (!model@apanasovich) {
+    olocs.scaled <- vecchia.approx$locsord
+    for (i in 1:vecchia.approx$P) {
+      for (j in 1:model@nscale) {
+        olocs.scaled[model@vecchia_approx$ondx == i, model@scaling == j] <-
+          olocs.scaled[
+            model@vecchia_approx$ondx == i,
+            model@scaling == j
+          ] /
+            model@covparams[param.seq[2, 1] + model@nscale * (i - 1) + j - 1]
+      }
+    }
+    vecchia.approx$locsord <- olocs.scaled
+    params <- c(params[1:param.seq[1, 2]], rep(1, vecchia.approx$P),
+      params[param.seq[3, 1]:param.seq[5, 2]])
+    param.seq <- create.param.sequence(vecchia.approx$P)
+  }
+
+  U.obj <- createUMultivariate(vecchia.approx, params)
+  Sigma.hat <- solve(U.obj$U %*% t(U.obj$U))
+  Sigma.hat <- Sigma.hat[U.obj$latent, U.obj$latent]
+  Sigma.hat <- Sigma.hat[order(U.obj$ord), order(U.obj$ord)]
+  nugget.seq <- NULL
+  for (i in 1:vecchia.approx$P) {
+    nugget.seq <- c(nugget.seq, rep(params[param.seq[4, 1] + i - 1],
+        nrow(model@locs_train[[i]])))
+  }
+  Sigma.hat <- Sigma.hat + nugget.seq * diag(nrow = nrow(Sigma.hat))
+
+  cur.coef <- as.vector(model@beta)
+  last.coef <- rep(Inf, ncol(X) + 1)
+  itn <- 0
+  while (max(abs(cur.coef - last.coef)) > eps & itn <= maxit) {
+    itn <- itn + 1
+
+    yhat.ni <- X %*% cur.coef[-1]
+    yhat.ni <- yhat.ni + mean(y[!miss]) - mean(yhat.ni[!miss])
+
+    mu.miss <- as.vector(yhat.ni[miss] + Sigma.hat[miss, !miss] %*%
+        solve(Sigma.hat[!miss, !miss], y[!miss] - yhat.ni[!miss]))
+    Sigma.miss <- Sigma.hat[miss, miss] - Sigma.hat[miss, !miss] %*%
+      solve(Sigma.hat[!miss, !miss], Sigma.hat[!miss, miss])
+
+    y.na.mat <- rtmvnorm(n.mi, mean = mu.miss, sigma = Sigma.miss,
+      upper = lod[miss], algorithm = "gibbs")
+
+    coef.mat <- matrix(nrow = n.mi, ncol = (ncol(X) + 1))
+    for (i in 1:n.mi) {
+      y[miss] <- y.na.mat[i, ]
+      tiid <- transform_miid(cbind(y, X), vecchia.approx, params)
+      yt <- tiid[, 1]
+      Xt <- as.matrix(tiid[, -1])
+
+      cur.glmnet <- cv.glmnet(as.matrix(Xt), as.matrix(yt),
+        alpha = model@alpha, family = family, nfolds = nfolds, foldid = foldid,
+        parallel = parallel)
+      coef.mat[i, ] <- as.matrix(coef(cur.glmnet, cur.glmnet$lambda.min))
+    }
+    last.coef <- cur.coef
+    cur.coef <- colMeans(coef.mat)
+  }
+  yhat.ni <- X %*% cur.coef[-1]
+  yhat.ni <- yhat.ni + mean(y[!miss]) - mean(yhat.ni[!miss])
+
+  mu.miss <- as.vector(yhat.ni[miss] + Sigma.hat[miss, !miss] %*%
+      solve(Sigma.hat[!miss, !miss], y[!miss] - yhat.ni[!miss]))
+  Sigma.miss <- Sigma.hat[miss, miss] - Sigma.hat[miss, !miss] %*%
+    solve(Sigma.hat[!miss, !miss], Sigma.hat[!miss, miss])
+
+  y.na.mat <- rtmvnorm(100, mean = mu.miss, sigma = Sigma.miss,
+    upper = lod[miss], algorithm = "gibbs")
+  model@Y_train[miss] <- colMeans(y.na.mat)
   invisible(model)
 })
 
@@ -400,7 +485,7 @@ setMethod("transform_data", "MultivariateVecchiaModel", function(model, Y, X) {
       vecchia.approx = vecchia.approx,
       c(
         params[1:param.seq[1, 2]],
-        rep(1, param.seq[2, 2] - param.seq[2, 1] + 1),
+        rep(1, vecchia.approx$P),
         params[param.seq[3, 1]:param.seq[5, 2]]
       )
     )

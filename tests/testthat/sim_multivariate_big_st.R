@@ -4,20 +4,17 @@ ny <- 3 # number of response variables
 p <- 10 # number of predictors for each response
 p.nz <- 4 # number of nonzero predictors for each y
 n.spatial.xy <- 10 # number of spatial coordinates per dimension
-
-library(MASS)
-library(fields)
-library(psych)
+intercepts <- c(4, 8, 12)
 
 beta1 <- c(rep(1, p.nz), rep(0, p - p.nz))
 beta.all <- rep(beta1, ny)
 
 X.st <- list()
 for (i in 1:ny) {
-  Sigma.X <- exp(-rdist(sample(1:p)) / 3)
-  X.st[[i]] <- mvrnorm(n.spatial.xy^3, rep(0, p), Sigma.X)
+  Sigma.X <- exp(-1 * fields::rdist(sample(1:p)) / 3)
+  X.st[[i]] <- MASS::mvrnorm(n.spatial.xy^3,  rep(0, p), Sigma.X)
 }
-X.all <- superMatrix(X.st)
+X.all <- psych::superMatrix(X.st)
 mean.trend.st <- X.all %*% beta.all
 
 n.rho <- choose(ny, 2)
@@ -32,9 +29,9 @@ x.variance <- runif(ny, 1.5, 4)
 marg.var <- nuggets + x.variance
 ranges <- rep(NA, 2 * ny)
 ranges[2 * (1:ny) - 1] <- runif(ny, 0.5, 1.2)
-ranges[2 * (1:ny)] <- runif(ny, 200, 400)
+ranges[2 * (1:ny)] <- runif(ny, 5, 10)
 
-params.all <- c(x.variance, ranges, marg.smoothness, nuggets, rho.vec)
+params.all <- c(marg.var, ranges, marg.smoothness, nuggets, rho.vec)
 
 locs.list <- list()
 locs.listb <- list()
@@ -55,7 +52,8 @@ for (i in 1:ny) {
     if (i == j) {
       ndx1 <- ((i - 1) * n.spatial.xy^3 + 1):(n.spatial.xy^3 * i)
       dij <- fields::rdist(locs.listb[[i]])
-      Sigma.All[ndx1, ndx1] <- marg.var[i] * fields::Matern(dij, range = 1, smoothness = marg.smoothness[i])
+      Sigma.All[ndx1, ndx1] <- marg.var[i] *
+        fields::Matern(dij, range = 1, smoothness = marg.smoothness[i])
     } else {
       ndx1 <- ((i - 1) * n.spatial.xy^3 + 1):(n.spatial.xy^3 * i)
       ndx2 <- ((j - 1) * n.spatial.xy^3 + 1):(n.spatial.xy^3 * j)
@@ -66,8 +64,10 @@ for (i in 1:ny) {
       aii <- 1
       ajj <- 1
       aij <- sqrt((aii^2 + ajj^2) / 2)
-      Sigma.All[ndx1, ndx2] <- rho[i, j] * sqrt(marg.var[i]) * sqrt(marg.var[j]) * aii^vii * ajj^vjj * gamma(vij) /
-        (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) * fields::Matern(dij, smoothness = vij, alpha = aij)
+      Sigma.All[ndx1, ndx2] <- rho[i, j] * sqrt(marg.var[i]) *
+        sqrt(marg.var[j]) * aii^vii * ajj^vjj * gamma(vij) /
+        (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
+        fields::Matern(dij, smoothness = vij, alpha = aij)
       Sigma.All[ndx2, ndx1] <- t(Sigma.All[ndx1, ndx2])
     }
   }
@@ -79,18 +79,12 @@ st.error <- rnorm(n.spatial.xy^3 * ny) %*% L.C
 
 nug.error <- NULL
 for (i in 1:ny) {
-  nug.error <- c(nug.error, nuggets[i] * rnorm(n.spatial.xy^3))
+  nug.error <- c(nug.error, sqrt(nuggets[i]) * rnorm(n.spatial.xy^3))
 }
 
 y.list <- list()
 for (i in 1:ny) {
   ndx1 <- ((i - 1) * n.spatial.xy^3 + 1):(n.spatial.xy^3 * i)
-  y.list[[i]] <- mean.trend.st[ndx1] + st.error[ndx1] + nug.error[ndx1]
+  y.list[[i]] <- mean.trend.st[ndx1] + st.error[ndx1] + nug.error[ndx1] +
+    intercepts[i]
 }
-
-rm(
-  ny, p, p.nz, n.spatial.xy, beta1, i, j, Sigma.X, mean.trend.st, n.rho,
-  loc1, loc2, ndx1, ndx2, dij, vii, vjj, vij, aii, ajj, aij, L.C,
-  st.error, nug.error, X.all, rho, rho.vec, ranges, Sigma.All, nuggets,
-  marg.smoothness, marg.var, locs.listb, loc3, loc1b, loc2b, loc3b
-)
