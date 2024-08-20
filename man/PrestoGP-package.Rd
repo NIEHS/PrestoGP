@@ -6,6 +6,8 @@
 \alias{PrestoGP-package}
 \title{PrestoGP: Penalized Regression for Spatio-Temporal Outcomes via Gaussian Processes}
 \description{
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
 Simultaneous variable seletion and estimation of LUR models with spatiotemporally correlated errors that is scalable for big data.
 }
 \seealso{
