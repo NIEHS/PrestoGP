@@ -182,7 +182,7 @@ knn_indices <- function(ordered_locs, query, n_neighbors, dist_func, dist_func_c
       "distances" = dists[nearest_neighbors]
     ))
   } else {
-    cur.nn <- RANN::nn2(ordered_locs, query, n_neighbors)
+    cur.nn <- nn2(ordered_locs, query, n_neighbors)
     return(list("indices" = cur.nn$nn.idx, "distances" = cur.nn$nn.dists))
   }
 }
