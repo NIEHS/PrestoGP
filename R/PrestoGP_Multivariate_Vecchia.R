@@ -328,6 +328,7 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
   vecchia.approx <- model@vecchia_approx
   params <- model@covparams
   param.seq <- model@param_sequence
+  P <- length(model@locs_train)
   if (!model@apanasovich) {
     olocs.scaled <- vecchia.approx$locsord
     for (i in 1:vecchia.approx$P) {
@@ -343,17 +344,53 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
     vecchia.approx$locsord <- olocs.scaled
     params <- c(params[1:param.seq[1, 2]], rep(1, vecchia.approx$P),
       params[param.seq[3, 1]:param.seq[5, 2]])
-    param.seq <- create.param.sequence(vecchia.approx$P)
   }
 
-  U.obj <- createUMultivariate(vecchia.approx, params)
-  Sigma.hat <- solve(U.obj$U %*% t(U.obj$U))
-  Sigma.hat <- Sigma.hat[U.obj$latent, U.obj$latent]
-  Sigma.hat <- Sigma.hat[order(U.obj$ord), order(U.obj$ord)]
+  locs.scaled <- scale_locs(model, model@locs_train)
+  locs.all <- NULL
   nugget.seq <- NULL
-  for (i in 1:vecchia.approx$P) {
+  ndx <- list()
+  for (i in seq_len(P)) {
+    locs.all <- rbind(locs.all, locs.scaled[[i]])
     nugget.seq <- c(nugget.seq, rep(params[param.seq[4, 1] + i - 1],
         nrow(model@locs_train[[i]])))
+    ndx[[i]] <- seq_len(nrow(locs.scaled[[i]]))
+    if (i > 1) {
+      last.ndx <- ndx[[i - 1]]
+      ndx[[i]] <- ndx[[i]] + last.ndx[length(last.ndx)]
+    }
+  }
+  locs.nn <- nn2(locs.all, k = model@n_neighbors)$nn.idx
+
+  sigma <- params[param.seq[1, 1]:param.seq[1, 2]]
+  rangep <- params[param.seq[2, 1]:param.seq[2, 2]]
+  smoothness <- params[param.seq[3, 1]:param.seq[3, 2]]
+
+  rho <- params[param.seq[5, 1]:param.seq[5, 2]]
+  rho.mat <- matrix(0, nrow = P, ncol = P)
+  rho.mat[upper.tri(rho.mat, diag = FALSE)] <- rho
+  rho.mat <- rho.mat + t(rho.mat)
+  diag(rho.mat) <- 1
+
+  Sigma.hat <- matrix(nrow = nrow(locs.all), ncol = nrow(locs.all))
+  for (i in seq_len(P)) {
+    for (j in i:P) {
+      smooth.ii <- smoothness[i]
+      smooth.jj <- smoothness[j]
+      smooth.ij <- (smooth.ii + smooth.jj) / 2
+      alpha.ii <- 1 / rangep[i]
+      alpha.jj <- 1 / rangep[j]
+      alpha.ij <- sqrt((alpha.ii^2 + alpha.jj^2) / 2)
+      Sigma.hat[ndx[[i]], ndx[[j]]] <- rho.mat[i, j] * sqrt(sigma[i]) *
+        sqrt(sigma[j]) * alpha.ii^smooth.ii * alpha.jj^smooth.jj *
+        gamma(smooth.ij) / (alpha.ij^(2 * smooth.ij) *
+          sqrt(gamma(smooth.ii) * gamma(smooth.jj))) *
+        Matern(rdist(locs.scaled[[i]], locs.scaled[[j]]),
+          alpha = alpha.ij, smoothness = smooth.ij)
+      if (i != j) {
+        Sigma.hat[ndx[[j]], ndx[[i]]] <- t(Sigma.hat[ndx[[i]], ndx[[j]]])
+      }
+    }
   }
   Sigma.hat <- Sigma.hat + nugget.seq * diag(nrow = nrow(Sigma.hat))
 
@@ -366,13 +403,65 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
     yhat.ni <- X %*% cur.coef[-1]
     yhat.ni <- yhat.ni + mean(y[!miss]) - mean(yhat.ni[!miss])
 
-    mu.miss <- as.vector(yhat.ni[miss] + Sigma.hat[miss, !miss] %*%
-        solve(Sigma.hat[!miss, !miss], y[!miss] - yhat.ni[!miss]))
-    Sigma.miss <- Sigma.hat[miss, miss] - Sigma.hat[miss, !miss] %*%
-      solve(Sigma.hat[!miss, !miss], Sigma.hat[!miss, miss])
+    if (parallel) {
+      y.na.mat <- foreach(i = which(miss), .combine = cbind) %dopar% {
+        cur.nn <- locs.nn[i, ]
+        cur.miss <- miss[cur.nn]
+        cur.y <- y[cur.nn]
+        cur.yhat <- yhat.ni[cur.nn]
+        cur.Sigma <- Sigma.hat[cur.nn, cur.nn]
+        if (sum(cur.miss) == length(cur.miss)) {
+          mu.miss <- cur.yhat
+          Sigma.miss <- cur.Sigma
+        } else {
+          mu.miss <- as.vector(cur.yhat[cur.miss] +
+              cur.Sigma[cur.miss, !cur.miss, drop = FALSE] %*%
+                solve(cur.Sigma[!cur.miss, !cur.miss],
+                  cur.y[!cur.miss] - cur.yhat[!cur.miss]))
+          Sigma.miss <- cur.Sigma[cur.miss, cur.miss] -
+            cur.Sigma[cur.miss, !cur.miss, drop = FALSE] %*%
+              solve(cur.Sigma[!cur.miss, !cur.miss],
+                cur.Sigma[!cur.miss, cur.miss, drop = FALSE])
+        }
+        if (length(mu.miss) > 1) {
+          cur.out <- rtmvnorm(10, mean = mu.miss, sigma = Sigma.miss,
+            upper = lod[cur.nn][cur.miss], algorithm = "gibbs")[, 1]
+        } else {
+          cur.out <- rnorm(10, mu.miss, as.numeric(Sigma.miss))
+        }
+        cur.out
+      }
+    } else {
+      y.na.mat <- matrix(nrow = 10, ncol = sum(miss))
 
-    y.na.mat <- rtmvnorm(n.mi, mean = mu.miss, sigma = Sigma.miss,
-      upper = lod[miss], algorithm = "gibbs")
+      for (i in seq_len(ncol(y.na.mat))) {
+        cur.nn <- locs.nn[which(miss)[i], ]
+        cur.miss <- miss[cur.nn]
+        cur.y <- y[cur.nn]
+        cur.yhat <- yhat.ni[cur.nn]
+        cur.Sigma <- Sigma.hat[cur.nn, cur.nn]
+        if (sum(cur.miss) == length(cur.miss)) {
+          mu.miss <- cur.yhat
+          Sigma.miss <- cur.Sigma
+        } else {
+          mu.miss <- as.vector(cur.yhat[cur.miss] +
+              cur.Sigma[cur.miss, !cur.miss, drop = FALSE] %*%
+                solve(cur.Sigma[!cur.miss, !cur.miss],
+                  cur.y[!cur.miss] - cur.yhat[!cur.miss]))
+          Sigma.miss <- cur.Sigma[cur.miss, cur.miss] -
+            cur.Sigma[cur.miss, !cur.miss, drop = FALSE] %*%
+              solve(cur.Sigma[!cur.miss, !cur.miss],
+                cur.Sigma[!cur.miss, cur.miss, drop = FALSE])
+        }
+        if (length(mu.miss) > 1) {
+          cur.out <- rtmvnorm(10, mean = mu.miss, sigma = Sigma.miss,
+            upper = lod[cur.nn][cur.miss], algorithm = "gibbs")[, 1]
+        } else {
+          cur.out <- rnorm(10, mu.miss, as.numeric(Sigma.miss))
+        }
+        y.na.mat[, i] <- cur.out
+      }
+    }
 
     coef.mat <- matrix(nrow = n.mi, ncol = (ncol(X) + 1))
     for (i in 1:n.mi) {
@@ -384,7 +473,7 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
       cur.glmnet <- cv.glmnet(as.matrix(Xt), as.matrix(yt),
         alpha = model@alpha, family = family, nfolds = nfolds, foldid = foldid,
         parallel = parallel)
-      coef.mat[i, ] <- as.matrix(coef(cur.glmnet, cur.glmnet$lambda.min))
+      coef.mat[i, ] <- as.matrix(coef(cur.glmnet, s = "lambda.min"))
     }
     last.coef <- cur.coef
     cur.coef <- colMeans(coef.mat)
@@ -392,13 +481,66 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
   yhat.ni <- X %*% cur.coef[-1]
   yhat.ni <- yhat.ni + mean(y[!miss]) - mean(yhat.ni[!miss])
 
-  mu.miss <- as.vector(yhat.ni[miss] + Sigma.hat[miss, !miss] %*%
-      solve(Sigma.hat[!miss, !miss], y[!miss] - yhat.ni[!miss]))
-  Sigma.miss <- Sigma.hat[miss, miss] - Sigma.hat[miss, !miss] %*%
-    solve(Sigma.hat[!miss, !miss], Sigma.hat[!miss, miss])
+  if (parallel) {
+    y.na.mat <- foreach(i = which(miss), .combine = cbind) %dopar% {
+      cur.nn <- locs.nn[i, ]
+      cur.miss <- miss[cur.nn]
+      cur.y <- y[cur.nn]
+      cur.yhat <- yhat.ni[cur.nn]
+      cur.Sigma <- Sigma.hat[cur.nn, cur.nn]
+      if (sum(cur.miss) == length(cur.miss)) {
+        mu.miss <- cur.yhat
+        Sigma.miss <- cur.Sigma
+      } else {
+        mu.miss <- as.vector(cur.yhat[cur.miss] +
+            cur.Sigma[cur.miss, !cur.miss, drop = FALSE] %*%
+              solve(cur.Sigma[!cur.miss, !cur.miss],
+                cur.y[!cur.miss] - cur.yhat[!cur.miss]))
+        Sigma.miss <- cur.Sigma[cur.miss, cur.miss] -
+          cur.Sigma[cur.miss, !cur.miss, drop = FALSE] %*%
+            solve(cur.Sigma[!cur.miss, !cur.miss],
+              cur.Sigma[!cur.miss, cur.miss, drop = FALSE])
+      }
+      if (length(mu.miss) > 1) {
+        cur.out <- rtmvnorm(100, mean = mu.miss, sigma = Sigma.miss,
+          upper = lod[cur.nn][cur.miss], algorithm = "gibbs")[, 1]
+      } else {
+        cur.out <- rnorm(100, mu.miss, as.numeric(Sigma.miss))
+      }
+      cur.out
+    }
+  } else {
+    y.na.mat <- matrix(nrow = 100, ncol = sum(miss))
 
-  y.na.mat <- rtmvnorm(100, mean = mu.miss, sigma = Sigma.miss,
-    upper = lod[miss], algorithm = "gibbs")
+    for (i in seq_len(ncol(y.na.mat))) {
+      cur.nn <- locs.nn[which(miss)[i], ]
+      cur.miss <- miss[cur.nn]
+      cur.y <- y[cur.nn]
+      cur.yhat <- yhat.ni[cur.nn]
+      cur.Sigma <- Sigma.hat[cur.nn, cur.nn]
+      if (sum(cur.miss) == length(cur.miss)) {
+        mu.miss <- cur.yhat
+        Sigma.miss <- cur.Sigma
+      } else {
+        mu.miss <- as.vector(cur.yhat[cur.miss] +
+            cur.Sigma[cur.miss, !cur.miss, drop = FALSE] %*%
+              solve(cur.Sigma[!cur.miss, !cur.miss],
+                cur.y[!cur.miss] - cur.yhat[!cur.miss]))
+        Sigma.miss <- cur.Sigma[cur.miss, cur.miss] -
+          cur.Sigma[cur.miss, !cur.miss, drop = FALSE] %*%
+            solve(cur.Sigma[!cur.miss, !cur.miss],
+              cur.Sigma[!cur.miss, cur.miss, drop = FALSE])
+      }
+      if (length(mu.miss) > 1) {
+        cur.out <- rtmvnorm(100, mean = mu.miss, sigma = Sigma.miss,
+          upper = lod[cur.nn][cur.miss], algorithm = "gibbs")[, 1]
+      } else {
+        cur.out <- rnorm(100, mu.miss, as.numeric(Sigma.miss))
+      }
+      y.na.mat[, i] <- cur.out
+    }
+  }
+
   model@Y_train[miss] <- colMeans(y.na.mat)
   invisible(model)
 })
