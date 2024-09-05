@@ -13,9 +13,8 @@
 #' @importFrom stats optim predict var rnorm
 #' @importFrom aod wald.test
 #' @importFrom dplyr %>%
-#' @importFrom truncnorm rtruncnorm
-#' @importFrom truncnorm etruncnorm
-#' @importFrom tmvtnorm rtmvnorm
+#' @importFrom truncnorm rtruncnorm etruncnorm
 #' @importFrom RANN nn2
+#' @importFrom nntmvn rtmvn_snn
 ## usethis namespace: end
 NULL
