@@ -21,7 +21,7 @@ model.}
 \item{\code{logparams}}{A numeric vector containing the transformed versions of the
 Matern parameters (used internally for likelihood calculations).}
 
-\item{\code{beta}}{A matrix containing the regression coefficients.}
+\item{\code{beta}}{A column matrix containing the regression coefficients.}
 
 \item{\code{lambda_1se_idx}}{Stores the index of the optimal tuning parameter for
 the glmnet model. See \code{\link[glmnet]{glmnet}}.}
@@ -35,6 +35,10 @@ the glmnet model. See \code{\link[glmnet]{glmnet}}.}
 
 \item{\code{Y_train}}{A column matrix containing the original response values.}
 
+\item{\code{X_ndx}}{A vector used to find the elements of beta corresponding to
+specific outcomes. The \emph{i}th element of X_ndx is the index of the
+last element of beta corresponding to predictors for outcome \emph{i}.}
+
 \item{\code{Y_bar}}{A vector containing the means of each outcome.}
 
 \item{\code{Y_obs}}{A logical vector used to track which values of Y are non-missing.}
@@ -43,13 +47,11 @@ the glmnet model. See \code{\link[glmnet]{glmnet}}.}
 
 \item{\code{y_tilde}}{The column matrix containing the transformed response values.}
 
-\item{\code{res}}{numeric.}
+\item{\code{res}}{A numeric vector of the residuals.}
 
 \item{\code{locs_train}}{A list containing the location coordinates. Each element
 of the list corresponds to a different outcome. (The list will have length
 1 for univariate models.)}
-
-\item{\code{res}}{A numeric vector of the residuals.}
 
 \item{\code{linear_model}}{The glmnet model. See \code{\link[glmnet]{glmnet}} and
 \code{\link[glmnet]{cv.glmnet}}.}
@@ -61,7 +63,7 @@ after optimization.}
 
 \item{\code{error}}{Penalized model error. See References for details.}
 
-\item{\code{n_eighbors}}{Number of neighbors to condition on for the Vecchia
+\item{\code{n_neighbors}}{Number of neighbors to condition on for the Vecchia
 approximation. Ignored for full models.}
 
 \item{\code{min_m}}{Minimum permissible number of neighbors.}

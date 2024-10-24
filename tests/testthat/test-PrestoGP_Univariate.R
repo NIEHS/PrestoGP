@@ -119,11 +119,34 @@ test_that("length(lod) != nrow(X)", {
   )
 })
 
+test_that("length(Y.names) != 1", {
+  model <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, as.matrix(c(1:4)), as.matrix(1:4),
+      as.matrix(1:4), Y.names = c("test1", "test2"),
+    ),
+    "Length of Y.names must match the number of response variables"
+  )
+})
+
+test_that("length(X.names) != ncol(X)", {
+  model <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, as.matrix(c(1:4)), as.matrix(1:4),
+      as.matrix(1:4), X.names = c("test1", "test2"),
+    ),
+    "Length of X.names must match the number of predictor variables"
+  )
+})
+
 test_that("Simulated dataset spatial", {
   load("sim_vecchia.RData")
   pgp.model1 <- new("VecchiaModel", n_neighbors = 25)
-  pgp.model1 <- prestogp_fit(pgp.model1, y, X, locs,
-    scaling = c(1, 1), apanasovich = TRUE, verbose = FALSE,
+  pgp.model1 <- prestogp_fit(pgp.model1, y, X, locs, Y.names = "test",
+    X.names = c("x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10"),
+    scaling = c(1, 1), apanasovich = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -131,15 +154,46 @@ test_that("Simulated dataset spatial", {
   )
 
   expect_true(validObject(pgp.model1))
+  show(pgp.model1)
 
-  beta.out <- as.vector(pgp.model1@beta)
+  expect_equal(get_neighbors(pgp.model1), pgp.model1@n_neighbors)
+  expect_equal(get_scaling(pgp.model1), pgp.model1@scaling)
+  expect_equal(get_converged(pgp.model1), pgp.model1@converged)
+  expect_equal(get_pen_loglik(pgp.model1), pgp.model1@error)
+
+  beta.out <- get_beta(pgp.model1)
   params.out <- pgp.model1@covparams
+  theta.out <- get_theta(pgp.model1)
 
-  expect_length(beta.out, 11)
+  expect_length(beta.out, 2)
+  expect_length(beta.out[[1]], 10)
+  expect_length(beta.out[[2]], 1)
   expect_length(params.out, 5)
-  expect_equal(beta.out, c(0.01, 0.86, 0.98, 0.94, 0.9, rep(0, 6)),
-    tolerance = 0.03
-  )
+  expect_length(theta.out[[1]], 1)
+  expect_length(theta.out[[2]], 1)
+  expect_length(theta.out[[3]], 1)
+  expect_length(theta.out[[4]], 1)
+
+  expect_named(theta.out, c("sigma", "scale", "smoothness", "nuggets"))
+  expect_named(theta.out[[1]], "test")
+  expect_named(theta.out[[2]], "test")
+  expect_named(theta.out[[3]], "test")
+  expect_named(theta.out[[4]], "test")
+  expect_named(beta.out, c("test", "(Intercept)"))
+  expect_named(beta.out[[1]], c("x1", "x2", "x3", "x4", "x5", "x6", "x7",
+      "x8", "x9", "x10"))
+  expect_named(beta.out[[2]], "(Intercept)")
+
+  expect_identical(as.numeric(theta.out[[1]]), params.out[1])
+  expect_identical(as.numeric(theta.out[[2]]), params.out[2])
+  expect_identical(as.numeric(theta.out[[3]]), params.out[3])
+  expect_identical(as.numeric(theta.out[[4]]), params.out[4])
+  expect_identical(as.numeric(beta.out[[2]]), as.numeric(pgp.model1@beta[1]))
+  expect_identical(as.vector(beta.out[[1]]), as.vector(pgp.model1@beta[2:11]))
+
+  expect_equal(as.numeric(beta.out[[1]]), c(0.86, 0.98, 0.94, 0.9, rep(0, 6)),
+    tolerance = 0.03)
+  expect_equal(as.numeric(beta.out[[2]]), 0.01, tolerance = 0.03)
   expect_equal(params.out[1], 1.6, tolerance = 0.5)
   expect_equal(params.out[2] - 0.4, 0, tolerance = 0.2)
   expect_equal(params.out[3], 0.59, tolerance = 0.2)
@@ -147,7 +201,7 @@ test_that("Simulated dataset spatial", {
 
   pgp.model2 <- new("FullModel")
   pgp.model2 <- prestogp_fit(pgp.model2, y, X, locs,
-    scaling = c(1, 1), apanasovich = TRUE, verbose = FALSE,
+    scaling = c(1, 1), apanasovich = TRUE, quiet = TRUE, verbose = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -156,22 +210,29 @@ test_that("Simulated dataset spatial", {
 
   expect_true(validObject(pgp.model2))
 
-  beta.out2 <- as.vector(pgp.model2@beta)
+  beta.out2 <- get_beta(pgp.model2)
   params.out2 <- pgp.model2@covparams
 
-  expect_length(beta.out2, 11)
+  expect_length(beta.out2, 2)
+  expect_length(beta.out2[[1]], 10)
+  expect_length(beta.out2[[2]], 1)
   expect_length(params.out2, 5)
-  expect_equal(beta.out2, c(0.01, 0.86, 0.98, 0.95, 0.9, rep(0, 6)),
-    tolerance = 0.03
-  )
+
+  expect_named(beta.out2, c("Y", "(Intercept)"))
+
+  expect_equal(beta.out2[[1]], c(0.86, 0.98, 0.95, 0.9, rep(0, 6)),
+    tolerance = 0.03)
+  expect_equal(as.numeric(beta.out2[[2]]), 0.01, tolerance = 0.03)
   expect_equal(params.out2[1], 1.5, tolerance = 0.6)
-  expect_equal(params.out2[2], 0.4, tolerance = 0.15)
+  expect_equal(params.out2[2] - 0.4, 0, tolerance = 0.15)
   expect_equal(params.out2[3], 0.62, tolerance = 0.2)
   expect_equal(params.out2[4], 2.0, tolerance = 0.15)
 
   # Vecchia and full models should be approximately equal
-  expect_equal(beta.out[1], beta.out2[1], tolerance = 0.07)
-  expect_equal(beta.out[-1], beta.out2[-1], tolerance = 0.04)
+  expect_equal(as.numeric(beta.out[[2]]), as.numeric(beta.out2[[2]]),
+    tolerance = 0.07)
+  expect_equal(as.numeric(beta.out[[1]]), as.numeric(beta.out2[[1]]),
+    tolerance = 0.04)
   expect_equal(params.out[1], params.out2[1], tolerance = 1)
   expect_equal(params.out[2] - params.out2[2], 0, tolerance = 0.2)
   expect_equal(params.out[3], params.out2[3], tolerance = 0.3)
@@ -184,7 +245,7 @@ test_that("Simulated dataset spatial", {
 
   pgp.model3 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model3 <- prestogp_fit(pgp.model3, y.na, X, locs,
-    scaling = c(1, 1), apanasovich = TRUE, verbose = FALSE,
+    scaling = c(1, 1), apanasovich = TRUE, quiet = FALSE,
     impute.y = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
@@ -195,9 +256,10 @@ test_that("Simulated dataset spatial", {
   params.out3 <- pgp.model3@covparams
 
   # Results should be the same after imputation
-  expect_equal(beta.out, beta.out3, tolerance = 0.07)
+  expect_equal(as.numeric(beta.out[[2]]), beta.out3[1], tolerance = 0.07)
+  expect_equal(as.numeric(beta.out[[1]]), beta.out3[-1], tolerance = 0.07)
   expect_equal(params.out[1], params.out3[1], tolerance = 1.1)
-  expect_equal(params.out[2], params.out3[2], tolerance = 0.3)
+  expect_equal(params.out[2] - params.out3[2], 0, tolerance = 0.3)
   expect_equal(params.out[3], params.out3[3], tolerance = 0.3)
   expect_equal(params.out[4], params.out3[4], tolerance = 0.4)
 
@@ -209,7 +271,7 @@ test_that("Simulated dataset spatial", {
 
   pgp.model4 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model4 <- prestogp_fit(pgp.model4, y.na.lod, X, locs,
-    scaling = c(1, 1), apanasovich = TRUE, verbose = FALSE,
+    scaling = c(1, 1), apanasovich = TRUE, verbose = TRUE,
     impute.y = TRUE, lod = lod.cut,
     optim.control = list(
       trace = 0, maxit = 5000,
@@ -220,7 +282,8 @@ test_that("Simulated dataset spatial", {
   params.out4 <- pgp.model4@covparams
 
   # Results should be the same after imputation
-  expect_equal(beta.out, beta.out4, tolerance = 0.09)
+  expect_equal(as.numeric(beta.out[[2]]), beta.out4[1], tolerance = 0.09)
+  expect_equal(as.numeric(beta.out[[1]]), beta.out4[-1], tolerance = 0.09)
   expect_equal(params.out[1], params.out3[1], tolerance = 1.3)
   expect_equal(params.out[2], params.out3[2], tolerance = 0.8)
   expect_equal(params.out[3], params.out3[3], tolerance = 0.7)
@@ -229,10 +292,12 @@ test_that("Simulated dataset spatial", {
 
 test_that("Simulated dataset spatiotemporal", {
   source("sim_vecchia_st.R")
+  Y <- as.matrix(y)
+  colnames(Y) <- "test"
   pgp.model1 <- new("VecchiaModel", n_neighbors = 25)
-  pgp.model1 <- prestogp_fit(pgp.model1, y, X, locs,
+  pgp.model1 <- prestogp_fit(pgp.model1, Y, X, locs,
     scaling = c(1, 1, 2),
-    apanasovich = FALSE, verbose = FALSE,
+    apanasovich = FALSE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -243,9 +308,27 @@ test_that("Simulated dataset spatiotemporal", {
 
   beta.out <- as.vector(pgp.model1@beta)
   params.out <- pgp.model1@covparams
+  theta.out <- get_theta(pgp.model1)
 
   expect_length(beta.out, 11)
   expect_length(params.out, 6)
+  expect_length(theta.out[[1]], 1)
+  expect_length(theta.out[[2]], 2)
+  expect_length(theta.out[[3]], 1)
+  expect_length(theta.out[[4]], 1)
+
+  expect_named(theta.out, c("sigma", "scale", "smoothness", "nuggets"))
+  expect_named(theta.out[[1]], "test")
+  expect_named(theta.out[[2]], c("test_1", "test_2"))
+  expect_named(theta.out[[3]], "test")
+  expect_named(theta.out[[4]], "test")
+
+  expect_identical(as.numeric(theta.out[[1]]), params.out[1])
+  expect_identical(as.numeric(theta.out[[2]][1]), params.out[2])
+  expect_identical(as.numeric(theta.out[[2]][2]), params.out[3])
+  expect_identical(as.numeric(theta.out[[3]]), params.out[4])
+  expect_identical(as.numeric(theta.out[[4]]), params.out[5])
+
   expect_equal(beta.out, c(0, 0.9, 1.01, 0.88, 1, rep(0, 6)),
     tolerance = 0.2
   )
@@ -263,7 +346,7 @@ test_that("Simulated dataset spatiotemporal", {
   pgp.model2 <- new("FullModel", n_neighbors = 25)
   pgp.model2 <- prestogp_fit(pgp.model2, y, X, locs,
     scaling = c(1, 1, 2),
-    apanasovich = FALSE, verbose = FALSE,
+    apanasovich = FALSE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -306,7 +389,7 @@ test_that("Invalid locs input for prediction", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, verbose = FALSE,
+    apanasovich = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -324,7 +407,7 @@ test_that("Invalid X input for prediction", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, verbose = FALSE,
+    apanasovich = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -342,7 +425,7 @@ test_that("ncol(locs) != ncol(locs_train)", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, verbose = FALSE,
+    apanasovich = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -361,7 +444,7 @@ test_that("nrow(X) != nrow(locs) for prediction", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, verbose = FALSE,
+    apanasovich = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -380,7 +463,7 @@ test_that("ncol(X) != ncol(X_train) for prediction", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, verbose = FALSE,
+    apanasovich = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -399,7 +482,7 @@ test_that("m too small for prediction", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, verbose = FALSE,
+    apanasovich = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -417,7 +500,7 @@ test_that("full prediction not implemented", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, verbose = FALSE,
+    apanasovich = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -435,7 +518,7 @@ test_that("m too large for prediction", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, verbose = FALSE,
+    apanasovich = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -452,7 +535,7 @@ test_that("Simulated spatial prediction", {
   pgp.model1 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr, locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, verbose = FALSE,
+    apanasovich = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
