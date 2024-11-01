@@ -2,13 +2,27 @@
 % Please edit documentation in R/PrestoGP_Model.R
 \name{show,PrestoGPModel-method}
 \alias{show,PrestoGPModel-method}
-\title{show}
+\title{show method for PrestoGP models}
 \usage{
 \S4method{show}{PrestoGPModel}(object)
 }
 \arguments{
-\item{object}{the PrestoGP model object}
+\item{object}{The PrestoGP model object}
 }
 \description{
-Print a summary of the model and its parameters
+This method prints a summary of a PrestoGP model and its parameters.
+}
+\examples{
+data(soil)
+soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+y <- soil[,4]                   # predict moisture content
+X <- as.matrix(soil[,5:9])
+locs <- as.matrix(soil[,1:2])
+
+soil.vm <- new("VecchiaModel", n_neighbors = 10)
+soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+show(soil.vm)
+}
+\seealso{
+\code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}}
 }

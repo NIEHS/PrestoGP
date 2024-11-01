@@ -203,7 +203,7 @@ test_that("m too large", {
   source("sim_vecchia_small.R")
   pgp.model1 <- new("VecchiaModel", n_neighbors = 101)
   expect_warning(
-    prestogp_fit(pgp.model1, y, X, locs),
+    prestogp_fit(pgp.model1, y, X, locs, quiet = TRUE),
     "Conditioning set size m chosen to be >=n. Changing to m=n-1"
   )
 })

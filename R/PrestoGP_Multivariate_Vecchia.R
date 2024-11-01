@@ -114,7 +114,7 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
   }
 )
 
-setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs, center.y, impute.y, lod) {
+setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs, Y.names, X.names, center.y, impute.y, lod) {
   if (!is.list(locs)) {
     stop("locs must be a list for multivariate models")
   }
@@ -129,6 +129,21 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
   }
   if (length(locs) != length(X)) {
     stop("locs and X must have the same length")
+  }
+  if (!is.null(names(Y))) {
+    names(locs) <- names(Y)
+  }
+  if (!is.null(Y.names)) {
+    if (length(Y.names) != length(locs)) {
+      stop("Length of Y.names must match the number of response variables")
+    } else {
+      names(locs) <- Y.names
+    }
+  }
+  if (is.null(names(locs))) {
+    for (i in seq_along(locs)) {
+      names(locs)[i] <- paste0("Y", i)
+    }
   }
   if (!is.null(lod)) {
     if (!is.list(lod)) {
@@ -183,6 +198,21 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
       }
     }
   }
+  if (!is.null(X.names)) {
+    if (!is.list(X.names)) {
+      stop("X.names must be a list for multivariate models")
+    } else if (length(X.names) != length(locs)) {
+      stop("Length of X.names must match the number of response variables")
+    } else {
+      for (i in seq_along(X.names)) {
+        if (length(X.names[[i]]) != ncol(X[[i]])) {
+          stop("Length of each X.names must match the number of predictors")
+        } else {
+          colnames(X[[i]]) <- X.names[[i]]
+        }
+      }
+    }
+  }
   Y_bar <- rep(NA, length(Y))
   Y_obs <- NULL
   for (i in seq_along(Y)) {
@@ -207,11 +237,13 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
   model@locs_train <- locs
   model@Y_train <- as.matrix(unlist(Y))
   model@Y_obs <- Y_obs
+  model@X_ndx <- ncol(X[[1]]) + 1
   if (length(X) == 1) {
     model@X_train <- X[[1]]
   } else {
     for (i in 2:length(X)) {
       X[[i]] <- cbind(rep(1, nrow(X[[i]])), X[[i]])
+      model@X_ndx <- c(model@X_ndx, model@X_ndx[i - 1] + ncol(X[[i]]))
     }
     model@X_train <- psych::superMatrix(X)
   }
@@ -321,7 +353,7 @@ setMethod("impute_y", "MultivariateVecchiaModel", function(model) {
 })
 
 setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
-  n.mi = 10, eps = 0.01, maxit = 5, family, nfolds, foldid, parallel) {
+  n.mi = 10, eps = 0.01, maxit = 5, family, nfolds, foldid, parallel, verbose) {
   y <- model@Y_train
   X <- model@X_train
   miss <- !model@Y_obs
@@ -437,6 +469,11 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
     }
     last.coef <- cur.coef
     cur.coef <- colMeans(coef.mat)
+    if (verbose) {
+      cat("LOD imputation iteration", itn, "complete", "\n")
+      cat("Current coefficients:", "\n")
+      print(cur.coef)
+    }
   }
   yhat.ni <- X %*% cur.coef[-1]
   yhat.ni <- yhat.ni + mean(y[!miss]) - mean(yhat.ni[!miss])
@@ -559,8 +596,4 @@ setMethod("transform_data", "MultivariateVecchiaModel", function(model, Y, X) {
   model@y_tilde <- Matrix(transformed.data[, 1])
   model@X_tilde <- Matrix(transformed.data[, -1], sparse = FALSE)
   invisible(model)
-})
-
-setMethod("theta_names", "MultivariateVecchiaModel", function(model) {
-  c("Marginal Variance", "Range", "Smoothness", "Nugget")
 })
