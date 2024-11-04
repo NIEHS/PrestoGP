@@ -12,7 +12,7 @@ setOldClass("cv.glmnet")
 #' model.
 #' @slot logparams A numeric vector containing the transformed versions of the
 #' Matern parameters (used internally for likelihood calculations).
-#' @slot beta A matrix containing the regression coefficients.
+#' @slot beta A column matrix containing the regression coefficients.
 #' @slot lambda_1se_idx Stores the index of the optimal tuning parameter for
 #' the glmnet model. See \code{\link[glmnet]{glmnet}}.
 #' @slot vecchia_approx The output of the Vecchia specify function. See
@@ -21,22 +21,24 @@ setOldClass("cv.glmnet")
 #' "super matrix" for multivariate models. See
 #' \code{\link[psych]{superMatrix}}.
 #' @slot Y_train A column matrix containing the original response values.
+#' @slot X_ndx A vector used to find the elements of beta corresponding to
+#' specific outcomes. The \emph{i}th element of X_ndx is the index of the
+#' last element of beta corresponding to predictors for outcome \emph{i}.
 #' @slot Y_bar A vector containing the means of each outcome.
 #' @slot Y_obs A logical vector used to track which values of Y are non-missing.
 #' @slot X_tilde The matrix of transformed predictors.
 #' @slot y_tilde The column matrix containing the transformed response values.
-#' @slot res numeric.
+#' @slot res A numeric vector of the residuals.
 #' @slot locs_train A list containing the location coordinates. Each element
 #' of the list corresponds to a different outcome. (The list will have length
 #' 1 for univariate models.)
-#' @slot res A numeric vector of the residuals.
 #' @slot linear_model The glmnet model. See \code{\link[glmnet]{glmnet}} and
 #' \code{\link[glmnet]{cv.glmnet}}.
 #' @slot converged Did the model fitting process converge (boolean)?
 #' @slot LL_Vecchia_krig The value of the negative log likelihood function
 #' after optimization.
 #' @slot error Penalized model error. See References for details.
-#' @slot n_eighbors Number of neighbors to condition on for the Vecchia
+#' @slot n_neighbors Number of neighbors to condition on for the Vecchia
 #' approximation. Ignored for full models.
 #' @slot min_m Minimum permissible number of neighbors.
 #' @slot alpha Parameter alpha for glmnet. See \code{\link[glmnet]{glmnet}}.
@@ -80,6 +82,7 @@ PrestoGPModel <- setClass("PrestoGPModel",
     linear_model = "cv.glmnet", # the linear model
     X_train = "matrix", # the original independent variable matrix
     Y_train = "matrix", # the original dependent variable matrix
+    X_ndx = "numeric", # used to map X_train to elements of the original X's
     Y_bar = "numeric", # the means of each outcome variable
     Y_obs = "logical", # a logical vector indicating whether the ith observation was observed
     locs_train = "list", # the location / temporal matrix
@@ -114,13 +117,18 @@ setMethod("initialize", "PrestoGPModel", function(.Object, ...) {
   .Object
 })
 
-setGeneric("show_theta", function(object, Y_names) standardGeneric("show_theta"))
+setGeneric("get_theta", function(model) standardGeneric("get_theta"))
+setGeneric("get_beta", function(model) standardGeneric("get_beta"))
+setGeneric("get_neighbors", function(model) standardGeneric("get_neighbors"))
+setGeneric("get_scaling", function(model) standardGeneric("get_scaling"))
+setGeneric("get_converged", function(model) standardGeneric("get_converged"))
+setGeneric("get_pen_loglik", function(model) standardGeneric("get_pen_loglik"))
 setGeneric(
   "prestogp_fit",
-  function(model, Y, X, locs, scaling = NULL, apanasovich = FALSE,
-    covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100,
-    center.y = NULL, impute.y = FALSE, lod = NULL, verbose = FALSE,
-    optim.method = "Nelder-Mead",
+  function(model, Y, X, locs, Y.names = NULL, X.names = NULL, scaling = NULL,
+    apanasovich = NULL, covparams = NULL, beta.hat = NULL, tol = 0.999999,
+    max_iters = 100, center.y = NULL, impute.y = FALSE, lod = NULL,
+    quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     family = c("gaussian", "binomial"), nfolds = 10, foldid = NULL,
     parallel = FALSE) {
@@ -220,92 +228,365 @@ setGeneric("transform_data", function(model, Y, X) standardGeneric("transform_da
 setGeneric("estimate_theta", function(model, locs, optim.control, method) standardGeneric("estimate_theta"))
 setGeneric("estimate_betas", function(model, family, nfolds, foldid, parallel, lodv) standardGeneric("estimate_betas"))
 setGeneric("impute_y", function(model) standardGeneric("impute_y"))
-setGeneric("impute_y_lod", function(model, lod, n.mi = 10, eps = 0.01, maxit = 5, family, nfolds, foldid, parallel) standardGeneric("impute_y_lod"))
+setGeneric("impute_y_lod", function(model, lod, n.mi = 10, eps = 0.01, maxit = 5, family, nfolds, foldid, parallel, verbose) standardGeneric("impute_y_lod"))
 setGeneric("compute_error", function(model, y, X) standardGeneric("compute_error"))
 setGeneric("scale_locs", function(model, locs) standardGeneric("scale_locs"))
-setGeneric("theta_names", function(model) standardGeneric("theta_names"))
 setGeneric("transform_covariance_parameters", function(model) standardGeneric("transform_covariance_parameters"))
-setGeneric("check_input", function(model, Y, X, locs, center.y, impute.y, lod) standardGeneric("check_input"))
+setGeneric("check_input", function(model, Y, X, locs, Y.names, X.names, center.y, impute.y, lod) standardGeneric("check_input"))
 setGeneric("check_input_pred", function(model, X, locs) standardGeneric("check_input_pred"))
 
-#' show
+#' show method for PrestoGP models
 #'
-#' Print a summary of the model and its parameters
+#' This method prints a summary of a PrestoGP model and its parameters.
 #'
-#' @param object the PrestoGP model object
-setMethod(
-  "show", "PrestoGPModel", # TODO consider exporting this
-  function(object) {
-    cat("PrestoGP Model\n") # TODO print out type of model
-    cat("Negative Log-Likelihood: ", object@error, "\n")
-    cat("Covariance Parameters:\n")
-    Y_names <- colnames(object@Y_train)
-    if (is.null(Y_names)) {
-      Y_names <- unlist(lapply(seq_len(ncol(object@Y_train)), function(x) {
-        paste("Outcome", x)
-      }))
-    }
-    show_theta(object, Y_names)
+#' @param object The PrestoGP model object
+#'
+#' @seealso \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}}
+#'
+#' @export
+#'
+#' @examples
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' y <- soil[,4]                   # predict moisture content
+#' X <- as.matrix(soil[,5:9])
+#' locs <- as.matrix(soil[,1:2])
+#'
+#' soil.vm <- new("VecchiaModel", n_neighbors = 10)
+#' soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+#' show(soil.vm)
 
-    y_hat <- matrix(predict(object@linear_model, newx = object@X_train), nrow = nrow(object@X_train), ncol = ncol(object@Y_train))
-    mse <- crossprod((object@Y_train - y_hat)) / (nrow(object@Y_train) - colSums(object@beta))
-    cat("\nTraining MSE: ", diag(mse), "\n")
-    X <- cbind(1, object@X_train)
-    covm <- MASS::ginv(t(X) %*% X)
-    cat("Non-zero Beta Parameters:\n")
-    # TODO compare to zero within a tolerance
-    # nnz_betas <- lapply(object@beta, 2, function(x){which(x != 0.0)})
-    nnz_betas <- list()
-    for (col in seq_len(ncol(object@Y_train))) {
-      nnz_betas <- append(nnz_betas, list(which(object@beta[, col] != 0.0)))
+setMethod(
+  "show", "PrestoGPModel",
+  function(object) {
+    cat("Matern covariance parameters (theta):", "\n")
+    print(get_theta(object))
+    cat("Regression coefficients (beta):", "\n")
+    print(get_beta(object))
+    cat("Model type:", is(object)[1], "\n")
+    if (object@n_neighbors > 0) {
+      cat("Nearest neighbors:", object@n_neighbors, "\n")
     }
-    X_names <- colnames(object@X_train)
-    if (is.null(X_names)) {
-      X_names <- unlist(lapply(seq_len(ncol(object@X_train)), function(x) {
-        paste("Ind. Variable", x)
-      }))
+    cat("Scaling:", object@scaling, "\n")
+    cat("Penalized likelihood:", object@error, "\n")
+    cat("MSE:", mean(object@res^2), "\n")
+    if (!object@converged) {
+      warning("Model fitting did not converge")
     }
-    X_names <- append("Intercept", X_names)
-    for (i in seq_len(ncol(object@Y_train))) {
-      cat(Y_names[i], " Parameters:\n")
-      beta_summary <- data.frame(matrix(ncol = 4, nrow = 0, dimnames = list(NULL, c("Parameter", "Estimate", "Standard Error", "Walds P-value"))))
-      # for(nnz in nnz_betas[i]){
-      for (j in seq_along(nnz_betas[[i]])) {
-        nnz <- nnz_betas[[i]][[j]]
-        walds <- wald.test(covm * mse[i, i], object@beta[, i], Terms = nnz)
-        std_err <- sqrt(diag(covm) * mse[i, i])
-        walds_p <- walds$result$chi2[3]
-        beta_summary[nrow(beta_summary) + 1, ] <- list(X_names[nnz], object@beta[nnz, i], std_err[nnz], walds_p)
-      }
-      print(beta_summary, row.names = FALSE)
-      cat("\n")
-    }
-    invisible(object)
   }
 )
 
-#' show_theta
+#' Extract the Matern (theta) parameters from a PrestoGP model.
 #'
-#' Print the covariance parameters in a table
+#' This method extracts a list containing the Matern variance/covariance
+#' parameters from a PrestoGP model.
 #'
-#' @param object the PrestoGP model object
-#' @param Y_names the names of the different outcome variables (may just be numbers if not provided in training input)
+#' @param model The PrestoGP model object
+#'
+#' @return A list containing the following elements:
+#' \describe{
+#' \item{sigma:}{A vector containing the estimates of the variance parameter
+#' sigma for each outcome.}
+#' \item{scale:}{A vector containing the estimates of the the scale
+#' parameter(s) for each outcome.}
+#' \item{smoothness:}{A vector containing the estimates of the smoothness
+#' parameter for each outcome.}
+#' \item{nuggets:}{A vector containing the estimates of the nugget variance
+#' for each outcome.}
+#' \item{correlation:}{A matrix containing the estimates of the correlations
+#' between outcomes. Omitted for univariate models.}
+#' }
+#'
+#' @seealso \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}}
+#'
+#' @references
+#' \itemize{
+#' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
+#' land-use regression for ground-level nitrogen dioxide", The Annals of
+#' Applied Statistics (2021) 15(2):688-710.
+#' \item Porcu, E., Bevilacqua, M., Schaback, R., and Oates RJ. "The Matérn
+#' Model: A Journey Through Statistics, Numerical Analysis and Machine
+#' Learning", Statistical Science (2024) 39(3):469-492.
+#' }
+#'
+#' @aliases get_theta
+#' @export
+#'
+#' @examples
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' y <- soil[,4]                   # predict moisture content
+#' X <- as.matrix(soil[,5:9])
+#' locs <- as.matrix(soil[,1:2])
+#'
+#' soil.vm <- new("VecchiaModel", n_neighbors = 10)
+#' soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+#' get_theta(soil.vm)
+
 setMethod(
-  "show_theta", "PrestoGPModel",
-  function(object, Y_names) {
-    theta_name_arr <- theta_names(object)
-    theta_summary <- data.frame(matrix(ncol = ncol(object@Y_train) + 1, nrow = length(theta_name_arr), dimnames = list(NULL, c("Parameter", Y_names))))
-    for (i in seq_along(theta_name_arr)) {
-      theta_row <- object@covparams[((i - 1) * ncol(object@Y_train) + 1):(i * ncol(object@Y_train))]
-      for (j in seq_len(ncol(object@Y_train))) {
-        theta_summary[i, j + 1] <- theta_row[j]
+  "get_theta", "PrestoGPModel",
+  function(model) {
+    pseq <- model@param_sequence
+    junk <- list()
+    junk$sigma <- model@covparams[pseq[1, 1]:pseq[1, 2]]
+    junk$scale <- model@covparams[pseq[2, 1]:pseq[2, 2]]
+    junk$smoothness <- model@covparams[pseq[3, 1]:pseq[3, 2]]
+    junk$nuggets <- model@covparams[pseq[4, 1]:pseq[4, 2]]
+    names(junk$sigma) <- names(model@locs_train)
+    names(junk$smoothness) <- names(model@locs_train)
+    names(junk$nuggets) <- names(model@locs_train)
+    if (model@nscale > 1) {
+      scale.names <- rep(NA, model@nscale * length(model@locs_train))
+      for (i in seq_along(names(model@locs_train))) {
+        for (j in seq_len(model@nscale)) {
+          scale.names[(i - 1) * model@nscale + j] <-
+            paste0(names(model@locs_train)[i], "_", j)
+        }
       }
+      names(junk$scale) <- scale.names
+    } else {
+      names(junk$scale) <- names(model@locs_train)
     }
-    for (j in seq_along(theta_name_arr)) {
-      theta_summary[j, 1] <- theta_name_arr[j]
+    if (length(model@locs_train) > 1) {
+      P <- length(model@locs_train)
+      rho <- model@covparams[pseq[5, 1]:pseq[5, 2]]
+      rho.mat <- matrix(0, nrow = P, ncol = P)
+      rho.mat[upper.tri(rho.mat, diag = FALSE)] <- rho
+      rho.mat <- rho.mat + t(rho.mat)
+      diag(rho.mat) <- 1
+      colnames(rho.mat) <- names(model@locs_train)
+      rownames(rho.mat) <- names(model@locs_train)
+      junk$correlation <- rho.mat
     }
-    print(theta_summary, row.names = FALSE)
-    # TODO show Rho matrix if there are 2 or more outcomes
+    return(junk)
+  }
+)
+
+#' Extract the regression coefficients (beta) for a PrestoGP model.
+#'
+#' This method extracts a list containing the regression coefficients for
+#' a PrestoGP model.
+#'
+#' @param model The PrestoGP model object
+#'
+#' @details It is important to note that the intercepts are estimated on the
+#' transformed data. They are not useful for making predictions on the
+#' original (untransformed) data. Use \code{\link{prestogp_predict}} to
+#' make predictions based on a PrestoGP model.
+#'
+#' @return A list containing the regression coefficients. Each element of the
+#' list corresponds to an outcome variable. The final element of the list
+#' contains the intercept(s).
+#'
+#' @seealso \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}},
+#' \code{\link{prestogp_predict}}
+#'
+#' @references
+#' \itemize{
+#' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
+#' land-use regression for ground-level nitrogen dioxide", The Annals of
+#' Applied Statistics (2021) 15(2):688-710.
+#' }
+#'
+#' @aliases get_beta
+#' @export
+#'
+#' @examples
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' y <- soil[,4]                   # predict moisture content
+#' X <- as.matrix(soil[,5:9])
+#' locs <- as.matrix(soil[,1:2])
+#'
+#' soil.vm <- new("VecchiaModel", n_neighbors = 10)
+#' soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+#' get_beta(soil.vm)
+
+setMethod(
+  "get_beta", "PrestoGPModel",
+  function(model) {
+    junk <- list()
+    P <- length(model@locs_train)
+    length(junk) <- P + 1
+    for (i in seq_len(P)) {
+      if (i == 1) {
+        indx <- 1
+        junk[[P + 1]] <- model@beta[1]
+        names(junk[[P + 1]]) <- "(Intercept)"
+      } else {
+        indx <- model@X_ndx[i - 1] + 1
+        new.names <- c(names(junk[[P + 1]]),
+          names(model@locs_train)[i])
+        junk[[P + 1]] <- c(junk[[P + 1]], model@beta[indx])
+        names(junk[[P + 1]]) <- new.names
+      }
+      pred.ndx <- (indx + 1):model@X_ndx[i]
+      junk[[i]] <- model@beta[pred.ndx]
+      names(junk[[i]]) <- colnames(model@X_train)[pred.ndx - 1]
+    }
+    if (!is.null(names(model@locs_train))) {
+      names(junk) <- c(names(model@locs_train), "(Intercept)")
+    } else {
+      names(junk) <- c("Y", "(Intercept)")
+    }
+    return(junk)
+  }
+)
+
+#' Extract the number of neighbors for a PrestoGP model.
+#'
+#' This method extracts the number of nearest neighbors that were used to
+#' compute the PrestoGP model.
+#'
+#' @param model The PrestoGP model object
+#'
+#' @return The (integer) number of neighbors used to fit the model.
+#'
+#' @seealso \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}}
+#'
+#' @references
+#' \itemize{
+#' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
+#' land-use regression for ground-level nitrogen dioxide", The Annals of
+#' Applied Statistics (2021) 15(2):688-710.
+#' }
+#'
+#' @aliases get_neighbors
+#' @export
+#'
+#' @examples
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' y <- soil[,4]                   # predict moisture content
+#' X <- as.matrix(soil[,5:9])
+#' locs <- as.matrix(soil[,1:2])
+#'
+#' soil.vm <- new("VecchiaModel", n_neighbors = 10)
+#' soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+#' get_neighbors(soil.vm)
+
+setMethod(
+  "get_neighbors", "PrestoGPModel",
+  function(model) {
+    return(model@n_neighbors)
+  }
+)
+
+#' Extract the scaling parameter for a PrestoGP model.
+#'
+#' This method extracts the scaling parameter for a PrestoGP model.
+#'
+#' @param model The PrestoGP model object
+#'
+#' @return A vector containing the scaling parameter. See
+#' \code{\link{prestogp_fit}} for an explanation of this parameter.
+#'
+#' @seealso \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}}
+#'
+#' @references
+#' \itemize{
+#' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
+#' land-use regression for ground-level nitrogen dioxide", The Annals of
+#' Applied Statistics (2021) 15(2):688-710.
+#' }
+#'
+#' @aliases get_scaling
+#' @export
+#'
+#' @examples
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' y <- soil[,4]                   # predict moisture content
+#' X <- as.matrix(soil[,5:9])
+#' locs <- as.matrix(soil[,1:2])
+#'
+#' soil.vm <- new("VecchiaModel", n_neighbors = 10)
+#' soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+#' get_scaling(soil.vm)
+
+setMethod(
+  "get_scaling", "PrestoGPModel",
+  function(model) {
+    return(model@scaling)
+  }
+)
+
+#' Did the PrestoGP model converge?
+#'
+#' This method returns a boolean value that indicates whether or not a
+#' PrestoGP model converged.
+#'
+#' @param model The PrestoGP model object
+#'
+#' @return A boolean value indicating whether or not the model converged.
+#'
+#' @seealso \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}}
+#'
+#' @references
+#' \itemize{
+#' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
+#' land-use regression for ground-level nitrogen dioxide", The Annals of
+#' Applied Statistics (2021) 15(2):688-710.
+#' }
+#'
+#' @aliases get_converged
+#' @export
+#'
+#' @examples
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' y <- soil[,4]                   # predict moisture content
+#' X <- as.matrix(soil[,5:9])
+#' locs <- as.matrix(soil[,1:2])
+#'
+#' soil.vm <- new("VecchiaModel", n_neighbors = 10)
+#' soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+#' get_converged(soil.vm)
+
+setMethod(
+  "get_converged", "PrestoGPModel",
+  function(model) {
+    return(model@converged)
+  }
+)
+
+#' Extract the penalized log likelihood for a PrestoGP model.
+#'
+#' This method extracts the (negative) penalized log likelihood for a PrestoGP
+#' model.
+#'
+#' @param model The PrestoGP model object
+#'
+#' @return The value of the (negative) penalized log likelihood. See References
+#' for details.
+#'
+#' @seealso \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}}
+#'
+#' @references
+#' \itemize{
+#' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
+#' land-use regression for ground-level nitrogen dioxide", The Annals of
+#' Applied Statistics (2021) 15(2):688-710.
+#' }
+#'
+#' @aliases get_pen_loglik
+#' @export
+#'
+#' @examples
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' y <- soil[,4]                   # predict moisture content
+#' X <- as.matrix(soil[,5:9])
+#' locs <- as.matrix(soil[,1:2])
+#'
+#' soil.vm <- new("VecchiaModel", n_neighbors = 10)
+#' soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+#' get_pen_loglik(soil.vm)
+
+setMethod(
+  "get_pen_loglik", "PrestoGPModel",
+  function(model) {
+    return(model@error)
   }
 )
 
@@ -321,6 +602,10 @@ setMethod(
 #' univariate models or a list for multivariate models.
 #' @param locs The values of the locations. Should be a matrix for univariate
 #' models or a list for multivariate models.
+#' @param Y.names The name(s) for the response variable(s). Should be a vector
+#' with length equal to the number of response variables. Defaults to NULL.
+#' @param X.names The names for the predictor variables. Should be a vector
+#' for univariate models or a list for multivariate models.
 #' @param scaling A vector of consecutive positive integers that is used to
 #' specify which columns of locs should have the same scaling parameter. For
 #' example, in a spatiotemporal model with two spatial measures and a time
@@ -347,8 +632,12 @@ setMethod(
 #' can specify a single limit of detection that is assumed to be the same for
 #' all observations. If not specified, it is assumed that no limit of
 #' detection exists. Ignored if impute.y is FALSE.
-#' @param verbose If TRUE, additional information about model fit will be
-#' printed. Defaults to FALSE.
+#' @param quiet If FALSE, the penalized log likelihood and the model MSE
+#' will be printed for each iteration of the model fitting procedure. No
+#' intermediate output will be printed if TRUE. Defaults to FALSE.
+#' @param verbose If TRUE, the estimated theta/beta parameters will be printed
+#' for each iteration of the model fitting procedure. Defaults to FALSE.
+#' Ignored if quiet is TRUE.
 #' @param optim.method Optimization method to be used for the maximum
 #' likelihood estimation that is passed to optim. Defaults to "Nelder-Mead".
 #' See \code{\link[stats]{optim}}.
@@ -439,13 +728,16 @@ setMethod(
 
 setMethod(
   "prestogp_fit", "PrestoGPModel",
-  function(model, Y, X, locs, scaling = NULL, apanasovich = NULL,
-    covparams = NULL, beta.hat = NULL, tol = 0.999999, max_iters = 100,
-    center.y = NULL, impute.y = FALSE, lod = NULL, verbose = FALSE,
-    optim.method = "Nelder-Mead",
+  function(model, Y, X, locs, Y.names = NULL, X.names = NULL, scaling = NULL,
+    apanasovich = NULL, covparams = NULL, beta.hat = NULL, tol = 0.999999,
+    max_iters = 100, center.y = NULL, impute.y = FALSE, lod = NULL,
+    quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     family = c("gaussian", "binomial"),
     nfolds = 10, foldid = NULL, parallel = FALSE) {
+    if (quiet & verbose) {
+      verbose <- FALSE
+    }
     family <- match.arg(family)
     if (is.null(center.y)) {
       if (family == "gaussian") {
@@ -454,7 +746,8 @@ setMethod(
         center.y <- FALSE
       }
     }
-    model <- check_input(model, Y, X, locs, center.y, impute.y, lod)
+    model <- check_input(model, Y, X, locs, Y.names, X.names, center.y,
+      impute.y, lod)
     if (is.null(lod)) {
       lodv <- rep(Inf, nrow(model@Y_train))
     } else {
@@ -555,28 +848,51 @@ setMethod(
     model@converged <- FALSE
     prev.error <- 1e10
     iter <- 1
-    if (verbose) {
+    if (!quiet) {
       cat("\n")
     }
     while (!model@converged && (iter < max_iters)) {
+      if (!quiet) {
+        cat("Beginning iteration", iter, "\n")
+      }
       model <- compute_residuals(model, model@Y_train, Y.hat, family)
-      res_matrix <- matrix(model@res, nrow = nrow(model@Y_train), ncol = ncol(model@Y_train))
-      if (verbose) {
-        cat("MSE: ", colMeans(res_matrix^2), "\n")
+      if (!quiet) {
+        cat("Estimating theta...", "\n")
       }
       model <- estimate_theta(model, locs, optim.control, optim.method)
+      if (!quiet) {
+        cat("Estimation of theta complete", "\n")
+        if (verbose) {
+          print(get_theta(model))
+        }
+      }
       # transform data to iid
       if (!model@apanasovich) {
         model <- specify(model)
       }
 
       if (sum(!model@Y_obs) > 0 & min(lodv) < Inf) {
+        if (!quiet) {
+          cat("Imputing missing y's...", "\n")
+        }
         model <- impute_y_lod(model, lodv, family = family, nfolds = nfolds,
-          foldid = foldid, parallel = parallel)
+          foldid = foldid, parallel = parallel, verbose = verbose)
+        if (!quiet) {
+          cat("Imputation complete", "\n")
+        }
       }
 
+      if (!quiet) {
+        cat("Estimating beta...", "\n")
+      }
       model <- transform_data(model, model@Y_train, model@X_train)
       model <- estimate_betas(model, family, nfolds, foldid, parallel, lodv)
+      if (!quiet) {
+        cat("Estimation of beta complete", "\n")
+        if (verbose) {
+          print(get_beta(model))
+        }
+      }
       min.error <- compute_error(model)
       ### Check min-error against the previous error and tolerance
       if (min.error < prev.error * tol) {
@@ -592,7 +908,13 @@ setMethod(
             type = "response")
         )
         if (sum(!model@Y_obs) > 0 & sum(lodv < Inf) == 0) {
+          if (!quiet) {
+            cat("Imputing missing y's...", "\n")
+          }
           model <- impute_y(model)
+          if (!quiet) {
+            cat("Imputation complete", "\n")
+          }
         }
         covparams.iter <- model@covparams
         Vecchia.SCAD.iter <- model@linear_model
@@ -603,11 +925,15 @@ setMethod(
         model@linear_model <- Vecchia.SCAD.iter
         model@error <- prev.error
       }
-      if (verbose) {
-        cat("\nIteration: ", iter, "\n")
-        show(model)
+      if (!quiet) {
+        cat("Iteration", iter, "complete", "\n")
+        cat("Current penalized likelihood:", model@error, "\n")
+        cat("Current MSE:", mean(model@res^2), "\n")
       }
       iter <- iter + 1
+    }
+    if (!model@converged) {
+      warning("Model fitting did not converge")
     }
     return(model)
   }

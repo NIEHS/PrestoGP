@@ -95,7 +95,7 @@ setMethod("prestogp_predict", "VecchiaModel",
   }
 )
 
-setMethod("check_input", "VecchiaModel", function(model, Y, X, locs, center.y, impute.y, lod) {
+setMethod("check_input", "VecchiaModel", function(model, Y, X, locs, Y.names, X.names, center.y, impute.y, lod) {
   if (!is.matrix(locs)) {
     stop("locs must be a matrix")
   }
@@ -151,8 +151,26 @@ setMethod("check_input", "VecchiaModel", function(model, Y, X, locs, center.y, i
     Y[is.na(Y)] <- mean(Y, na.rm = TRUE)
   }
   model@X_train <- X
+  model@X_ndx <- ncol(X) + 1
   model@Y_train <- Y
   model@locs_train <- list(locs)
+  if (!is.null(colnames(Y))) {
+    names(model@locs_train) <- colnames(Y)
+  }
+  if (!is.null(Y.names)) {
+    if (length(Y.names) > 1) {
+      stop("Length of Y.names must match the number of response variables")
+    } else {
+      names(model@locs_train) <- Y.names
+    }
+  }
+  if (!is.null(X.names)) {
+    if (length(X.names) != ncol(model@X_train)) {
+      stop("Length of X.names must match the number of predictor variables")
+    } else {
+      colnames(model@X_train) <- X.names
+    }
+  }
   invisible(model)
 })
 
@@ -214,8 +232,8 @@ setMethod("impute_y", "VecchiaModel", function(model) {
   invisible(model)
 })
 
-setMethod("impute_y_lod", "VecchiaModel", function(model, lod,
-  n.mi = 10, eps = 0.01, maxit = 10, family, nfolds, foldid, parallel) {
+setMethod("impute_y_lod", "VecchiaModel", function(model, lod, n.mi = 10,
+  eps = 0.01, maxit = 10, family, nfolds, foldid, parallel, verbose) {
   y <- model@Y_train
   X <- model@X_train
   miss <- !model@Y_obs
@@ -279,6 +297,11 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lod,
     }
     last.coef <- cur.coef
     cur.coef <- colMeans(coef.mat)
+    if (verbose) {
+      cat("LOD imputation iteration", itn, "complete", "\n")
+      cat("Current coefficients:", "\n")
+      print(cur.coef)
+    }
   }
   yhat.ni <- X %*% cur.coef[-1]
   yhat.ni <- yhat.ni + mean(y[!miss]) - mean(yhat.ni[!miss])
@@ -398,16 +421,4 @@ setMethod("transform_data", "VecchiaModel", function(model, Y, X) {
   model@y_tilde <- Matrix(transformed.data[, 1])
   model@X_tilde <- Matrix(transformed.data[, -1], sparse = FALSE)
   invisible(model)
-})
-
-#' theta_names
-#'
-#' Return a vector specifying the names of the different covariance parameters (used for show method)
-#'
-#' @param model The model to estimate theta for
-#'
-#' @return a vector with the names of the covariance parameters
-#' @noRd
-setMethod("theta_names", "VecchiaModel", function(model) {
-  c("Marginal Variance", "Spatial Range", "Temporal Range", "Nugget")
 })
