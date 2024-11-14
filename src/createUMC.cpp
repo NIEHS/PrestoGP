@@ -3,25 +3,30 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(cpp17)]]
 #include <cmath>
+#include <boost/math/special_functions/bessel.hpp>
+#include <boost/math/special_functions/gamma.hpp>
 
 double matern1(const double &x, const double &smooth, const double &alpha) {
   if (smooth == 0.5) {
     return exp(-x * alpha);
   } else if (smooth == 1.5) {
-    double normcon = (pow(alpha, 3) / sqrt(M_PI)) * (tgamma(2.0) / tgamma(1.5));
+    double normcon = (pow(alpha, 3) / sqrt(M_PI)) *
+      (boost::math::tgamma(2.0) / boost::math::tgamma(1.5));
     return normcon * 0.5 * M_PI * pow(alpha, -3) * exp(-x * alpha) *
            (1 + x * alpha);
   } else if (smooth == 2.5) {
-    double normcon = (pow(alpha, 5) / sqrt(M_PI)) * (tgamma(3.0) / tgamma(2.5));
+    double normcon = (pow(alpha, 5) / sqrt(M_PI)) *
+      (boost::math::tgamma(3.0) / boost::math::tgamma(2.5));
     double scaled_x = x * alpha;
     return normcon * 0.125 * M_PI * pow(alpha, -5) * exp(-scaled_x) *
            (3 + 3 * scaled_x + scaled_x * scaled_x);
   } else if (x == 0.0) {
     return 1.0;
   } else {
-    double normcon = pow(2.0, 1.0 - smooth) / tgamma(smooth);
+    double normcon = pow(2.0, 1.0 - smooth) / boost::math::tgamma(smooth);
     double scaled_x = x * alpha;
-    return normcon * pow(scaled_x, smooth) * R::bessel_k(scaled_x, smooth, 1);
+    return normcon * pow(scaled_x, smooth) *
+      boost::math::cyl_bessel_k(smooth, scaled_x);
   }
 }
 

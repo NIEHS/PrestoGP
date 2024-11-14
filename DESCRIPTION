@@ -1,7 +1,7 @@
 Package: PrestoGP
 Type: Package
 Title: Penalized Regression for Spatio-Temporal Outcomes via Gaussian Processes 
-Version: 0.2.0.9036
+Version: 0.2.0.9037
 Authors@R: c(
     person(given = "Eric",
            family = "Bair",
@@ -23,7 +23,7 @@ Description: Simultaneous variable seletion and estimation of LUR models with sp
 Depends:
     R (>= 3.5.0)
 LinkingTo:
-    Rcpp, RcppArmadillo
+    Rcpp, RcppArmadillo, BH
 Imports:
     GPvecchia,
     fields,
