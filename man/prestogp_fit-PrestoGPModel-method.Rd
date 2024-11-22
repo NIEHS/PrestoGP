@@ -10,6 +10,8 @@
   Y,
   X,
   locs,
+  Y.names = NULL,
+  X.names = NULL,
   scaling = NULL,
   apanasovich = NULL,
   covparams = NULL,
@@ -19,6 +21,7 @@
   center.y = NULL,
   impute.y = FALSE,
   lod = NULL,
+  quiet = FALSE,
   verbose = FALSE,
   optim.method = "Nelder-Mead",
   optim.control = list(trace = 0, reltol = 0.001, maxit = 5000),
@@ -39,6 +42,12 @@ univariate models or a list for multivariate models.}
 
 \item{locs}{The values of the locations. Should be a matrix for univariate
 models or a list for multivariate models.}
+
+\item{Y.names}{The name(s) for the response variable(s). Should be a vector
+with length equal to the number of response variables. Defaults to NULL.}
+
+\item{X.names}{The names for the predictor variables. Should be a vector
+for univariate models or a list for multivariate models.}
 
 \item{scaling}{A vector of consecutive positive integers that is used to
 specify which columns of locs should have the same scaling parameter. For
@@ -75,8 +84,13 @@ can specify a single limit of detection that is assumed to be the same for
 all observations. If not specified, it is assumed that no limit of
 detection exists. Ignored if impute.y is FALSE.}
 
-\item{verbose}{If TRUE, additional information about model fit will be
-printed. Defaults to FALSE.}
+\item{quiet}{If FALSE, the penalized log likelihood and the model MSE
+will be printed for each iteration of the model fitting procedure. No
+intermediate output will be printed if TRUE. Defaults to FALSE.}
+
+\item{verbose}{If TRUE, the estimated theta/beta parameters will be printed
+for each iteration of the model fitting procedure. Defaults to FALSE.
+Ignored if quiet is TRUE.}
 
 \item{optim.method}{Optimization method to be used for the maximum
 likelihood estimation that is passed to optim. Defaults to "Nelder-Mead".

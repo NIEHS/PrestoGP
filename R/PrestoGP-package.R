@@ -8,10 +8,10 @@
 #' @importFrom methods callNextMethod
 #' @importFrom methods new
 #' @importFrom methods validObject
+#' @importFrom methods is
 #' @importFrom stats coef
 #' @importFrom utils getFromNamespace
 #' @importFrom stats optim predict var rnorm
-#' @importFrom aod wald.test
 #' @importFrom dplyr %>%
 #' @importFrom truncnorm rtruncnorm etruncnorm
 #' @importFrom RANN nn2
