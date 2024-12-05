@@ -280,8 +280,8 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lod, n.mi = 10,
     }
     tiid <- transform_iid(cbind(yi, X), vecchia.approx, params[1:3],
       params[4])
-    yt <- tiid[, 1:ncol(yi)]
-    Xt <- as.matrix(tiid[, -(1:ncol(yi))])
+    yt <- tiid[, seq_len(ncol(yi))]
+    Xt <- as.matrix(tiid[, -(seq_len(ncol(yi)))])
 
     for (i in seq_len(n.mi)) {
       cur.glmnet <- cv.glmnet(as.matrix(Xt), as.matrix(yt[, i]),
