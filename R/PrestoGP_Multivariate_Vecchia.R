@@ -435,37 +435,32 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
     yhat.ni <- X %*% cur.coef[-1]
     yhat.ni <- yhat.ni + mean(y[!miss]) - mean(yhat.ni[!miss])
 
+    coef.mat <- matrix(nrow = n.mi, ncol = (ncol(X) + 1))
     if (parallel) {
-      coef.mat <- foreach(i = seq_len(n.mi), .combine = rbind) %dopar% {
-        yi <- rtmvn_snn(y - yhat.ni, rep(-Inf, length(y)),
-          rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, covmat = Sigma.hat)
-        yi <- yi + yhat.ni
-
-        tiid <- transform_miid(cbind(yi, X), vecchia.approx, params)
-        yt <- tiid[, 1]
-        Xt <- as.matrix(tiid[, -1])
-
-        cur.glmnet <- cv.glmnet(as.matrix(Xt), as.matrix(yt),
-          alpha = model@alpha, family = family, nfolds = nfolds,
-          foldid = foldid)
-        as.vector(coef(cur.glmnet, s = "lambda.min"))
+      yi <- foreach(i = seq_len(n.mi), .combine = cbind) %dopar% {
+        out <- rtmvn_snn(y - yhat.ni, rep(-Inf, length(y)),
+          rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn,
+          covmat = Sigma.hat)
+        out + yhat.ni
       }
     } else {
-      coef.mat <- matrix(nrow = n.mi, ncol = (ncol(X) + 1))
+      yi <- matrix(nrow = length(yhat.ni), ncol = n.mi)
       for (i in seq_len(n.mi)) {
-        yi <- rtmvn_snn(y - yhat.ni, rep(-Inf, length(y)),
-          rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, covmat = Sigma.hat)
-        yi <- yi + yhat.ni
-
-        tiid <- transform_miid(cbind(yi, X), vecchia.approx, params)
-        yt <- tiid[, 1]
-        Xt <- as.matrix(tiid[, -1])
-
-        cur.glmnet <- cv.glmnet(as.matrix(Xt), as.matrix(yt),
-          alpha = model@alpha, family = family, nfolds = nfolds,
-          foldid = foldid)
-        coef.mat[i, ] <- as.matrix(coef(cur.glmnet, s = "lambda.min"))
+        yi[, i] <- rtmvn_snn(y - yhat.ni, rep(-Inf, length(y)),
+          rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn,
+          covmat = Sigma.hat)
+        yi[, i] <- yi[, i] + yhat.ni
       }
+    }
+    tiid <- transform_miid(cbind(yi, X), vecchia.approx, params)
+    yt <- tiid[, 1:ncol(yi)]
+    Xt <- as.matrix(tiid[, -(1:ncol(yi))])
+
+    for (i in seq_len(n.mi)) {
+      cur.glmnet <- cv.glmnet(as.matrix(Xt), as.matrix(yt[, i]),
+        alpha = model@alpha, family = family, nfolds = nfolds,
+        foldid = foldid, parallel = parallel)
+      coef.mat[i, ] <- as.matrix(coef(cur.glmnet, s = "lambda.min"))
     }
     last.coef <- cur.coef
     cur.coef <- colMeans(coef.mat)
