@@ -769,7 +769,7 @@ test_that("m too large for prediction", {
 })
 
 test_that("Simulated dataset multivariate spatial prediction", {
-  source("sim_multivariate_big_pred.R")
+  load("sim_multivariate_big_pred.RData")
   pgp.mmodel1 <- new("MultivariateVecchiaModel", n_neighbors = 25)
   pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
     locs.list.otr,
@@ -786,6 +786,8 @@ test_that("Simulated dataset multivariate spatial prediction", {
   mse <- mean((pgp.mmodel1.pred$means - unlist(y.list.otst))^2)
   me <- mean(pgp.mmodel1.pred$means - unlist(y.list.otst))
 
-  expect_equal(mse, 1.99, tolerance = 0.1)
-  expect_equal(me + 0.04, 0, tolerance = 0.03)
+  expect_gt(mse, 1.9)
+  expect_lt(mse, 2.3)
+  expect_gt(me, -0.02)
+  expect_lt(me, 0.035)
 })

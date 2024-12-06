@@ -291,7 +291,7 @@ test_that("Simulated dataset spatial", {
 })
 
 test_that("Simulated dataset spatiotemporal", {
-  source("sim_vecchia_st.R")
+  load("sim_vecchia_st.RData")
   Y <- as.matrix(y)
   colnames(Y) <- "test"
   pgp.model1 <- new("VecchiaModel", n_neighbors = 25)
@@ -329,17 +329,17 @@ test_that("Simulated dataset spatiotemporal", {
   expect_identical(as.numeric(theta.out[[3]]), params.out[4])
   expect_identical(as.numeric(theta.out[[4]]), params.out[5])
 
-  expect_equal(beta.out, c(0, 0.9, 1.01, 0.88, 1, rep(0, 6)),
-    tolerance = 0.2
+  expect_equal(beta.out, c(0, 0.9, 0.99, 0.93, 0.985, rep(0, 6)),
+    tolerance = 0.02
   )
-  expect_gt(params.out[1], 0.74)
+  expect_gt(params.out[1], 0.87)
   expect_lt(params.out[1], 1.5)
   expect_gt(params.out[2], 0.09)
-  expect_lt(params.out[2], 0.18)
-  expect_gt(params.out[3], 0.93)
-  expect_lt(params.out[3], 2.19)
-  expect_gt(params.out[4], 0.91)
-  expect_lt(params.out[4], 1.33)
+  expect_lt(params.out[2], 0.19)
+  expect_gt(params.out[3], 0.88)
+  expect_lt(params.out[3], 2.18)
+  expect_gt(params.out[4], 0.83)
+  expect_lt(params.out[4], 1.35)
   expect_gt(params.out[5], 0.72)
   expect_lt(params.out[5], 0.83)
 
@@ -360,26 +360,26 @@ test_that("Simulated dataset spatiotemporal", {
 
   expect_length(beta.out2, 11)
   expect_length(params.out2, 6)
-  expect_equal(beta.out2, c(0.01, 0.9, 1.02, 0.88, 1, rep(0, 6)),
+  expect_equal(beta.out2, c(0.01, 0.91, 0.99, 0.93, 0.99, rep(0, 6)),
     tolerance = 0.02
   )
-  expect_gt(params.out2[1], 0.75)
+  expect_gt(params.out2[1], 0.82)
   expect_lt(params.out2[1], 1.4)
   expect_gt(params.out2[2], 0.07)
   expect_lt(params.out2[2], 0.13)
-  expect_gt(params.out2[3], 0.93)
-  expect_lt(params.out2[3], 1.7)
+  expect_gt(params.out2[3], 0.91)
+  expect_lt(params.out2[3], 1.73)
   expect_gt(params.out2[4], 1.06)
-  expect_lt(params.out2[4], 1.57)
+  expect_lt(params.out2[4], 1.61)
   expect_gt(params.out2[5], 0.73)
-  expect_lt(params.out2[5], 0.83)
+  expect_lt(params.out2[5], 0.85)
 
   # Vecchia and full models should be approximately equal
   expect_equal(beta.out, beta.out2, tolerance = 0.03)
-  expect_equal(params.out[1], params.out2[1], tolerance = 0.6)
+  expect_equal(params.out[1], params.out2[1], tolerance = 0.7)
   expect_equal(params.out[2] - params.out2[2], 0, tolerance = 0.1)
   expect_equal(params.out[3] - params.out2[3], 0, tolerance = 0.9)
-  expect_equal(params.out[4], params.out2[4], tolerance = 0.5)
+  expect_equal(params.out[4], params.out2[4], tolerance = 0.6)
   expect_equal(params.out[5], params.out2[5], tolerance = 0.1)
 })
 

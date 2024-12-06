@@ -826,16 +826,31 @@ setMethod(
     model <- specify(model)
 
     if (is.null(beta.hat)) {
+      if (!quiet) {
+        cat("\n")
+      }
       if (sum(!model@Y_obs) > 0 & min(lodv) < Inf) {
+        if (!quiet) {
+          cat("Imputing missing y's and estimating initial beta...", "\n")
+        }
         cur.mi <- lod_reg_mi(model@Y_train, model@X_train, lodv, !model@Y_obs,
-          parallel = parallel, foldid = foldid)
+          parallel = parallel, foldid = foldid, verbose = verbose)
         model@Y_train[!model@Y_obs] <- cur.mi$y.impute
         beta.hat <- as.matrix(cur.mi$coef)
+        if (!quiet) {
+          cat("Estimation of initial beta complete", "\n")
+        }
       } else {
+        if (!quiet) {
+          cat("Estimating initial beta...", "\n")
+        }
         beta0.glmnet <- cv.glmnet(model@X_train, model@Y_train,
           parallel = parallel, foldid = foldid)
         beta.hat <- as.matrix(predict(beta0.glmnet,
             type = "coefficients", s = beta0.glmnet$lambda.1se))
+        if (!quiet) {
+          cat("Estimation of initial beta complete", "\n")
+        }
       }
     }
     Y.hat <- beta.hat[1, 1] + model@X_train %*% beta.hat[-1, ]
@@ -927,7 +942,7 @@ setMethod(
       }
       if (!quiet) {
         cat("Iteration", iter, "complete", "\n")
-        cat("Current penalized likelihood:", model@error, "\n")
+        cat("Current penalized negative log likelihood:", model@error, "\n")
         cat("Current MSE:", mean(model@res^2), "\n")
       }
       iter <- iter + 1
