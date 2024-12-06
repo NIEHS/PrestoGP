@@ -276,6 +276,91 @@ setMethod(
   }
 )
 
+
+#' summary table for PrestoGP models
+#'
+#' This method prints a summary of a PrestoGP model and its parameters using gt package
+#'
+#' @param object The PrestoGP model object
+#'
+#' @seealso \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}}
+#'
+#' @export
+#'
+#' @examples
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' y <- soil[,4]                   # predict moisture content
+#' X <- as.matrix(soil[,5:9])
+#' locs <- as.matrix(soil[,1:2])
+#'
+#' soil.vm <- new("VecchiaModel", n_neighbors = 10)
+#' soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+#' show(soil.vm)
+
+setMethod(
+  "summary", "PrestoGPModel",
+  function(object) {
+    theta_mdl <- get_theta(object)
+    beta_mdl <- get_beta(object)
+
+
+
+# Extract the marginal model parameters
+sigma <- theta_mdl$sigma
+smoothness <- theta_mdl$smoothness
+nuggets <- theta_mdl$nuggets
+names(sigma) <- names(smoothness) <- names(nuggets) <- names(theta_mdl$sigma)
+
+# Scales
+scale_dims <- length(unique(object@scaling))
+scale_df <- data.frame(theta_mdl$scale, id = rep(1:scale_dims, each = length(sigma)))
+scales <- scale_df%>%
+  group_by(id) %>%
+  group_split(.keep = FALSE) 
+
+
+
+
+# Construct model equations dynamically
+model_equations <- sapply(seq_along(sigma), function(i) {
+  glue(
+    "Cᵢᵢ(h) = σᵢᵢ² × M(h | {round(smoothness[i], 2)},[{paste(round(scales[[i]], 2), collapse = ', ')}]) + {round(nuggets[i]^2,4)}"
+  )
+})
+
+# Create the table
+marginal_df <- data.frame(
+  Variable = names(sigma),
+  Sigma2 = sigma^2,  # Avoid special characters
+  Smoothness = smoothness,
+  Nugget2 = nuggets^2,  # Avoid special characters
+  Scales = sapply(scales, function(x) paste(round(x, 2), collapse = ", "))
+)
+
+# Render as a gt table
+marginal_df %>%
+  gt() %>%
+  cols_label(
+    Variable = "Variable",
+    Sigma2 = "Marginal Variance (σᵢᵢ²)",       # Properly labeled
+    Smoothness = "Smoothness (νᵢᵢ)",
+    Nugget2 = "nugget (τ²)",
+    Scales = "scales (α)"
+  ) %>%
+   fmt_number(
+    columns = c(Sigma2, Smoothness, Nugget2, Scales),
+    decimals = 4  # Show 3 significant digits
+  ) |>
+  tab_header(
+    title = "Marginal Models for Each Variable",
+    subtitle = "Cᵢᵢ(h) = σᵢᵢ² × M(h | νᵢᵢ, α)"
+  )
+
+
+  }
+)
+
 #' Extract the Matern (theta) parameters from a PrestoGP model.
 #'
 #' This method extracts a list containing the Matern variance/covariance
