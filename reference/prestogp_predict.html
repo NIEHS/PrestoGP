@@ -11,7 +11,7 @@ of the predictor variables)."><meta property="og:image" content="https://niehs.g
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9036</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9037</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -184,13 +184,16 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-in"><span><span class="va">soil.vm</span> <span class="op">&lt;-</span> <span class="fu">new</span><span class="op">(</span><span class="st">"VecchiaModel"</span>, n_neighbors <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">soil.vm</span> <span class="op">&lt;-</span> <span class="fu"><a href="prestogp_fit-PrestoGPModel-method.html">prestogp_fit</a></span><span class="op">(</span><span class="va">soil.vm</span>, <span class="va">y</span><span class="op">[</span><span class="va">otr</span><span class="op">]</span>, <span class="va">X</span><span class="op">[</span><span class="va">otr</span>,<span class="op">]</span>, <span class="va">locs</span><span class="op">[</span><span class="va">otr</span>,<span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating initial beta... </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of initial beta complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 1 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized likelihood: 247.6847 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 247.6847 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 8.402037 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 2 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
@@ -198,7 +201,7 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 2 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized likelihood: 246.3209 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 246.3209 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 8.40214 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 3 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
@@ -206,7 +209,7 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 3 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized likelihood: 246.2636 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 246.2636 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 8.403128 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 4 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
@@ -214,7 +217,7 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 4 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized likelihood: 246.2629 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 246.2629 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 8.403154 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 5 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
@@ -222,7 +225,7 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 5 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized likelihood: 246.2629 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 246.2629 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 8.403154 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Perform predictions on the test set</span></span></span>
