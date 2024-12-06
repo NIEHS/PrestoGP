@@ -351,7 +351,7 @@ eliminate_dupes <- function(locs, locs.pred = NULL) {
 }
 
 lod_reg_mi <- function(y, X, lod, miss, n.mi = 10, eps = 0.01, maxit = 10,
-  parallel, foldid) {
+  parallel, foldid, verbose) {
   lod <- lod[miss]
   last.coef <- rep(Inf, ncol(X) + 1)
   cur.glmnet <- cv.glmnet(X, y, parallel = parallel, foldid = foldid,
@@ -375,6 +375,11 @@ lod_reg_mi <- function(y, X, lod, miss, n.mi = 10, eps = 0.01, maxit = 10,
           s = "lambda.min"))
     }
     cur.coef <- colMeans(coef.mat)
+    if (verbose) {
+      cat("LOD imputation iteration", itn, "complete", "\n")
+      cat("Current coefficients:", "\n")
+      print(cur.coef)
+    }
   }
   miss.means <- X[miss, ] %*% cur.coef[-1] + cur.coef[1]
   obs.means <- X[!miss, ] %*% cur.coef[-1] + cur.coef[1]
