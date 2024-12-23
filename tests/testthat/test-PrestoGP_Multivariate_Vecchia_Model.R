@@ -271,8 +271,13 @@ test_that("Simulated dataset multivariate spatial", {
     )
   )
 
+  expect_silent(plot_beta(pgp.mmodel1))
+  dev.off()
+
   expect_true(validObject(pgp.mmodel1))
 
+  expect_equal(get_Y(pgp.mmodel1), y.list)
+  expect_equal(get_linear_model(pgp.mmodel1), pgp.mmodel1@linear_model)
   expect_equal(get_neighbors(pgp.mmodel1), pgp.mmodel1@n_neighbors)
   expect_equal(get_scaling(pgp.mmodel1), pgp.mmodel1@scaling)
   expect_equal(get_converged(pgp.mmodel1), pgp.mmodel1@converged)
@@ -326,12 +331,12 @@ test_that("Simulated dataset multivariate spatial", {
   expect_identical(as.vector(beta.out[[1]]), as.vector(pgp.mmodel1@beta[2:11]))
   expect_identical(as.vector(beta.out[[2]]), as.vector(pgp.mmodel1@beta[13:22]))
   expect_identical(as.vector(beta.out[[3]]), as.vector(pgp.mmodel1@beta[24:33]))
-  expect_identical(as.numeric(beta.out[[4]][1]),
+  expect_equal(as.numeric(beta.out[[4]][1] - mean(y.list[[1]])),
     as.numeric(pgp.mmodel1@beta[1]))
-  expect_identical(as.numeric(beta.out[[4]][2]),
-    as.numeric(pgp.mmodel1@beta[12]))
-  expect_identical(as.numeric(beta.out[[4]][3]),
-    as.numeric(pgp.mmodel1@beta[23]))
+  expect_identical(as.numeric(beta.out[[4]][2] + mean(y.list[[1]]) -
+        mean(y.list[[2]])), as.numeric(pgp.mmodel1@beta[12]))
+  expect_identical(as.numeric(beta.out[[4]][3] + mean(y.list[[1]]) -
+        mean(y.list[[3]])), as.numeric(pgp.mmodel1@beta[23]))
 
   expect_equal(as.numeric(beta.out[[1]]), c(0.98, 0.97, 0.92, 0.96, rep(0, 3),
       0.02, rep(0, 2)), tolerance = 0.04)
@@ -339,7 +344,9 @@ test_that("Simulated dataset multivariate spatial", {
       0.04, rep(0, 2)), tolerance = 0.04)
   expect_equal(as.numeric(beta.out[[3]]), c(1.0, 0.99, 0.96, 0.94, rep(0, 6)),
     tolerance = 0.04)
-  expect_equal(as.numeric(beta.out[[4]]), c(-0.01, 0, 0), tolerance = 0.04)
+  expect_equal(as.numeric(beta.out[[4]]), c(-0.01 + mean(y.list[[1]]),
+      mean(y.list[[2]]) - mean(y.list[[1]]),
+      mean(y.list[[3]]) - mean(y.list[[1]])), tolerance = 0.04)
 
   expect_equal(params.out[1], 2.3, tolerance = 5.1)
   expect_equal(params.out[2], 4.4, tolerance = 4.6)
@@ -399,6 +406,12 @@ test_that("Simulated dataset multivariate spatial", {
   expect_equal(rownames(theta.out2[[5]]), c("Y1", "Y2", "Y3"))
 
   expect_named(beta.out2, c("Y1", "Y2", "Y3", "(Intercept)"))
+  expect_named(beta.out2[[1]], c("Y1_1", "Y1_2", "Y1_3", "Y1_4", "Y1_5",
+      "Y1_6", "Y1_7", "Y1_8", "Y1_9", "Y1_10"))
+  expect_named(beta.out2[[2]], c("Y2_1", "Y2_2", "Y2_3", "Y2_4", "Y2_5",
+      "Y2_6", "Y2_7", "Y2_8", "Y2_9", "Y2_10"))
+  expect_named(beta.out2[[3]], c("Y3_1", "Y3_2", "Y3_3", "Y3_4", "Y3_5",
+      "Y3_6", "Y3_7", "Y3_8", "Y3_9", "Y3_10"))
   expect_named(beta.out2[[4]], c("(Intercept)", "Y2", "Y3"))
 
   # Results should be the same after imputation
@@ -442,8 +455,14 @@ test_that("Simulated dataset multivariate spatial", {
     tolerance = 0.05)
   expect_equal(as.numeric(beta.out[[3]]), as.numeric(beta.out3[[3]]),
     tolerance = 0.05)
-  expect_equal(as.numeric(beta.out[[4]]), as.numeric(beta.out3[[4]]),
-    tolerance = 0.05)
+  expect_equal(as.numeric(beta.out[[4]][1] - pgp.mmodel1@Y_bar[1]),
+    as.numeric(beta.out3[[4]][1] - pgp.mmodel3@Y_bar[1]), tolerance = 0.05)
+  expect_equal(as.numeric(beta.out[[4]][2] - pgp.mmodel1@Y_bar[2] +
+        pgp.mmodel1@Y_bar[1]), as.numeric(beta.out3[[4]][2] -
+        pgp.mmodel3@Y_bar[2] + pgp.mmodel3@Y_bar[1]), tolerance = 0.05)
+  expect_equal(as.numeric(beta.out[[4]][3] - pgp.mmodel1@Y_bar[3] +
+        pgp.mmodel1@Y_bar[1]), as.numeric(beta.out3[[4]][3] -
+        pgp.mmodel3@Y_bar[3] + pgp.mmodel3@Y_bar[1]), tolerance = 0.05)
   expect_equal(params.out[1], params.out3[1], tolerance = 7.5)
   expect_equal(params.out[2], params.out3[2], tolerance = 7.2)
   expect_equal(params.out[3], params.out3[3], tolerance = 7.1)
@@ -783,11 +802,31 @@ test_that("Simulated dataset multivariate spatial prediction", {
 
   pgp.mmodel1.pred <- prestogp_predict(pgp.mmodel1, X.st.otst, locs.list.otst)
 
-  mse <- mean((pgp.mmodel1.pred$means - unlist(y.list.otst))^2)
-  me <- mean(pgp.mmodel1.pred$means - unlist(y.list.otst))
+  expect_named(pgp.mmodel1.pred$means, c("Y1", "Y2", "Y3"))
 
+  mse1 <- mean((pgp.mmodel1.pred$means[[1]] - y.list.otst[[1]])^2)
+  me1 <- mean(pgp.mmodel1.pred$means[[1]] - y.list.otst[[1]])
+  mse2 <- mean((pgp.mmodel1.pred$means[[2]] - y.list.otst[[2]])^2)
+  me2 <- mean(pgp.mmodel1.pred$means[[2]] - y.list.otst[[2]])
+  mse3 <- mean((pgp.mmodel1.pred$means[[3]] - y.list.otst[[3]])^2)
+  me3 <- mean(pgp.mmodel1.pred$means[[3]] - y.list.otst[[3]])
+  mse <- mean((unlist(pgp.mmodel1.pred$means) - unlist(y.list.otst))^2)
+  me <- mean(unlist(pgp.mmodel1.pred$means) - unlist(y.list.otst))
+
+  expect_gt(mse1, 1.7)
+  expect_lt(mse1, 2.1)
+  expect_gt(me1, -0.12)
+  expect_lt(me1, -0.01)
+  expect_gt(mse2, 1.1)
+  expect_lt(mse2, 1.4)
+  expect_gt(me2, -0.29)
+  expect_lt(me2, -0.15)
+  expect_gt(mse3, 2.7)
+  expect_lt(mse3, 3.0)
+  expect_gt(me3, 0.26)
+  expect_lt(me3, 0.4)
   expect_gt(mse, 1.9)
-  expect_lt(mse, 2.3)
-  expect_gt(me, -0.02)
-  expect_lt(me, 0.035)
+  expect_lt(mse, 3.0)
+  expect_gt(me, -0.012)
+  expect_lt(me, 0.042)
 })

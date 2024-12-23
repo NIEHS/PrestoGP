@@ -153,9 +153,14 @@ test_that("Simulated dataset spatial", {
     )
   )
 
+  expect_silent(plot_beta(pgp.model1))
+  dev.off()
+
   expect_true(validObject(pgp.model1))
   show(pgp.model1)
 
+  expect_equal(get_Y(pgp.model1), y)
+  expect_equal(get_linear_model(pgp.model1), pgp.model1@linear_model)
   expect_equal(get_neighbors(pgp.model1), pgp.model1@n_neighbors)
   expect_equal(get_scaling(pgp.model1), pgp.model1@scaling)
   expect_equal(get_converged(pgp.model1), pgp.model1@converged)
@@ -188,12 +193,13 @@ test_that("Simulated dataset spatial", {
   expect_identical(as.numeric(theta.out[[2]]), params.out[2])
   expect_identical(as.numeric(theta.out[[3]]), params.out[3])
   expect_identical(as.numeric(theta.out[[4]]), params.out[4])
-  expect_identical(as.numeric(beta.out[[2]]), as.numeric(pgp.model1@beta[1]))
+  expect_equal(as.numeric(beta.out[[2]] - mean(y)),
+    as.numeric(pgp.model1@beta[1]))
   expect_identical(as.vector(beta.out[[1]]), as.vector(pgp.model1@beta[2:11]))
 
   expect_equal(as.numeric(beta.out[[1]]), c(0.86, 0.98, 0.94, 0.9, rep(0, 6)),
     tolerance = 0.03)
-  expect_equal(as.numeric(beta.out[[2]]), 0.01, tolerance = 0.03)
+  expect_equal(as.numeric(beta.out[[2]] - mean(y)), 0.01, tolerance = 0.03)
   expect_equal(params.out[1], 1.6, tolerance = 0.5)
   expect_equal(params.out[2] - 0.4, 0, tolerance = 0.2)
   expect_equal(params.out[3], 0.59, tolerance = 0.2)
@@ -222,7 +228,7 @@ test_that("Simulated dataset spatial", {
 
   expect_equal(beta.out2[[1]], c(0.86, 0.98, 0.95, 0.9, rep(0, 6)),
     tolerance = 0.03)
-  expect_equal(as.numeric(beta.out2[[2]]), 0.01, tolerance = 0.03)
+  expect_equal(as.numeric(beta.out2[[2]] - mean(y)), 0.01, tolerance = 0.03)
   expect_equal(params.out2[1], 1.5, tolerance = 0.6)
   expect_equal(params.out2[2] - 0.4, 0, tolerance = 0.15)
   expect_equal(params.out2[3], 0.62, tolerance = 0.2)
@@ -256,7 +262,8 @@ test_that("Simulated dataset spatial", {
   params.out3 <- pgp.model3@covparams
 
   # Results should be the same after imputation
-  expect_equal(as.numeric(beta.out[[2]]), beta.out3[1], tolerance = 0.07)
+  expect_equal(as.numeric(beta.out[[2]] - mean(y)), beta.out3[1],
+    tolerance = 0.07)
   expect_equal(as.numeric(beta.out[[1]]), beta.out3[-1], tolerance = 0.07)
   expect_equal(params.out[1], params.out3[1], tolerance = 1.1)
   expect_equal(params.out[2] - params.out3[2], 0, tolerance = 0.3)
@@ -282,7 +289,8 @@ test_that("Simulated dataset spatial", {
   params.out4 <- pgp.model4@covparams
 
   # Results should be the same after imputation
-  expect_equal(as.numeric(beta.out[[2]]), beta.out4[1], tolerance = 0.09)
+  expect_equal(as.numeric(beta.out[[2]] - mean(y)), beta.out4[1],
+    tolerance = 0.09)
   expect_equal(as.numeric(beta.out[[1]]), beta.out4[-1], tolerance = 0.09)
   expect_equal(params.out[1], params.out3[1], tolerance = 1.3)
   expect_equal(params.out[2], params.out3[2], tolerance = 0.8)
