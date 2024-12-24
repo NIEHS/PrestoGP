@@ -21,6 +21,8 @@ setOldClass("cv.glmnet")
 #' "super matrix" for multivariate models. See
 #' \code{\link[psych]{superMatrix}}.
 #' @slot Y_train A column matrix containing the original response values.
+#' After fitting the model, missing values will be replaced with the imputed
+#' values if impute.y is TRUE. See \code{link{prestogp_fit}}.
 #' @slot X_ndx A vector used to find the elements of beta corresponding to
 #' specific outcomes. The \emph{i}th element of X_ndx is the index of the
 #' last element of beta corresponding to predictors for outcome \emph{i}.
@@ -117,12 +119,49 @@ setMethod("initialize", "PrestoGPModel", function(.Object, ...) {
   .Object
 })
 
+#' Extract the Y values for a PrestoGP model.
+#'
+#' This method extracts the values of Y for a PrestoGP model. If imputation
+#' was used when fitting the model, the missing Y's will be replaced with
+#' their imputed values.
+#'
+#' @param model The PrestoGP model object
+#'
+#' @return A vector or list containing the values of Y. Any missing Y's will
+#' be replaced with their imputed values.
+#'
+#' @seealso \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}}
+#'
+#' @references
+#' \itemize{
+#' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
+#' land-use regression for ground-level nitrogen dioxide", The Annals of
+#' Applied Statistics (2021) 15(2):688-710.
+#' }
+#'
+#' @rdname get_Y
+#' @export
+#'
+#' @examples
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' y <- soil[,4]                   # predict moisture content
+#' X <- as.matrix(soil[,5:9])
+#' locs <- as.matrix(soil[,1:2])
+#'
+#' soil.vm <- new("VecchiaModel", n_neighbors = 10)
+#' soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+#' get_Y(soil.vm)
+setGeneric("get_Y", function(model) standardGeneric("get_Y"))
 setGeneric("get_theta", function(model) standardGeneric("get_theta"))
 setGeneric("get_beta", function(model) standardGeneric("get_beta"))
+setGeneric(
+  "get_linear_model", function(model) standardGeneric("get_linear_model"))
 setGeneric("get_neighbors", function(model) standardGeneric("get_neighbors"))
 setGeneric("get_scaling", function(model) standardGeneric("get_scaling"))
 setGeneric("get_converged", function(model) standardGeneric("get_converged"))
 setGeneric("get_pen_loglik", function(model) standardGeneric("get_pen_loglik"))
+setGeneric("plot_beta", function(model, ...) standardGeneric("plot_beta"))
 setGeneric(
   "prestogp_fit",
   function(model, Y, X, locs, Y.names = NULL, X.names = NULL, scaling = NULL,
@@ -262,7 +301,11 @@ setMethod(
     cat("Matern covariance parameters (theta):", "\n")
     print(get_theta(object))
     cat("Regression coefficients (beta):", "\n")
-    print(get_beta(object))
+    cur.coef <- get_beta(object)
+    for (i in seq_along(cur.coef)) {
+      cur.coef[[i]] <- cur.coef[[i]][cur.coef[[i]] != 0]
+    }
+    print(cur.coef)
     cat("Model type:", is(object)[1], "\n")
     if (object@n_neighbors > 0) {
       cat("Nearest neighbors:", object@n_neighbors, "\n")
@@ -411,13 +454,14 @@ setMethod(
     for (i in seq_len(P)) {
       if (i == 1) {
         indx <- 1
-        junk[[P + 1]] <- model@beta[1]
+        junk[[P + 1]] <- model@beta[1] + model@Y_bar[1]
         names(junk[[P + 1]]) <- "(Intercept)"
       } else {
         indx <- model@X_ndx[i - 1] + 1
         new.names <- c(names(junk[[P + 1]]),
           names(model@locs_train)[i])
-        junk[[P + 1]] <- c(junk[[P + 1]], model@beta[indx])
+        junk[[P + 1]] <- c(junk[[P + 1]], model@beta[indx] + model@Y_bar[i] -
+            model@Y_bar[1])
         names(junk[[P + 1]]) <- new.names
       }
       pred.ndx <- (indx + 1):model@X_ndx[i]
@@ -430,6 +474,51 @@ setMethod(
       names(junk) <- c("Y", "(Intercept)")
     }
     return(junk)
+  }
+)
+
+#' Extract the fitted linear model for a PrestoGP model
+#'
+#' This method return the fitted linear model (of class cv.glmnet) for a
+#' PrestoGP model.
+#'
+#' @param model The PrestoGP model object
+#'
+#' @details It is important to note that the model is fit to the
+#' transformed data. The CV error rate and predicted values of Y will not be
+#' correct for the original (untransformed) data. This method should be
+#' used primarily for examining the coefficient path and generating plots.
+#'
+#' @return The fitted linear model (of class cv.glmnet).
+#'
+#' @seealso \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}},
+#' \code{\link[glmnet]{cv.glmnet}}
+#'
+#' @references
+#' \itemize{
+#' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
+#' land-use regression for ground-level nitrogen dioxide", The Annals of
+#' Applied Statistics (2021) 15(2):688-710.
+#' }
+#'
+#' @aliases get_linear_model
+#' @export
+#'
+#' @examples
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' y <- soil[,4]                   # predict moisture content
+#' X <- as.matrix(soil[,5:9])
+#' locs <- as.matrix(soil[,1:2])
+#'
+#' soil.vm <- new("VecchiaModel", n_neighbors = 10)
+#' soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+#' get_linear_model(soil.vm)
+
+setMethod(
+  "get_linear_model", "PrestoGPModel",
+  function(model) {
+    return(model@linear_model)
   }
 )
 
@@ -587,6 +676,47 @@ setMethod(
   "get_pen_loglik", "PrestoGPModel",
   function(model) {
     return(model@error)
+  }
+)
+
+#' Plots the glide path for the coefficients for a PrestoGP model.
+#'
+#' This method generates a plot showing the coefficients of the model for
+#' different values of the tuning parameter. It is a wrapper for
+#' \code{\link[glmnet]{plot.glmnet}}.
+#'
+#' @param model The PrestoGP model object
+#'
+#' @param ... Additional parameters to \code{\link[glmnet]{plot.glmnet}}
+#'
+#' @seealso \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}},
+#' \code{\link[glmnet]{plot.glmnet}}
+#'
+#' @references
+#' \itemize{
+#' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
+#' land-use regression for ground-level nitrogen dioxide", The Annals of
+#' Applied Statistics (2021) 15(2):688-710.
+#' }
+#'
+#' @aliases plot_beta
+#' @export
+#'
+#' @examples
+#' data(soil)
+#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
+#' y <- soil[,4]                   # predict moisture content
+#' X <- as.matrix(soil[,5:9])
+#' locs <- as.matrix(soil[,1:2])
+#'
+#' soil.vm <- new("VecchiaModel", n_neighbors = 10)
+#' soil.vm <- prestogp_fit(soil.vm, y, X, locs)
+#' plot_beta(soil.vm)
+
+setMethod(
+  "plot_beta", "PrestoGPModel",
+  function(model, ...) {
+    plot(model@linear_model$glmnet.fit, ...)
   }
 )
 

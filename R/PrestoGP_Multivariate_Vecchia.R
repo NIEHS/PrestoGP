@@ -31,6 +31,20 @@ setMethod("initialize", "MultivariateVecchiaModel", function(.Object, n_neighbor
   .Object
 })
 
+#' @rdname get_Y
+setMethod("get_Y", "MultivariateVecchiaModel",
+  function(model) {
+    Y.all <- model@Y_train
+    Y.out <- list()
+    for (i in seq_along(model@locs_train)) {
+      cur.y <- seq_len(nrow(model@locs_train[[i]]))
+      Y.out[[i]] <- Y.all[cur.y] + model@Y_bar[i]
+      Y.all <- Y.all[-cur.y]
+    }
+    return(Y.out)
+  }
+)
+
 #' @rdname prestogp_predict
 setMethod("prestogp_predict", "MultivariateVecchiaModel",
   function(model, X, locs, m = NULL, ordering.pred = c("obspred", "general"), pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
@@ -93,18 +107,23 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
 
     # prediction function can return both mean and sds
     # returns a list with elements mu.pred,mu.obs,var.pred,var.obs,V.ord
-    Vec.mean <- Y_bar + pred$mu.pred + Vecchia.Pred # residual + mean trend
+    Vec.mean.all <- Y_bar + pred$mu.pred + Vecchia.Pred # residual + mean trend
+    ndx.out <- NULL
+    for (i in seq_along(locs)) {
+      ndx.out <- c(ndx.out, rep(i, nrow(locs[[i]])))
+    }
     if (return.values == "mean") {
+      Vec.mean <- list()
+      for (i in seq_along(locs)) {
+        Vec.mean[[i]] <- Vec.mean.all[ndx.out == i]
+      }
+      names(Vec.mean) <- names(model@locs_train)
       return.list <- list(means = Vec.mean)
     } else {
       warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
-      Vec.sds <- pred$var.pred
-      ndx.out <- NULL
+      Vec.sds <- list()
       for (i in seq_along(locs)) {
-        ndx.out <- c(ndx.out, rep(i, nrow(locs[[i]])))
-      }
-      for (i in seq_along(locs)) {
-        Vec.sds[ndx.out == i] <- sqrt(Vec.sds[ndx.out == i] +
+        Vec.sds[[i]] <- sqrt(pred$var.pred[ndx.out == i] +
             model@covparams[model@param_sequence[4, i]])
       }
       return.list <- list(means = Vec.mean, sds = Vec.sds)
@@ -141,9 +160,7 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
     }
   }
   if (is.null(names(locs))) {
-    for (i in seq_along(locs)) {
-      names(locs)[i] <- paste0("Y", i)
-    }
+    names(locs) <- paste0("Y", seq_along(locs))
   }
   if (!is.null(lod)) {
     if (!is.list(lod)) {
@@ -241,8 +258,15 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
   if (length(X) == 1) {
     model@X_train <- X[[1]]
   } else {
+    if (is.null(colnames(X[[1]]))) {
+      colnames(X[[1]]) <- paste0(names(locs)[1], "_", seq_len(ncol(X[[1]])))
+    }
     for (i in 2:length(X)) {
       X[[i]] <- cbind(rep(1, nrow(X[[i]])), X[[i]])
+      if (is.null(colnames(X[[i]]))) {
+        colnames(X[[i]]) <- paste0(names(locs)[i], "_",
+          (seq_len(ncol(X[[i]])) - 1))
+      }
       model@X_ndx <- c(model@X_ndx, model@X_ndx[i - 1] + ncol(X[[i]]))
     }
     model@X_train <- psych::superMatrix(X)
