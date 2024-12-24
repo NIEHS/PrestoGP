@@ -33,7 +33,9 @@ the glmnet model. See \code{\link[glmnet]{glmnet}}.}
 "super matrix" for multivariate models. See
 \code{\link[psych]{superMatrix}}.}
 
-\item{\code{Y_train}}{A column matrix containing the original response values.}
+\item{\code{Y_train}}{A column matrix containing the original response values.
+After fitting the model, missing values will be replaced with the imputed
+values if impute.y is TRUE. See \code{link{prestogp_fit}}.}
 
 \item{\code{X_ndx}}{A vector used to find the elements of beta corresponding to
 specific outcomes. The \emph{i}th element of X_ndx is the index of the

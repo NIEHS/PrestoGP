@@ -14,6 +14,7 @@ Simultaneous variable seletion and estimation of LUR models with spatiotemporall
 Useful links:
 \itemize{
   \item \url{https://niehs.github.io/PrestoGP/}
+  \item \url{https://github.com/NIEHS/PrestoGP}
 }
 
 }

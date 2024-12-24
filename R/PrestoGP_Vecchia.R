@@ -28,6 +28,13 @@ setMethod("initialize", "VecchiaModel", function(.Object, n_neighbors = 25, ...)
   .Object
 })
 
+#' @rdname get_Y
+setMethod("get_Y", "VecchiaModel",
+  function(model) {
+    return(as.vector(model@Y_train + model@Y_bar))
+  }
+)
+
 #' @rdname prestogp_predict
 setMethod("prestogp_predict", "VecchiaModel",
   function(model, X, locs, m = NULL, ordering.pred = c("obspred", "general"), pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
