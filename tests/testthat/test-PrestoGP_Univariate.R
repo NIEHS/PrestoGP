@@ -267,7 +267,7 @@ test_that("Simulated dataset spatial", {
   expect_equal(as.numeric(beta.out[[1]]), beta.out3[-1], tolerance = 0.07)
   expect_equal(params.out[1], params.out3[1], tolerance = 1.1)
   expect_equal(params.out[2] - params.out3[2], 0, tolerance = 0.3)
-  expect_equal(params.out[3], params.out3[3], tolerance = 0.3)
+  expect_equal(params.out[3] - params.out3[3], 0, tolerance = 0.3)
   expect_equal(params.out[4], params.out3[4], tolerance = 0.4)
 
   # Missing data with lod

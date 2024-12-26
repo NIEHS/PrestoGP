@@ -200,9 +200,8 @@ test_that("mvnegloglik", {
 })
 
 test_that("mvnegloglik_ST", {
-  source("sim_multivariate_big_st.R")
+  load("sim_multivariate_big_st.RData")
   P <- 3
-  Y <- cbind(runif(10), runif(10), runif(10))
   cor.matrix <- cor(Y)
   cov_mat <- c(cor.matrix[upper.tri(cor.matrix)])
   logparams <- create.initial.values.flex(
