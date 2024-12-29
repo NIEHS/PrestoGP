@@ -1,3 +1,9 @@
+# PrestoGP 0.2.0.9039 (2024-12-26)
+
+## MINOR IMPROVEMENTS
+
+  * Rewrote some tests that were failing on some verions of R
+
 # PrestoGP 0.2.0.9038 (2024-12-23)
 
 ## NEW FEATURES
