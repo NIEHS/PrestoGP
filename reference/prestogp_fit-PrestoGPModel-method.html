@@ -9,7 +9,7 @@ and outcome variables."><meta property="og:image" content="https://niehs.github.
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9037</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9039</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,7 +20,8 @@ and outcome variables."><meta property="og:image" content="https://niehs.github.
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
-      </ul><ul class="navbar-nav"></ul></div>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/NIEHS/PrestoGP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+      </ul></div>
 
 
   </div>
@@ -28,7 +29,7 @@ and outcome variables."><meta property="og:image" content="https://niehs.github.
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Train a PrestoGP model.</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/NIEHS/PrestoGP/blob/main/R/PrestoGP_Model.R" class="external-link"><code>R/PrestoGP_Model.R</code></a></small>
       <div class="d-none name"><code>prestogp_fit-PrestoGPModel-method.Rd</code></div>
     </div>
 
@@ -241,7 +242,7 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 1 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.181 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.5732 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.104869 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 2 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
@@ -249,16 +250,16 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 2 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.1105 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107302 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.5042 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107652 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 3 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 3 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.1105 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107302 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.5042 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107652 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Impute missing y's</span></span></span>
 <span class="r-in"><span><span class="va">miss</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">soil</span><span class="op">)</span>, <span class="fl">20</span><span class="op">)</span></span></span>
@@ -276,7 +277,7 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 1 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.393 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.0564 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.104869 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 2 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
@@ -284,32 +285,16 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 2 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.3047 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107217 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.9772 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107397 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 3 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 3 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.0089 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107062 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 4 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 4 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.0079 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107144 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 5 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 5 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.0079 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107144 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.9772 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107397 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Impute y's missing due to limit of detection</span></span></span>
 <span class="r-in"><span><span class="va">soil.lod</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">y</span>, <span class="fl">0.1</span><span class="op">)</span></span></span>
@@ -327,7 +312,7 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 1 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.232 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.2134 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.104869 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 2 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
@@ -335,16 +320,16 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 2 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.1455 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107444 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.1394 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107618 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 3 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 3 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.1455 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107444 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.1394 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107618 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Full model</span></span></span>
 <span class="r-in"><span><span class="va">soil.fm</span> <span class="op">&lt;-</span> <span class="fu">new</span><span class="op">(</span><span class="st">"FullModel"</span><span class="op">)</span></span></span>
@@ -359,7 +344,7 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 1 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.3133 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.5599 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.104869 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 2 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
@@ -367,16 +352,32 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 2 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.2743 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.105179 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.276 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.105682 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 3 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 3 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.2743 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.105179 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.0615 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.105514 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 4 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 4 complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.7354 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.105429 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 5 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 5 complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.7354 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.105208 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Multivariate model</span></span></span>
 <span class="r-in"><span><span class="va">ym</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span></span>
@@ -399,7 +400,7 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 1 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1392.561 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1393.414 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 53.9135 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 2 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
@@ -407,16 +408,8 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 2 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1380.552 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 132.9825 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 3 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 3 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1380.552 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 222.1078 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1393.414 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 62.36897 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Space/elevation model</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">soil250</span>, package<span class="op">=</span><span class="st">"geoR"</span><span class="op">)</span></span></span>
@@ -438,16 +431,16 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 1 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: -255.9419 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 0.009739877 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: -257.7434 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 0.009255459 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 2 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 2 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: -255.9419 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 0.01132906 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: -257.7434 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 0.01053627 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

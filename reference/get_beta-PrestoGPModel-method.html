@@ -9,7 +9,7 @@ a PrestoGP model."><meta property="og:image" content="https://niehs.github.io/Pr
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9037</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9039</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,7 +20,8 @@ a PrestoGP model."><meta property="og:image" content="https://niehs.github.io/Pr
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
-      </ul><ul class="navbar-nav"></ul></div>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/NIEHS/PrestoGP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+      </ul></div>
 
 
   </div>
@@ -28,7 +29,7 @@ a PrestoGP model."><meta property="og:image" content="https://niehs.github.io/Pr
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Extract the regression coefficients (beta) for a PrestoGP model.</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/NIEHS/PrestoGP/blob/main/R/PrestoGP_Model.R" class="external-link"><code>R/PrestoGP_Model.R</code></a></small>
       <div class="d-none name"><code>get_beta-PrestoGPModel-method.Rd</code></div>
     </div>
 
@@ -97,7 +98,7 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 1 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.4668 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 487.0619 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.104869 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 2 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
@@ -105,24 +106,24 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 2 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.6606 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107287 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.5055 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107118 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 3 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 3 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.6414 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107472 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.5034 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107285 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 4 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 4 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.6414 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107445 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 486.5034 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107285 </span>
 <span class="r-in"><span><span class="fu">get_beta</span><span class="op">(</span><span class="va">soil.vm</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $Y</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   NO3.N Total.N   NH4.N     DOC    N20N </span>
@@ -130,7 +131,7 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $`(Intercept)`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  0.05075931 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    11.40578 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>

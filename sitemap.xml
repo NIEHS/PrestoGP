@@ -2,6 +2,7 @@
 <url><loc>https://niehs.github.io/PrestoGP/404.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/authors.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/index.html</loc></url>
+<url><loc>https://niehs.github.io/PrestoGP/news/index.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/FullModel-class.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/MultivariateVecchiaModel-class.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/PrestoGP-package.html</loc></url>
@@ -9,14 +10,17 @@
 <url><loc>https://niehs.github.io/PrestoGP/reference/VecchiaModel-class.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/create.param.sequence.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/createUMultivariate.html</loc></url>
+<url><loc>https://niehs.github.io/PrestoGP/reference/get_Y.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/get_beta-PrestoGPModel-method.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/get_converged-PrestoGPModel-method.html</loc></url>
+<url><loc>https://niehs.github.io/PrestoGP/reference/get_linear_model-PrestoGPModel-method.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/get_neighbors-PrestoGPModel-method.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/get_pen_loglik-PrestoGPModel-method.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/get_scaling-PrestoGPModel-method.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/get_theta-PrestoGPModel-method.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/index.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/max_min_ordering.html</loc></url>
+<url><loc>https://niehs.github.io/PrestoGP/reference/plot_beta-PrestoGPModel-method.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/prestogp_fit-PrestoGPModel-method.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/prestogp_predict.html</loc></url>
 <url><loc>https://niehs.github.io/PrestoGP/reference/show-PrestoGPModel-method.html</loc></url>
