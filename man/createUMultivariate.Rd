@@ -10,7 +10,7 @@ createUMultivariate(vec.approx, params, cov_func = NULL)
 \item{vec.approx}{Object returned by \code{\link{vecchia_Mspecify}}.}
 
 \item{params}{Vector of covariance parameters. See
-\code{\link{create.param.sequence}} or the examples below for details
+\code{\link{create_param_sequence}} or the examples below for details
 about the format of this vector.}
 
 \item{cov_func}{The function used to compute the covariance between two
@@ -42,7 +42,7 @@ locsm <- list()
 locsm[[1]] <- locsm[[2]] <- locs
 soil.va <- vecchia_Mspecify(locsm, m=10)
 
-pseq <- create.param.sequence(2)
+pseq <- create_param_sequence(2)
 # Initialize the vector of covariance parameters
 params <- rep(NA, pseq[5,2])
 # Sigma parameters:
@@ -71,5 +71,5 @@ approximations of Gaussian processes", Statistical Science (2021)
 }
 \seealso{
 \code{\link[GPvecchia]{createU}}, \code{\link{vecchia_Mspecify}},
-\code{\link{create.param.sequence}}
+\code{\link{create_param_sequence}}
 }

@@ -13,7 +13,7 @@ vecchia_Mlikelihood(z, vecchia.approx, covparams)
 \code{\link{vecchia_Mspecify}}.}
 
 \item{covparams}{Vector of covariance parameters. See
-\code{\link{create.param.sequence}} or the examples below for details
+\code{\link{create_param_sequence}} or the examples below for details
 about the format of this vector.}
 }
 \value{
@@ -31,7 +31,7 @@ locsm <- list()
 locsm[[1]] <- locsm[[2]] <- locs
 soil.va <- vecchia_Mspecify(locsm, m=10)
 
-pseq <- create.param.sequence(2)
+pseq <- create_param_sequence(2)
 # Initialize the vector of covariance parameters
 params <- rep(NA, pseq[5,2])
 # Sigma parameters:
@@ -56,5 +56,5 @@ approximations of Gaussian processes", Statistical Science (2021)
 }
 \seealso{
 \code{\link[GPvecchia]{vecchia_likelihood}},
-\code{\link{vecchia_Mspecify}}, \code{\link{create.param.sequence}}
+\code{\link{vecchia_Mspecify}}, \code{\link{create_param_sequence}}
 }

@@ -67,14 +67,14 @@ negloglik.full <- function(logparams, d, y, param.seq) {
 #' @param vecchia.approx A Vecchia object returned by
 #' \code{\link{vecchia_Mspecify}}.
 #' @param covparams Vector of covariance parameters. See
-#' \code{\link{create.param.sequence}} or the examples below for details
+#' \code{\link{create_param_sequence}} or the examples below for details
 #' about the format of this vector.
 #'
 #' @return The log likelihood implied by the multivariate Vecchia
 #' approximation.
 #'
 #' @seealso \code{\link[GPvecchia]{vecchia_likelihood}},
-#' \code{\link{vecchia_Mspecify}}, \code{\link{create.param.sequence}}
+#' \code{\link{vecchia_Mspecify}}, \code{\link{create_param_sequence}}
 #'
 #' @references
 #' \itemize{
@@ -92,7 +92,7 @@ negloglik.full <- function(logparams, d, y, param.seq) {
 #' locsm[[1]] <- locsm[[2]] <- locs
 #' soil.va <- vecchia_Mspecify(locsm, m=10)
 #'
-#' pseq <- create.param.sequence(2)
+#' pseq <- create_param_sequence(2)
 #' # Initialize the vector of covariance parameters
 #' params <- rep(NA, pseq[5,2])
 #' # Sigma parameters:
@@ -132,7 +132,7 @@ mvnegloglik <- function(logparams, vecchia.approx, y, param.seq, P) {
   #       in the list
   # y    :  multivariate outcome, each out outcome in a separate entry in a list
   #  param.seq: The vector of parameter index sequences created by the function
-  #            create.param.sequence - Used to identify the beginning and end
+  #            create_param_sequence - Used to identify the beginning and end
   #           index locations of each parameter.
 
   # P <- length(y)
@@ -159,7 +159,7 @@ mvnegloglik_ST <- function(logparams, vecchia.approx, y, param.seq, P, scaling, 
   #       in the list
   # y    :  multivariate outcome, each out outcome in a separate entry in a list
   #  param.seq: The vector of parameter index sequences created by the function
-  #            create.param.sequence - Used to identify the beginning and end
+  #            create_param_sequence - Used to identify the beginning and end
   #           index locations of each parameter.
 
   # P <- length(y)
@@ -200,7 +200,7 @@ mvnegloglik.full <- function(logparams, locs, y, param.seq) {
   #       in the list
   # y    :  multivariate outcome, each out outcome in a separate entry in a list
   #  param.seq: The vector of parameter index sequences created by the function
-  #            create.param.sequence - Used to identify the beginning and end
+  #            create_param_sequence - Used to identify the beginning and end
   #           index locations of each parameter.
 
   # P <- length(y)
