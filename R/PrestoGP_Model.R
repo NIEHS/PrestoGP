@@ -47,10 +47,9 @@ setOldClass("cv.glmnet")
 #' @slot scaling The indices of the scale parameters. See
 #' \code{link{prestogp_fit}}.
 #' @slot nscale The number of scale parameters in the model.
-#' @slot apanasovich Should the Apanasovich covariance model be used? See
-#' References.
+#' @slot common_scale Do all columns of locs have the same scale parameter?
 #' @slot param_sequence Records the indices of the various Matern parameters.
-#' See \code{\link{create.param.sequence}}.
+#' See \code{\link{create_param_sequence}}.
 #'
 #' @seealso \code{\link{VecchiaModel-class}}, \code{\link{FullModel-class}},
 #' \code{\link{MultivariateVecchiaModel-class}}, \code{\link{prestogp_fit}}
@@ -96,7 +95,7 @@ PrestoGPModel <- setClass("PrestoGPModel",
     alpha = "numeric", # the alpha ratio of ridge to lasso penalty
     scaling = "numeric", # the indices of the scale parameters,
     nscale = "numeric", # the number of scale parameters
-    apanasovich = "logical", # should the Apanasovich model be used
+    common_scale = "logical", # is there a common scale parameter?
     param_sequence = "matrix", # maps the indices of the various Matern parameters
     logparams = "numeric" # transformed version of the Matern parameters
   )
@@ -165,7 +164,7 @@ setGeneric("plot_beta", function(model, ...) standardGeneric("plot_beta"))
 setGeneric(
   "prestogp_fit",
   function(model, Y, X, locs, Y.names = NULL, X.names = NULL, scaling = NULL,
-    apanasovich = NULL, covparams = NULL, beta.hat = NULL, tol = 0.999999,
+    common_scale = NULL, covparams = NULL, beta.hat = NULL, tol = 0.999999,
     max_iters = 100, center.y = NULL, impute.y = FALSE, lod = NULL,
     quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
@@ -742,9 +741,9 @@ setMethod(
 #' measure, the value of scaling would be c(1, 1, 2). The length of scaling
 #' must match the number of columns of locs. If it is not specified, all
 #' columns of locs will have a common scale parameter.
-#' @param apanasovich Should the multivariate Matern model described in
-#' Apanasovich et al. (2012) be used? Defaults to TRUE if there is only one
-#' scale parameter for each outcome and FALSE otherwise.
+#' @param common_scale Do all columsn of locs have a common scales parameter?
+#' See Details for the effects of this parameter. Defaults to TRUE if there
+#' is only one scale parameter for each outcome and FALSE otherwise.
 #' @param covparams The initial covariance parameters estimate (optional).
 #' @param beta.hat The initial beta parameters estimates (optional).
 #' @param tol The model is considered converged when error is not less than
@@ -783,6 +782,16 @@ setMethod(
 #' cross-validation. See \code{\link[glmnet]{cv.glmnet}}.
 #' @param parallel Should cv.glmnet use parallel "foreach" to fit each fold?
 #' Defaults to FALSE. See \code{\link[glmnet]{cv.glmnet}}.
+#'
+#' @details If common_scale is TRUE, multivariate models will use the Matern
+#' cross-covariance function described in Apanasovich et al. (2012). This
+#' model can only be used if each outcome has only a single scale parameter.
+#' If common_scale is FALSE, each column of locs will be divded by the
+#' corresponding element of scaling, and the cross-covariance will be computed
+#' under the assumption that all scale parameters are equal to 1. For
+#' univariate models, the Vecchia approximation will not be recomputed in
+#' each iteration of the model fitting procedure if common_scale is TRUE,
+#' but the parameter is otherwise ignored.
 #'
 #' @return A PrestoGPModel object with slots updated based on the results of
 #' the model fitting procedure. See \code{\link{PrestoGPModel-class}} for
@@ -859,7 +868,7 @@ setMethod(
 setMethod(
   "prestogp_fit", "PrestoGPModel",
   function(model, Y, X, locs, Y.names = NULL, X.names = NULL, scaling = NULL,
-    apanasovich = NULL, covparams = NULL, beta.hat = NULL, tol = 0.999999,
+    common_scale = NULL, covparams = NULL, beta.hat = NULL, tol = 0.999999,
     max_iters = 100, center.y = NULL, impute.y = FALSE, lod = NULL,
     quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
@@ -923,20 +932,20 @@ setMethod(
         stop("scaling must consist of sequential integers starting at 1")
       }
     }
-    if (is.null(apanasovich)) {
+    if (is.null(common_scale)) {
       if (nscale == 1) {
-        apanasovich <- TRUE
+        common_scale <- TRUE
       } else {
-        apanasovich <- FALSE
+        common_scale <- FALSE
       }
     }
-    if (apanasovich & nscale > 1) {
-      stop("Apanasovich models require a common scale parameter")
+    if (common_scale & nscale > 1) {
+      stop("common_scale must be FALSE if there are multiple scale parameters")
     }
     model@scaling <- scaling
     model@nscale <- nscale
-    model@apanasovich <- apanasovich
-    if (model@apanasovich & (length(model@locs_train) > 1)) {
+    model@common_scale <- common_scale
+    if (model@common_scale & (length(model@locs_train) > 1)) {
       model@locs_train <- eliminate_dupes(model@locs_train)$locs
     }
     if (!is.null(covparams)) {
@@ -1012,7 +1021,7 @@ setMethod(
         }
       }
       # transform data to iid
-      if (!model@apanasovich) {
+      if (!model@common_scale) {
         model <- specify(model)
       }
 
@@ -1183,7 +1192,7 @@ setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y, covparams)
   } else {
     P <- length(locs)
   }
-  pseq <- create.param.sequence(P, model@nscale)
+  pseq <- create_param_sequence(P, model@nscale)
   if (is.null(covparams)) {
     col.vars <- rep(NA, P)
     D.sample.bar <- rep(NA, model@nscale * P)
@@ -1260,7 +1269,7 @@ setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y, covparams)
 #' @return a matrix with scaled locations
 #' @noRd
 setMethod("scale_locs", "PrestoGPModel", function(model, locs) {
-  if (model@apanasovich) {
+  if (model@common_scale) {
     return(locs)
   } else {
     locs.out <- locs

@@ -146,7 +146,7 @@ test_that("Simulated dataset spatial", {
   pgp.model1 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model1 <- prestogp_fit(pgp.model1, y, X, locs, Y.names = "test",
     X.names = c("x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10"),
-    scaling = c(1, 1), apanasovich = TRUE, quiet = TRUE,
+    scaling = c(1, 1), common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -207,7 +207,7 @@ test_that("Simulated dataset spatial", {
 
   pgp.model2 <- new("FullModel")
   pgp.model2 <- prestogp_fit(pgp.model2, y, X, locs,
-    scaling = c(1, 1), apanasovich = TRUE, quiet = TRUE, verbose = TRUE,
+    scaling = c(1, 1), common_scale = TRUE, quiet = TRUE, verbose = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -251,7 +251,7 @@ test_that("Simulated dataset spatial", {
 
   pgp.model3 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model3 <- prestogp_fit(pgp.model3, y.na, X, locs,
-    scaling = c(1, 1), apanasovich = TRUE, quiet = FALSE,
+    scaling = c(1, 1), common_scale = TRUE, quiet = FALSE,
     impute.y = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
@@ -278,7 +278,7 @@ test_that("Simulated dataset spatial", {
 
   pgp.model4 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model4 <- prestogp_fit(pgp.model4, y.na.lod, X, locs,
-    scaling = c(1, 1), apanasovich = TRUE, verbose = TRUE,
+    scaling = c(1, 1), common_scale = TRUE, verbose = TRUE,
     impute.y = TRUE, lod = lod.cut,
     optim.control = list(
       trace = 0, maxit = 5000,
@@ -305,7 +305,7 @@ test_that("Simulated dataset spatiotemporal", {
   pgp.model1 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model1 <- prestogp_fit(pgp.model1, Y, X, locs,
     scaling = c(1, 1, 2),
-    apanasovich = FALSE, quiet = TRUE,
+    common_scale = FALSE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -354,7 +354,7 @@ test_that("Simulated dataset spatiotemporal", {
   pgp.model2 <- new("FullModel", n_neighbors = 25)
   pgp.model2 <- prestogp_fit(pgp.model2, y, X, locs,
     scaling = c(1, 1, 2),
-    apanasovich = FALSE, quiet = TRUE,
+    common_scale = FALSE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -397,7 +397,7 @@ test_that("Invalid locs input for prediction", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -415,7 +415,7 @@ test_that("Invalid X input for prediction", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -433,7 +433,7 @@ test_that("ncol(locs) != ncol(locs_train)", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -452,7 +452,7 @@ test_that("nrow(X) != nrow(locs) for prediction", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -471,7 +471,7 @@ test_that("ncol(X) != ncol(X_train) for prediction", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -490,7 +490,7 @@ test_that("m too small for prediction", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -508,7 +508,7 @@ test_that("full prediction not implemented", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -526,7 +526,7 @@ test_that("m too large for prediction", {
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr,
     locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -543,7 +543,7 @@ test_that("Simulated spatial prediction", {
   pgp.model1 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr, locs.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3

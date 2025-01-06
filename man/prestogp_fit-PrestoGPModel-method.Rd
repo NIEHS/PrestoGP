@@ -13,7 +13,7 @@
   Y.names = NULL,
   X.names = NULL,
   scaling = NULL,
-  apanasovich = NULL,
+  common_scale = NULL,
   covparams = NULL,
   beta.hat = NULL,
   tol = 0.999999,
@@ -56,9 +56,9 @@ measure, the value of scaling would be c(1, 1, 2). The length of scaling
 must match the number of columns of locs. If it is not specified, all
 columns of locs will have a common scale parameter.}
 
-\item{apanasovich}{Should the multivariate Matern model described in
-Apanasovich et al. (2012) be used? Defaults to TRUE if there is only one
-scale parameter for each outcome and FALSE otherwise.}
+\item{common_scale}{Do all columsn of locs have a common scales parameter?
+See Details for the effects of this parameter. Defaults to TRUE if there
+is only one scale parameter for each outcome and FALSE otherwise.}
 
 \item{covparams}{The initial covariance parameters estimate (optional).}
 
@@ -121,6 +121,17 @@ details.
 \description{
 This method fits a PrestoGP model given a set of locations and predictor
 and outcome variables.
+}
+\details{
+If common_scale is TRUE, multivariate models will use the Matern
+cross-covariance function described in Apanasovich et al. (2012). This
+model can only be used if each outcome has only a single scale parameter.
+If common_scale is FALSE, each column of locs will be divded by the
+corresponding element of scaling, and the cross-covariance will be computed
+under the assumption that all scale parameters are equal to 1. For
+univariate models, the Vecchia approximation will not be recomputed in
+each iteration of the model fitting procedure if common_scale is TRUE,
+but the parameter is otherwise ignored.
 }
 \examples{
 data(soil)
