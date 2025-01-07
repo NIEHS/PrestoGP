@@ -11,7 +11,7 @@ vecchia_prediction."><meta property="og:image" content="https://niehs.github.io/
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9039</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9040</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,7 +67,7 @@ models. It is a multivariate version of
 
 <dt id="arg-covparms">covparms<a class="anchor" aria-label="anchor" href="#arg-covparms"></a></dt>
 <dd><p>Vector of covariance parameters. See
-<code><a href="create.param.sequence.html">create.param.sequence</a></code> or the examples below for details
+<code><a href="create_param_sequence.html">create_param_sequence</a></code> or the examples below for details
 about the format of this vector.</p></dd>
 
 
@@ -101,7 +101,7 @@ Biological and Environmental Statistics (2020) 25:383-414.</p></li>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="https://rdrr.io/pkg/GPvecchia/man/vecchia_prediction.html" class="external-link">vecchia_prediction</a></code>,
-<code><a href="vecchia_Mspecify.html">vecchia_Mspecify</a></code>, <code><a href="create.param.sequence.html">create.param.sequence</a></code></p></div>
+<code><a href="vecchia_Mspecify.html">vecchia_Mspecify</a></code>, <code><a href="create_param_sequence.html">create_param_sequence</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -116,7 +116,7 @@ Biological and Environmental Statistics (2020) 25:383-414.</p></li>
 <span class="r-in"><span><span class="va">locsp</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">locsp</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span> <span class="op">-</span> <span class="fl">0.5</span></span></span>
 <span class="r-in"><span><span class="va">soil.vap</span> <span class="op">&lt;-</span> <span class="fu"><a href="vecchia_Mspecify.html">vecchia_Mspecify</a></span><span class="op">(</span><span class="va">locsm</span>, m<span class="op">=</span><span class="fl">10</span>, locs.list.pred<span class="op">=</span><span class="va">locsp</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">pseq</span> <span class="op">&lt;-</span> <span class="fu"><a href="create.param.sequence.html">create.param.sequence</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">pseq</span> <span class="op">&lt;-</span> <span class="fu"><a href="create_param_sequence.html">create_param_sequence</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># Initialize the vector of covariance parameters</span></span></span>
 <span class="r-in"><span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="va">pseq</span><span class="op">[</span><span class="fl">5</span>,<span class="fl">2</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># Sigma parameters:</span></span></span>
