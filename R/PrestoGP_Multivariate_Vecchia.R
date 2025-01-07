@@ -76,7 +76,7 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
 
     locs.train.scaled <- scale_locs(model, model@locs_train)
     locs.scaled <- scale_locs(model, locs)
-    if (model@apanasovich & (length(model@locs_train) > 1)) {
+    if (model@common_scale & (length(model@locs_train) > 1)) {
       locs.nd <- eliminate_dupes(locs.train.scaled, locs.scaled)
       locs.train.scaled <- locs.nd$locs
       locs.scaled <- locs.nd$locs.pred
@@ -88,7 +88,7 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
     )
 
     ## carry out prediction
-    if (!model@apanasovich) {
+    if (!model@common_scale) {
       params <- model@covparams
       param.seq <- model@param_sequence
       pred <- vecchia_Mprediction(res, vec.approx.test,
@@ -343,7 +343,7 @@ setMethod("impute_y", "MultivariateVecchiaModel", function(model) {
     all.obs <- all.obs[-(1:nl)]
   }
 
-  if (model@apanasovich & (length(model@locs_train) > 1)) {
+  if (model@common_scale & (length(model@locs_train) > 1)) {
     locs.nd <- eliminate_dupes(locs.otr, locs.otst)
     locs.otr <- locs.nd$locs
     locs.otst <- locs.nd$locs.pred
@@ -355,7 +355,7 @@ setMethod("impute_y", "MultivariateVecchiaModel", function(model) {
   )
 
   ## carry out prediction
-  if (!model@apanasovich) {
+  if (!model@common_scale) {
     params <- model@covparams
     param.seq <- model@param_sequence
     pred <- vecchia_Mprediction(res, vec.approx.test,
@@ -385,7 +385,7 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
   params <- model@covparams
   param.seq <- model@param_sequence
   P <- length(model@locs_train)
-  if (!model@apanasovich) {
+  if (!model@common_scale) {
     olocs.scaled <- vecchia.approx$locsord
     for (i in 1:vecchia.approx$P) {
       for (j in 1:model@nscale) {
@@ -523,7 +523,7 @@ setMethod("specify", "MultivariateVecchiaModel", function(model) {
   locs <- model@locs_train
   locs.scaled <- scale_locs(model, locs)
   model@vecchia_approx <- vecchia_Mspecify(locs.scaled, model@n_neighbors)
-  if (!model@apanasovich) {
+  if (!model@common_scale) {
     olocs.scaled <- model@vecchia_approx$locsord
     for (i in seq_along(locs)) {
       for (j in 1:model@nscale) {
@@ -548,7 +548,7 @@ setMethod("specify", "MultivariateVecchiaModel", function(model) {
 #' @noRd
 setMethod("estimate_theta", "MultivariateVecchiaModel", function(model, locs, optim.control, method) {
   P <- length(locs)
-  if (model@apanasovich) {
+  if (model@common_scale) {
     vecchia.result <- optim(
       par = model@logparams,
       fn = mvnegloglik,
@@ -582,7 +582,7 @@ setMethod("estimate_theta", "MultivariateVecchiaModel", function(model, locs, op
 
 setMethod("transform_data", "MultivariateVecchiaModel", function(model, Y, X) {
   vecchia.approx <- model@vecchia_approx
-  if (!model@apanasovich) {
+  if (!model@common_scale) {
     params <- model@covparams
     param.seq <- model@param_sequence
     olocs.scaled <- vecchia.approx$locsord

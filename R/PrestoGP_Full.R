@@ -44,7 +44,7 @@ setMethod("compute_residuals", "FullModel", function(model, Y, Y.hat) {
 })
 
 setMethod("estimate_theta", "FullModel", function(model, locs, optim.control, method) {
-  if (model@apanasovich) {
+  if (model@common_scale) {
     full.result <- optim(
       par = model@logparams,
       fn = negloglik.full,
@@ -78,7 +78,7 @@ setMethod("transform_data", "FullModel", function(model, Y, X) {
   n <- nrow(model@Y_train)
   params <- model@covparams
   locs.scaled <- scale_locs(model, model@locs_train)[[1]]
-  if (!model@apanasovich) {
+  if (!model@common_scale) {
     param.seq <- model@param_sequence
     Omega.full <- params[1] * Matern(rdist(locs.scaled),
       range = 1,

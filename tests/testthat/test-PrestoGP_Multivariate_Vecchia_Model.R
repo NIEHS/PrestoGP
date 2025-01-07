@@ -264,7 +264,7 @@ test_that("Simulated dataset multivariate spatial", {
       c("x2_1", "x2_2", "x2_3", "x2_4", "x2_5", "x2_6", "x2_7", "x2_8",
         "x2_9", "x2_10"), c("x3_1", "x3_2", "x3_3", "x3_4", "x3_5", "x3_6",
         "x3_7", "x3_8", "x3_9", "x3_10")),
-    scaling = c(1, 1), apanasovich = TRUE, quiet = TRUE,
+    scaling = c(1, 1), common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -379,7 +379,7 @@ test_that("Simulated dataset multivariate spatial", {
 
   pgp.mmodel2 <- new("MultivariateVecchiaModel", n_neighbors = 25)
   pgp.mmodel2 <- prestogp_fit(pgp.mmodel2, y.list.na, X.st, locs.list,
-    scaling = c(1, 1), apanasovich = TRUE, quiet = TRUE,
+    scaling = c(1, 1), common_scale = TRUE, quiet = TRUE,
     impute.y = TRUE, optim.control = list(trace = 0, maxit = 5000,
       reltol = 1e-3))
   beta.out2 <- get_beta(pgp.mmodel2)
@@ -442,7 +442,7 @@ test_that("Simulated dataset multivariate spatial", {
   # Missing data with lod
   pgp.mmodel3 <- new("MultivariateVecchiaModel", n_neighbors = 25)
   pgp.mmodel3 <- prestogp_fit(pgp.mmodel3, y.list.lod, X.st, locs.list,
-    scaling = c(1, 1), apanasovich = TRUE, verbose = TRUE,
+    scaling = c(1, 1), common_scale = TRUE, verbose = TRUE,
     impute.y = TRUE, lod = lod.cut, optim.control = list(trace = 0,
       maxit = 5000, reltol = 1e-3))
   beta.out3 <- get_beta(pgp.mmodel3)
@@ -575,7 +575,7 @@ test_that("Invalid locs input for prediction", {
   pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
     locs.list.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -593,7 +593,7 @@ test_that("Invalid X input for prediction", {
   pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
     locs.list.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -611,7 +611,7 @@ test_that("locs/X length mismatch for prediction", {
   pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
     locs.list.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -629,7 +629,7 @@ test_that("locs/locs_train length mismatch", {
   pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
     locs.list.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -650,7 +650,7 @@ test_that("locs not a matrix for prediction", {
   pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
     locs.list.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -674,7 +674,7 @@ test_that("ncol(locs) != ncol(locs_train)", {
   pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
     locs.list.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -698,7 +698,7 @@ test_that("X not a matrix for prediction", {
   pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
     locs.list.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -717,7 +717,7 @@ test_that("nrow(X) != nrow(locs) for prediction", {
   pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
     locs.list.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -736,7 +736,7 @@ test_that("ncol(X) != ncol(X_train) for prediction", {
   pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
     locs.list.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -755,7 +755,7 @@ test_that("m too small for prediction", {
   pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
     locs.list.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -773,7 +773,7 @@ test_that("m too large for prediction", {
   pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
     locs.list.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -793,7 +793,7 @@ test_that("Simulated dataset multivariate spatial prediction", {
   pgp.mmodel1 <- prestogp_fit(pgp.mmodel1, y.list.otr, X.st.otr,
     locs.list.otr,
     scaling = c(1, 1),
-    apanasovich = TRUE, quiet = TRUE,
+    common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3

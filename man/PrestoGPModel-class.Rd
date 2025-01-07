@@ -77,11 +77,10 @@ approximation. Ignored for full models.}
 
 \item{\code{nscale}}{The number of scale parameters in the model.}
 
-\item{\code{apanasovich}}{Should the Apanasovich covariance model be used? See
-References.}
+\item{\code{common_scale}}{Do all columns of locs have the same scale parameter?}
 
 \item{\code{param_sequence}}{Records the indices of the various Matern parameters.
-See \code{\link{create.param.sequence}}.}
+See \code{\link{create_param_sequence}}.}
 }}
 
 \examples{

@@ -227,7 +227,7 @@ revMat <- function(mat) {
 #' @param vecchia.approx A Vecchia object returned by
 #' \code{\link{vecchia_Mspecify}}.
 #' @param covparms Vector of covariance parameters. See
-#' \code{\link{create.param.sequence}} or the examples below for details
+#' \code{\link{create_param_sequence}} or the examples below for details
 #' about the format of this vector.
 #' @param var.exact Should prediction variances by computed exactly, or is a
 #' (faster) approximation acceptable? See
@@ -240,7 +240,7 @@ revMat <- function(mat) {
 #' unobserved locations. See \code{\link[GPvecchia]{vecchia_prediction}}.
 #'
 #' @seealso \code{\link[GPvecchia]{vecchia_prediction}},
-#' \code{\link{vecchia_Mspecify}}, \code{\link{create.param.sequence}}
+#' \code{\link{vecchia_Mspecify}}, \code{\link{create_param_sequence}}
 #'
 #' @references
 #' \itemize{
@@ -264,7 +264,7 @@ revMat <- function(mat) {
 #' locsp[[2]] <- locsp[[2]] - 0.5
 #' soil.vap <- vecchia_Mspecify(locsm, m=10, locs.list.pred=locsp)
 #'
-#' pseq <- create.param.sequence(2)
+#' pseq <- create_param_sequence(2)
 #' # Initialize the vector of covariance parameters
 #' params <- rep(NA, pseq[5,2])
 #' # Sigma parameters:
