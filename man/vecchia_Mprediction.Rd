@@ -19,7 +19,7 @@ vecchia_Mprediction(
 \code{\link{vecchia_Mspecify}}.}
 
 \item{covparms}{Vector of covariance parameters. See
-\code{\link{create.param.sequence}} or the examples below for details
+\code{\link{create_param_sequence}} or the examples below for details
 about the format of this vector.}
 
 \item{var.exact}{Should prediction variances by computed exactly, or is a
@@ -50,7 +50,7 @@ locsp[[1]] <- locsp[[1]] + 0.5
 locsp[[2]] <- locsp[[2]] - 0.5
 soil.vap <- vecchia_Mspecify(locsm, m=10, locs.list.pred=locsp)
 
-pseq <- create.param.sequence(2)
+pseq <- create_param_sequence(2)
 # Initialize the vector of covariance parameters
 params <- rep(NA, pseq[5,2])
 # Sigma parameters:
@@ -78,5 +78,5 @@ Biological and Environmental Statistics (2020) 25:383-414.
 }
 \seealso{
 \code{\link[GPvecchia]{vecchia_prediction}},
-\code{\link{vecchia_Mspecify}}, \code{\link{create.param.sequence}}
+\code{\link{vecchia_Mspecify}}, \code{\link{create_param_sequence}}
 }

@@ -11,7 +11,7 @@ test_that("negloglik_vecchia", {
   y <- as.vector(y)
 
   logparams <- create.initial.values.flex(0.9, 0.5, 0.5, 0.1, 1, 1)
-  pseq <- create.param.sequence(1)
+  pseq <- create_param_sequence(1)
   vec.approx <- vecchia_specify(locs, 5)
   LL.vecchia <- negloglik_vecchia(logparams, y, vec.approx, pseq)
   expect_equal(194.75, LL.vecchia, tolerance = 1e-2)
@@ -52,7 +52,7 @@ test_that("negloglik_vecchia_ST", {
   y <- as.vector(y)
 
   logparams <- create.initial.values.flex(0.9, c(2, 3), 0.5, 0.1, 1, 1)
-  pseq <- create.param.sequence(1, 2)
+  pseq <- create_param_sequence(1, 2)
   vec.approx <- vecchia_specify(locs, 5)
   LL.vecchia <- negloglik_vecchia_ST(
     logparams, y, vec.approx, pseq,
@@ -61,7 +61,7 @@ test_that("negloglik_vecchia_ST", {
   expect_equal(284.73, LL.vecchia, tolerance = 1e-2)
 
   logparams2 <- create.initial.values.flex(0.9, 1, 0.5, 0.1, 1, 1)
-  pseq2 <- create.param.sequence(1)
+  pseq2 <- create_param_sequence(1)
   vec.approx2 <- vec.approx
   vec.approx2$locsord[, 1:2] <- vec.approx$locsord[, 1:2] / 2
   vec.approx2$locsord[, 3] <- vec.approx$locsord[, 3] / 3
@@ -97,7 +97,7 @@ test_that("negloglik.full", {
   )
 
   d <- rdist(locs)
-  pseq <- create.param.sequence(1)
+  pseq <- create_param_sequence(1)
 
   res.optim.NM <- optim(
     par = params.init, fn = negloglik.full, d = d, y = y,
@@ -159,7 +159,7 @@ test_that("negloglik_full_ST", {
   y <- as.vector(y)
 
   logparams <- create.initial.values.flex(0.9, c(2, 3), 0.5, 0.1, 1, 1)
-  pseq <- create.param.sequence(1, 2)
+  pseq <- create_param_sequence(1, 2)
   LL.full <- negloglik_full_ST(
     logparams, locs, y, pseq,
     c(1, 1, 2), 2
@@ -167,7 +167,7 @@ test_that("negloglik_full_ST", {
   expect_equal(286.84, LL.full, tolerance = 1e-2)
 
   logparams2 <- create.initial.values.flex(0.9, 1, 0.5, 0.1, 1, 1)
-  pseq2 <- create.param.sequence(1)
+  pseq2 <- create_param_sequence(1)
   locs2 <- locs
   locs2[, 1:2] <- locs[, 1:2] / 2
   locs2[, 3] <- locs[, 3] / 3
@@ -190,7 +190,7 @@ test_that("mvnegloglik", {
     cov_mat,
     P
   )
-  pseq <- create.param.sequence(P)
+  pseq <- create_param_sequence(P)
   vec.approx <- vecchia_Mspecify(locs.list, 25)
   neg_likelihood <- mvnegloglik(
     logparams, vec.approx,
@@ -212,7 +212,7 @@ test_that("mvnegloglik_ST", {
     cov_mat,
     P
   )
-  pseq <- create.param.sequence(P, 2)
+  pseq <- create_param_sequence(P, 2)
   vec.approx <- vecchia_Mspecify(locs.list, 25)
   neg_likelihood <- mvnegloglik_ST(
     logparams, vec.approx,
@@ -271,7 +271,7 @@ test_that("mvnegloglik_ST", {
 test_that("mvnegloglik.full", {
   source("sim_multivariate_lik.R")
 
-  pseq <- create.param.sequence(3)
+  pseq <- create_param_sequence(3)
 
   param.marg.var <- 0.9 * unlist(lapply(y.list, var))
   param.marg.scale <- rep(1, 3)

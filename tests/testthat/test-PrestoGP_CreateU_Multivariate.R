@@ -1,5 +1,5 @@
-test_that("create.param.sequence", {
-  seq <- create.param.sequence(1)
+test_that("create_param_sequence", {
+  seq <- create_param_sequence(1)
   colnames(seq) <- NULL
   expect_equal(2, ncol(seq))
   expect_equal(5, nrow(seq))
@@ -9,7 +9,7 @@ test_that("create.param.sequence", {
   expect_equal(c(4, 4), seq[4, ])
   expect_equal(c(5, 5), seq[5, ])
 
-  seq <- create.param.sequence(3)
+  seq <- create_param_sequence(3)
   colnames(seq) <- NULL
   expect_equal(2, ncol(seq))
   expect_equal(5, nrow(seq))
@@ -19,7 +19,7 @@ test_that("create.param.sequence", {
   expect_equal(c(10, 12), seq[4, ])
   expect_equal(c(13, 15), seq[5, ])
 
-  seq <- create.param.sequence(3, 2)
+  seq <- create_param_sequence(3, 2)
   colnames(seq) <- NULL
   expect_equal(2, ncol(seq))
   expect_equal(5, nrow(seq))

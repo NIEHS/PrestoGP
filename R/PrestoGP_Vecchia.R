@@ -69,7 +69,7 @@ setMethod("prestogp_predict", "VecchiaModel",
     vec.approx.test <- vecchia_specify(locs.train.scaled, m, locs.pred = locs.scaled, ordering.pred = ordering.pred, pred.cond = pred.cond)
 
     ## carry out prediction
-    if (!model@apanasovich) {
+    if (!model@common_scale) {
       pred <- vecchia_prediction(
         res,
         vec.approx.test,
@@ -218,7 +218,7 @@ setMethod("impute_y", "VecchiaModel", function(model) {
     ordering.pred = "obspred", pred.cond = "independent")
 
   ## carry out prediction
-  if (!model@apanasovich) {
+  if (!model@common_scale) {
     pred <- vecchia_prediction(
       res,
       vec.approx.test,
@@ -246,7 +246,7 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lod, n.mi = 10,
   miss <- !model@Y_obs
   vecchia.approx <- model@vecchia_approx
   params <- model@covparams
-  if (!model@apanasovich) {
+  if (!model@common_scale) {
     vecchia.approx$locsord <- scale_locs(
       model,
       list(vecchia.approx$locsord)
@@ -340,7 +340,7 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lod, n.mi = 10,
 setMethod("specify", "VecchiaModel", function(model) {
   locs.scaled <- scale_locs(model, model@locs_train)
   model@vecchia_approx <- vecchia_specify(locs.scaled[[1]], model@n_neighbors)
-  if (!model@apanasovich) {
+  if (!model@common_scale) {
     olocs.scaled <- model@vecchia_approx$locsord
     for (j in 1:model@nscale) {
       olocs.scaled[, model@scaling == j] <- olocs.scaled[, model@scaling == j] *
@@ -361,7 +361,7 @@ setMethod("specify", "VecchiaModel", function(model) {
 #' @return a model with an updated covariance parameters estimate
 #' @noRd
 setMethod("estimate_theta", "VecchiaModel", function(model, locs, optim.control, method) {
-  if (model@apanasovich) {
+  if (model@common_scale) {
     vecchia.result <- optim(
       par = model@logparams,
       fn = negloglik_vecchia,
@@ -404,7 +404,7 @@ setMethod("estimate_theta", "VecchiaModel", function(model, locs, optim.control,
 setMethod("transform_data", "VecchiaModel", function(model, Y, X) {
   vecchia.approx <- model@vecchia_approx
   params <- model@covparams
-  if (!model@apanasovich) {
+  if (!model@common_scale) {
     vecchia.approx$locsord <- scale_locs(
       model,
       list(vecchia.approx$locsord)
