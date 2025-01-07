@@ -70,15 +70,15 @@ test_that("scaling not sequential", {
   )
 })
 
-test_that("Invalid Apanasovich model", {
+test_that("common_scale=TRUE with multiple scale paraemters", {
   source("sim_vecchia_small.R")
   pgp.model1 <- new("VecchiaModel")
   expect_error(
     prestogp_fit(pgp.model1, y, X, locs,
       scaling = 1:2,
-      apanasovich = TRUE
+      common_scale = TRUE
     ),
-    "Apanasovich models require a common scale parameter"
+    "common_scale must be FALSE if there are multiple scale parameters"
   )
 })
 

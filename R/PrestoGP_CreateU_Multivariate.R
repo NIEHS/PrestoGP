@@ -6,6 +6,12 @@
 #' @param P Number of outcome variables
 #' @param ns Number of scale parameters
 #'
+#' @details This function is intended for advanced users who want to specify
+#' the input Matern parameters for functions such as
+#' \code{\link{vecchia_Mlikelihood}} or \code{\link{createUMultivariate}}.
+#' To extract the Matern parameters from a fitted PrestoGP model, it is
+#' strongly recommended to use \code{link{get_theta}} instead.
+#'
 #' @return A matrix with five rows and two columns as described below:
 #' \describe{
 #' \item{Row 1:}{Starting and ending indices for the sigma parameter(s)}
@@ -40,7 +46,7 @@
 #' # fit separate scale parameters for location and elevation
 #' soil.vm2 <- prestogp_fit(soil.vm2, y2, X2, locs2, scaling = c(1, 1, 2))
 #'
-#' pseq <- create.param.sequence(1, 2)
+#' pseq <- create_param_sequence(1, 2)
 #' soil2.params <- soil.vm2@covparams
 #' # sigma
 #' soil2.params[pseq[1,1]:pseq[1,2]]
@@ -52,25 +58,36 @@
 #' soil2.params[pseq[4,1]:pseq[4,2]]
 #'
 #' # Multivariate model
-#' data(soil)
-#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 #' ym <- list()
-#' ym[[1]] <- soil[,5]             # predict two nitrogen concentration levels
-#' ym[[2]] <- soil[,7]
+#' ym[[1]] <- soil250[,4] # predict sand/silt portion of the sample
+#' ym[[2]] <- soil250[,5]
+#' ym[[3]] <- soil250[,6]
 #' Xm <- list()
-#' Xm[[1]] <- Xm[[2]] <- as.matrix(soil[,c(4,6,8,9)])
+#' Xm[[1]] <- Xm[[2]] <- Xm[[3]] <- as.matrix(soil250[,7:22])
 #' locsm <- list()
-#' locsm[[1]] <- locsm[[2]] <- as.matrix(soil[,1:2])
+#' locsm[[1]] <- locsm[[2]] <- locsm[[3]] <- as.matrix(soil250[,1:3])
 #'
 #' soil.mvm <-  new("MultivariateVecchiaModel", n_neighbors = 10)
 #' soil.mvm <- prestogp_fit(soil.mvm, ym, Xm, locsm)
 #'
-#' pseq <- create.param.sequence(2, 1)
+#' pseq <- create_param_sequence(3, 2)
 #' soil.params <- soil.mvm@covparams
 #' # sigmas
 #' soil.params[pseq[1,1]:pseq[1,2]]
 #' # scale parameters
-#' soil.params[pseq[2,1]:pseq[2,2]]
+#' scale.seq <- pseq[2,1]:pseq[2,2]
+#' # scale parameter for location, outcome 1
+#' soil.params[scale.seq[1]]
+#' # scale parameter for elevation, outcome 1
+#' soil.params[scale.seq[2]]
+#' # scale parameter for location, outcome 2
+#' soil.params[scale.seq[3]]
+#' # scale parameter for elevation, outcome 2
+#' soil.params[scale.seq[4]]
+#' # scale parameter for location, outcome 3
+#' soil.params[scale.seq[5]]
+#' # scale parameter for elevation, outcome 3
+#' soil.params[scale.seq[6]]
 #' # smoothness parameters
 #' soil.params[pseq[3,1]:pseq[3,2]]
 #' # nuggets
@@ -79,7 +96,7 @@
 #' soil.corr <- diag(2) / 2
 #' soil.corr[upper.tri(soil.corr)] <- soil.params[pseq[5,1]:pseq[5,2]]
 #' soil.corr <- soil.corr + t(soil.corr)
-create.param.sequence <- function(P, ns = 1) {
+create_param_sequence <- function(P, ns = 1) {
   nk <- choose(P, 2)
   if (nk == 0) {
     nk <- 1 # univariate case
@@ -465,7 +482,7 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
 #'
 #' @param vec.approx Object returned by \code{\link{vecchia_Mspecify}}.
 #' @param params Vector of covariance parameters. See
-#' \code{\link{create.param.sequence}} or the examples below for details
+#' \code{\link{create_param_sequence}} or the examples below for details
 #' about the format of this vector.
 #' @param cov_func The function used to compute the covariance between two
 #' observations. Defaults to a Matern model.
@@ -481,7 +498,7 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
 #' objects required for other functions.
 #'
 #' @seealso \code{\link[GPvecchia]{createU}}, \code{\link{vecchia_Mspecify}},
-#' \code{\link{create.param.sequence}}
+#' \code{\link{create_param_sequence}}
 #'
 #' @references
 #' \itemize{
@@ -504,7 +521,7 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
 #' locsm[[1]] <- locsm[[2]] <- locs
 #' soil.va <- vecchia_Mspecify(locsm, m=10)
 #'
-#' pseq <- create.param.sequence(2)
+#' pseq <- create_param_sequence(2)
 #' # Initialize the vector of covariance parameters
 #' params <- rep(NA, pseq[5,2])
 #' # Sigma parameters:
@@ -531,7 +548,7 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
   n <- nrow(olocs)
   ondx <- vec.approx$ondx
 
-  param.seq <- create.param.sequence(P)
+  param.seq <- create_param_sequence(P)
   param.sequence.begin <- param.seq[, 1]
   param.sequence.end <- param.seq[, 2]
 
