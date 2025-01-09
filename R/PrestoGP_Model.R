@@ -169,7 +169,7 @@ setGeneric(
     quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     family = c("gaussian", "binomial"), nfolds = 10, foldid = NULL,
-    parallel = FALSE) {
+    parallel = FALSE, adaptive = FALSE) {
     standardGeneric("prestogp_fit")
   }
 )
@@ -264,7 +264,7 @@ setGeneric("specify", function(model, ...) standardGeneric("specify"))
 setGeneric("compute_residuals", function(model, Y, Y.hat, family) standardGeneric("compute_residuals"))
 setGeneric("transform_data", function(model, Y, X) standardGeneric("transform_data"))
 setGeneric("estimate_theta", function(model, locs, optim.control, method) standardGeneric("estimate_theta"))
-setGeneric("estimate_betas", function(model, family, nfolds, foldid, parallel, lodv) standardGeneric("estimate_betas"))
+setGeneric("estimate_betas", function(model, family, nfolds, foldid, parallel, adaptive) standardGeneric("estimate_betas"))
 setGeneric("impute_y", function(model) standardGeneric("impute_y"))
 setGeneric("impute_y_lod", function(model, lod, n.mi = 10, eps = 0.01, maxit = 5, family, nfolds, foldid, parallel, verbose) standardGeneric("impute_y_lod"))
 setGeneric("compute_error", function(model, y, X) standardGeneric("compute_error"))
@@ -782,6 +782,8 @@ setMethod(
 #' cross-validation. See \code{\link[glmnet]{cv.glmnet}}.
 #' @param parallel Should cv.glmnet use parallel "foreach" to fit each fold?
 #' Defaults to FALSE. See \code{\link[glmnet]{cv.glmnet}}.
+#' @param adaptive Should adaptive lasso be used? See Zou (2006) for details.
+#' Defaults to FALSE.
 #'
 #' @details If common_scale is TRUE, multivariate models will use the Matern
 #' cross-covariance function described in Apanasovich et al. (2012). This
@@ -808,6 +810,8 @@ setMethod(
 #' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
 #' land-use regression for ground-level nitrogen dioxide", The Annals of
 #' Applied Statistics (2021) 15(2):688-710.
+#' \item Zou, H. "The adaptive lasso and its oracle properties", Journal of
+#' the American Statistical Association (2006) 101(476):1418-1429.
 #' }
 #'
 #' @aliases prestogp_fit
@@ -873,7 +877,7 @@ setMethod(
     quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     family = c("gaussian", "binomial"),
-    nfolds = 10, foldid = NULL, parallel = FALSE) {
+    nfolds = 10, foldid = NULL, parallel = FALSE, adaptive = FALSE) {
     if (quiet & verbose) {
       verbose <- FALSE
     }
@@ -1040,7 +1044,8 @@ setMethod(
         cat("Estimating beta...", "\n")
       }
       model <- transform_data(model, model@Y_train, model@X_train)
-      model <- estimate_betas(model, family, nfolds, foldid, parallel, lodv)
+      model <- estimate_betas(model, family, nfolds, foldid, parallel,
+        adaptive)
       if (!quiet) {
         cat("Estimation of beta complete", "\n")
         if (verbose) {
@@ -1102,16 +1107,20 @@ setMethod(
 #' @return A model with updated coefficients
 #' @noRd
 setMethod("estimate_betas", "PrestoGPModel", function(model, family, nfolds,
-  foldid, parallel, lodv) {
-  if (min(lodv) < Inf) {
-    model@linear_model <- cv.glmnet(as.matrix(model@X_tilde),
-      as.matrix(model@y_tilde), alpha = model@alpha, family = family,
+  foldid, parallel, adaptive) {
+  if (adaptive) {
+    ridge.model <- cv.glmnet(as.matrix(model@X_tilde),
+      as.matrix(model@y_tilde), alpha = 0, family = family,
       nfolds = nfolds, foldid = foldid, parallel = parallel)
+    pen.factor <- 1 / abs(as.numeric(coef(ridge.model,
+          s = ridge.model$lambda.min))[-1])
   } else {
-    model@linear_model <- cv.glmnet(as.matrix(model@X_tilde),
-      as.matrix(model@y_tilde), alpha = model@alpha, family = family,
-      nfolds = nfolds, foldid = foldid, parallel = parallel)
+    pen.factor <- rep(1, ncol(model@X_tilde))
   }
+  model@linear_model <- cv.glmnet(as.matrix(model@X_tilde),
+    as.matrix(model@y_tilde), alpha = model@alpha, family = family,
+    nfolds = nfolds, foldid = foldid, parallel = parallel,
+    penalty.factor = pen.factor)
   idmin <- which(model@linear_model$lambda == model@linear_model$lambda.min)
   semin <- model@linear_model$cvm[idmin] + model@linear_model$cvsd[idmin]
   lambda_1se <- max(model@linear_model$lambda[model@linear_model$cvm <= semin])

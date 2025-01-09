@@ -1,3 +1,14 @@
+# PrestoGP 0.2.0.9041 (2025-1-7)
+
+## NEW FEATURES
+
+* Added the option `adaptive` to `prestogp_fit` to allow fitting an
+  adaptive lasso model
+
+## MINOR IMPROVEMENTS
+
+* Eliminated some redundant code in `estimate_betas`
+
 # PrestoGP 0.2.0.9040 (2025-1-3)
 
 ## BREAKING CHANGES

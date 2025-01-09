@@ -28,7 +28,8 @@
   family = c("gaussian", "binomial"),
   nfolds = 10,
   foldid = NULL,
-  parallel = FALSE
+  parallel = FALSE,
+  adaptive = FALSE
 )
 }
 \arguments{
@@ -112,6 +113,9 @@ cross-validation. See \code{\link[glmnet]{cv.glmnet}}.}
 
 \item{parallel}{Should cv.glmnet use parallel "foreach" to fit each fold?
 Defaults to FALSE. See \code{\link[glmnet]{cv.glmnet}}.}
+
+\item{adaptive}{Should adaptive lasso be used? See Zou (2006) for details.
+Defaults to FALSE.}
 }
 \value{
 A PrestoGPModel object with slots updated based on the results of
@@ -194,6 +198,8 @@ of components", Journal of the American Statistical Association (2012)
 \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
 land-use regression for ground-level nitrogen dioxide", The Annals of
 Applied Statistics (2021) 15(2):688-710.
+\item Zou, H. "The adaptive lasso and its oracle properties", Journal of
+the American Statistical Association (2006) 101(476):1418-1429.
 }
 }
 \seealso{
