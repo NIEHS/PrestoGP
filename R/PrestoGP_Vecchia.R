@@ -56,10 +56,12 @@ setMethod("prestogp_predict", "VecchiaModel",
 
     # Vecchia prediction at new locations
     # Vecchia.Pred <- predict(model@Vecchia_SCAD_fit[[1]], X = X, which = model@lambda_1se_idx[[1]])
-    Vecchia.Pred <- predict(model@linear_model, newx = X, s = model@linear_model$lambda[model@lambda_1se_idx])
+    Vecchia.Pred <- predict(model@linear_model, newx = X, s = "lambda.1se",
+      gamma = "gamma.1se")
     # Vecchia trend prediction at observed data
     # Vecchia.hat <- predict(model@Vecchia_SCAD_fit[[1]], X = model@X_train, which = model@lambda_1se_idx[[1]])
-    Vecchia.hat <- predict(model@linear_model, newx = model@X_train, s = model@linear_model$lambda[model@lambda_1se_idx])
+    Vecchia.hat <- predict(model@linear_model, newx = model@X_train,
+      s = "lambda.1se", gamma = "gamma.1se")
 
     # Test set prediction
     res <- model@Y_train - Vecchia.hat
@@ -202,11 +204,9 @@ setMethod("check_input_pred", "VecchiaModel", function(model, X, locs) {
 
 setMethod("impute_y", "VecchiaModel", function(model) {
   Vecchia.Pred <- predict(model@linear_model,
-    newx = model@X_train[!model@Y_obs, ],
-    s = model@linear_model$lambda[model@lambda_1se_idx])
+    newx = model@X_train[!model@Y_obs, ], s = "lambda.1se", gamma = "gamma.1se")
   Vecchia.hat <- predict(model@linear_model,
-    newx = model@X_train[model@Y_obs, ],
-    s = model@linear_model$lambda[model@lambda_1se_idx])
+    newx = model@X_train[model@Y_obs, ], s = "lambda.1se", gamma = "gamma.1se")
 
   # Test set prediction
   res <- model@Y_train[model@Y_obs] - Vecchia.hat
