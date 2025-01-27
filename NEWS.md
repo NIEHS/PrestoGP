@@ -1,3 +1,21 @@
+# PrestoGP 0.2.0.9042 (2025-1-14)
+
+## BREAKING CHANGES
+
+* The slot `lambda_1se_idx` has been removed from the `PrestoGPModel`
+  superclass
+
+## NEW FEATURES
+
+* Added the option `relax` to `prestogp_fit` to allow fitting a
+  relaxed lasso model
+
+## MINOR IMPROVEMENTS
+
+* Eliminated the type checking on the `linear_model` slot in the
+  `PrestoGPModel` superclass, which will allow new types of regression
+  models (e.g., relaxed lasso, SCAD, MCP)
+
 # PrestoGP 0.2.0.9041 (2025-1-7)
 
 ## NEW FEATURES

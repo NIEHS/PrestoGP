@@ -23,9 +23,6 @@ Matern parameters (used internally for likelihood calculations).}
 
 \item{\code{beta}}{A column matrix containing the regression coefficients.}
 
-\item{\code{lambda_1se_idx}}{Stores the index of the optimal tuning parameter for
-the glmnet model. See \code{\link[glmnet]{glmnet}}.}
-
 \item{\code{vecchia_approx}}{The output of the Vecchia specify function. See
 \code{\link[GPvecchia]{vecchia_specify}} and \code{\link{vecchia_Mspecify}}.}
 
