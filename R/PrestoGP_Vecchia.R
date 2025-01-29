@@ -56,10 +56,12 @@ setMethod("prestogp_predict", "VecchiaModel",
 
     # Vecchia prediction at new locations
     # Vecchia.Pred <- predict(model@Vecchia_SCAD_fit[[1]], X = X, which = model@lambda_1se_idx[[1]])
-    Vecchia.Pred <- predict(model@linear_model, newx = X, s = model@linear_model$lambda[model@lambda_1se_idx])
+    Vecchia.Pred <- predict(model@linear_model, newx = X, s = "lambda.1se",
+      gamma = "gamma.1se")
     # Vecchia trend prediction at observed data
     # Vecchia.hat <- predict(model@Vecchia_SCAD_fit[[1]], X = model@X_train, which = model@lambda_1se_idx[[1]])
-    Vecchia.hat <- predict(model@linear_model, newx = model@X_train, s = model@linear_model$lambda[model@lambda_1se_idx])
+    Vecchia.hat <- predict(model@linear_model, newx = model@X_train,
+      s = "lambda.1se", gamma = "gamma.1se")
 
     # Test set prediction
     res <- model@Y_train - Vecchia.hat
@@ -202,11 +204,9 @@ setMethod("check_input_pred", "VecchiaModel", function(model, X, locs) {
 
 setMethod("impute_y", "VecchiaModel", function(model) {
   Vecchia.Pred <- predict(model@linear_model,
-    newx = model@X_train[!model@Y_obs, ],
-    s = model@linear_model$lambda[model@lambda_1se_idx])
+    newx = model@X_train[!model@Y_obs, ], s = "lambda.1se", gamma = "gamma.1se")
   Vecchia.hat <- predict(model@linear_model,
-    newx = model@X_train[model@Y_obs, ],
-    s = model@linear_model$lambda[model@lambda_1se_idx])
+    newx = model@X_train[model@Y_obs, ], s = "lambda.1se", gamma = "gamma.1se")
 
   # Test set prediction
   res <- model@Y_train[model@Y_obs] - Vecchia.hat
@@ -256,8 +256,15 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lod, n.mi = 10,
 
   locs.scaled <- scale_locs(model, model@locs_train)[[1]]
   locs.nn <- nn2(locs.scaled, k = model@n_neighbors + 1)$nn.idx
-  Sigma.hat <- params[1] * Matern(rdist(locs.scaled), range = params[2],
-    smoothness = params[3]) + params[4] * diag(nrow = nrow(locs.scaled))
+
+  Sigma.hat <- array(dim = c(nrow(locs.scaled), nrow(locs.scaled),
+      sum(is.na(y))))
+  k <- 1
+  for (i in which(is.na(y))) {
+    Sigma.hat[, , k] <- MMatern_cov(locs.scaled[locs.nn[i, ], , drop = FALSE],
+      rep(1, ncol(locs.nn)), params, 1)
+    k <- k + 1
+  }
 
   cur.coef <- as.vector(model@beta)
   last.coef <- rep(Inf, ncol(X) + 1)
@@ -271,17 +278,15 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lod, n.mi = 10,
     coef.mat <- matrix(nrow = n.mi, ncol = (ncol(X) + 1))
     if (parallel) {
       yi <- foreach(i = seq_len(n.mi), .combine = cbind) %dopar% {
-        out <- rtmvn_snn(y - yhat.ni, rep(-Inf, length(y)),
-          rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn,
-          covmat = Sigma.hat)
+        out <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
+          rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, Sigma.hat)
         out + yhat.ni
       }
     } else {
       yi <- matrix(nrow = length(yhat.ni), ncol = n.mi)
       for (i in seq_len(n.mi)) {
-        yi[, i] <- rtmvn_snn(y - yhat.ni, rep(-Inf, length(y)),
-          rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn,
-          covmat = Sigma.hat)
+        yi[, i] <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
+          rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, Sigma.hat)
         yi[, i] <- yi[, i] + yhat.ni
       }
     }
@@ -309,8 +314,8 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lod, n.mi = 10,
 
   if (parallel) {
     y.na.mat <- foreach(i = seq_len(100), .combine = rbind) %dopar% {
-      yi <- rtmvn_snn(y - yhat.ni, rep(-Inf, length(y)),
-        rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, covmat = Sigma.hat)
+      yi <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
+        rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, Sigma.hat)
       yi <- yi + yhat.ni
       yi[miss]
     }
@@ -318,8 +323,8 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lod, n.mi = 10,
     y.na.mat <- matrix(nrow = 100, ncol = sum(miss))
 
     for (i in seq_len(100)) {
-      yi <- rtmvn_snn(y - yhat.ni, rep(-Inf, length(y)),
-        rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, covmat = Sigma.hat)
+      yi <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
+        rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, Sigma.hat)
       yi <- yi + yhat.ni
       y.na.mat[i, ] <- yi[miss]
     }
