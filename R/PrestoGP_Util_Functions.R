@@ -388,3 +388,82 @@ lod_reg_mi <- function(y, X, lod, miss, n.mi = 10, eps = 0.01, maxit = 10,
   y.impute <- etruncnorm(b = lod, mean = miss.means, sd = cur.sd)
   return(list(coef = cur.coef, y.impute = y.impute))
 }
+
+MMatern_cov <- function(locs, y_ndx, covparams, P) {
+  param.seq <- create_param_sequence(P)
+  sigma <- covparams[param.seq[1, 1]:param.seq[1, 2]]
+  rangep <- covparams[param.seq[2, 1]:param.seq[2, 2]]
+  smoothness <- covparams[param.seq[3, 1]:param.seq[3, 2]]
+  nuggets <- covparams[param.seq[4, 1]:param.seq[4, 2]]
+
+  rho <- covparams[param.seq[5, 1]:param.seq[5, 2]]
+  rho.mat <- matrix(0, nrow = P, ncol = P)
+  rho.mat[upper.tri(rho.mat, diag = FALSE)] <- rho
+  rho.mat <- rho.mat + t(rho.mat)
+  diag(rho.mat) <- 1
+
+  Sigma.hat <- matrix(nrow = nrow(locs), ncol = nrow(locs))
+  for (i in seq_len(P)) {
+    for (j in i:P) {
+      which.i <- which(y_ndx == i)
+      which.j <- which(y_ndx == j)
+      if (sum(which.i) > 0 && sum(which.j) > 0) {
+        smooth.ii <- smoothness[i]
+        smooth.jj <- smoothness[j]
+        smooth.ij <- (smooth.ii + smooth.jj) / 2
+        alpha.ii <- 1 / rangep[i]
+        alpha.jj <- 1 / rangep[j]
+        alpha.ij <- sqrt((alpha.ii^2 + alpha.jj^2) / 2)
+        Sigma.hat[which.i, which.j] <- rho.mat[i, j] * sqrt(sigma[i]) *
+          sqrt(sigma[j]) * alpha.ii^smooth.ii * alpha.jj^smooth.jj *
+          gamma(smooth.ij) / (alpha.ij^(2 * smooth.ij) *
+            sqrt(gamma(smooth.ii) * gamma(smooth.jj))) *
+          Matern(rdist(locs[which.i, drop = FALSE],
+              locs[which.j, drop = FALSE]),
+            alpha = alpha.ij, smoothness = smooth.ij)
+        if (i != j) {
+          Sigma.hat[which.j, which.i] <- t(Sigma.hat[which.i, which.j])
+        } else {
+          Sigma.hat[which.i, which.i] <- Sigma.hat[which.i, which.i] +
+            nuggets[i] * diag(nrow = sum(which.i))
+        }
+      }
+    }
+  }
+  return(Sigma.hat)
+}
+
+rtmvn_snn2 <- function(y, cens_lb, cens_ub, mask_cens, NN, cov_array) {
+  ind_cens <- which(mask_cens)
+  k <- 1
+  for (i in ind_cens) {
+    NN_row <- NN[i, ]
+    covmat_sub <- cov_array[, , k]
+    k <- k + 1
+    mask_cens_sub <- mask_cens[NN_row]
+    y_sub <- y[NN_row]
+    cens_lb_sub <- cens_lb[NN_row]
+    cens_ub_sub <- cens_ub[NN_row]
+    n_cens_sub <- sum(mask_cens_sub)
+    if (n_cens_sub == length(NN_row)) {
+      cond_covmat_sub_cens <- covmat_sub
+      cond_mean_sub_cens <- rep(0, n_cens_sub)
+    } else {
+      tmp_mat <- covmat_sub[mask_cens_sub, !mask_cens_sub] %*%
+        solve(covmat_sub[!mask_cens_sub, !mask_cens_sub])
+      cond_covmat_sub_cens <- covmat_sub[mask_cens_sub, mask_cens_sub] -
+        tmp_mat %*% covmat_sub[!mask_cens_sub, mask_cens_sub]
+      cond_covmat_sub_cens[lower.tri(cond_covmat_sub_cens)] <-
+        t(cond_covmat_sub_cens)[lower.tri(cond_covmat_sub_cens)]
+      cond_mean_sub_cens <- as.vector(tmp_mat %*% y_sub[!mask_cens_sub])
+    }
+    samp_cens_sub <- t(TruncatedNormal::rtmvnorm(
+      1, cond_mean_sub_cens,
+      cond_covmat_sub_cens,
+      cens_lb_sub[mask_cens_sub], cens_ub_sub[mask_cens_sub]
+    ))
+    y[i] <- samp_cens_sub[1]
+    mask_cens[i] <- FALSE
+  }
+  y
+}

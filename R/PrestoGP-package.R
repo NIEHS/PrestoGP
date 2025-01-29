@@ -15,6 +15,5 @@
 #' @importFrom dplyr %>%
 #' @importFrom truncnorm rtruncnorm etruncnorm
 #' @importFrom RANN nn2
-#' @importFrom nntmvn rtmvn_snn
 ## usethis namespace: end
 NULL
