@@ -1,3 +1,13 @@
+# PrestoGP 0.2.0.9043 (2025-1-29)
+
+## BUG FIXES
+
+* Imputation code has been rewritten to avoid computing the full
+  covariance matrix, resulting in a huge performance improvement
+  
+* The nntmvn package dependency has been removed to fix errors caused
+  by a recent update
+
 # PrestoGP 0.2.0.9042 (2025-1-14)
 
 ## BREAKING CHANGES
