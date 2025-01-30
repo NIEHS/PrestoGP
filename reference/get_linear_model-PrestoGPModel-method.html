@@ -9,7 +9,7 @@ PrestoGP model."><meta property="og:image" content="https://niehs.github.io/Pres
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9040</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9043</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,7 +73,7 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="PrestoGPModel-class.html">PrestoGPModel-class</a></code>, <code><a href="prestogp_fit-PrestoGPModel-method.html">prestogp_fit</a></code>,
-<code><a href="https://rdrr.io/pkg/glmnet/man/cv.glmnet.html" class="external-link">cv.glmnet</a></code></p></div>
+<code><a href="https://glmnet.stanford.edu/reference/cv.glmnet.html" class="external-link">cv.glmnet</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -116,7 +116,7 @@ Applied Statistics (2021) 15(2):688-710.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 9.107651 </span>
 <span class="r-in"><span><span class="fu">get_linear_model</span><span class="op">(</span><span class="va">soil.vm</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Call:  cv.glmnet(x = as.matrix(model@X_tilde), y = as.matrix(model@y_tilde),      nfolds = nfolds, foldid = foldid, parallel = parallel, alpha = model@alpha,      family = family) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Call:  cv.glmnet(x = as.matrix(model@X_tilde), y = as.matrix(model@y_tilde),      nfolds = nfolds, foldid = foldid, parallel = parallel, relax = relax,      alpha = model@alpha, family = family, penalty.factor = pen.factor) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Measure: Mean-Squared Error </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>

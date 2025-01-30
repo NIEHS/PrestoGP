@@ -9,7 +9,7 @@ and outcome variables."><meta property="og:image" content="https://niehs.github.
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9040</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9043</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,7 +64,9 @@ and outcome variables.</p>
 <span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gaussian"</span>, <span class="st">"binomial"</span><span class="op">)</span>,</span>
 <span>  nfolds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  foldid <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  adaptive <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  relax <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -180,23 +182,33 @@ See <code><a href="https://rdrr.io/r/stats/optim.html" class="external-link">opt
 <dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
 <dd><p>Family parameter for the glmnet model. Currently only
 "gaussian" and "binomial" are supported. Defaults to "gaussian". See
-<code><a href="https://rdrr.io/pkg/glmnet/man/glmnet.html" class="external-link">glmnet</a></code>.</p></dd>
+<code><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet</a></code>.</p></dd>
 
 
 <dt id="arg-nfolds">nfolds<a class="anchor" aria-label="anchor" href="#arg-nfolds"></a></dt>
 <dd><p>Number of cross-validation folds for cv.glmnet. Defaults to
-10. See <code><a href="https://rdrr.io/pkg/glmnet/man/cv.glmnet.html" class="external-link">cv.glmnet</a></code>.</p></dd>
+10. See <code><a href="https://glmnet.stanford.edu/reference/cv.glmnet.html" class="external-link">cv.glmnet</a></code>.</p></dd>
 
 
 <dt id="arg-foldid">foldid<a class="anchor" aria-label="anchor" href="#arg-foldid"></a></dt>
 <dd><p>Optional vector of values between 1 and "nfolds" specifying
 what fold each observation should be assigned to in the cv.glmnet
-cross-validation. See <code><a href="https://rdrr.io/pkg/glmnet/man/cv.glmnet.html" class="external-link">cv.glmnet</a></code>.</p></dd>
+cross-validation. See <code><a href="https://glmnet.stanford.edu/reference/cv.glmnet.html" class="external-link">cv.glmnet</a></code>.</p></dd>
 
 
 <dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
 <dd><p>Should cv.glmnet use parallel "foreach" to fit each fold?
-Defaults to FALSE. See <code><a href="https://rdrr.io/pkg/glmnet/man/cv.glmnet.html" class="external-link">cv.glmnet</a></code>.</p></dd>
+Defaults to FALSE. See <code><a href="https://glmnet.stanford.edu/reference/cv.glmnet.html" class="external-link">cv.glmnet</a></code>.</p></dd>
+
+
+<dt id="arg-adaptive">adaptive<a class="anchor" aria-label="anchor" href="#arg-adaptive"></a></dt>
+<dd><p>Should adaptive lasso be used? See Zou (2006) for details.
+Defaults to FALSE.</p></dd>
+
+
+<dt id="arg-relax">relax<a class="anchor" aria-label="anchor" href="#arg-relax"></a></dt>
+<dd><p>Should relaxed lasso be used? See Meinshausen (2007) for
+details. Defaults to FALSE.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -224,13 +236,17 @@ but the parameter is otherwise ignored.</p>
 cross-covariance functions for multivariate random fields with any number
 of components", Journal of the American Statistical Association (2012)
 107(497):180-193.</p></li>
+<li><p>Meinshausen, N. "Relaxed lasso", Computational Statistics and Data
+Analysis (2007) 52(1):374-393.</p></li>
 <li><p>Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
 land-use regression for ground-level nitrogen dioxide", The Annals of
 Applied Statistics (2021) 15(2):688-710.</p></li>
+<li><p>Zou, H. "The adaptive lasso and its oracle properties", Journal of
+the American Statistical Association (2006) 101(476):1418-1429.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="PrestoGPModel-class.html">PrestoGPModel-class</a></code>, <code><a href="https://rdrr.io/pkg/glmnet/man/glmnet.html" class="external-link">glmnet</a></code></p></div>
+    <div class="dont-index"><p><code><a href="PrestoGPModel-class.html">PrestoGPModel-class</a></code>, <code><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet</a></code></p></div>
     </div>
 
     <div class="section level2">
