@@ -296,6 +296,48 @@ test_that("Simulated dataset spatial", {
   expect_equal(params.out[2], params.out3[2], tolerance = 0.8)
   expect_equal(params.out[3], params.out3[3], tolerance = 0.7)
   expect_equal(params.out[4], params.out3[4], tolerance = 1)
+
+  # Adaptive lasso fit
+  pgp.model5 <- new("VecchiaModel")
+  pgp.model5 <- prestogp_fit(pgp.model5, y, X, locs,
+    scaling = c(1, 1), common_scale = TRUE, quiet = TRUE, adaptive = TRUE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  beta.out5 <- get_beta(pgp.model5)
+  params.out5 <- pgp.model5@covparams
+
+  # Adaptive and non-adaptive fits should be approximately equal
+  expect_equal(as.numeric(beta.out[[2]]), as.numeric(beta.out5[[2]]),
+    tolerance = 0.005)
+  expect_equal(as.numeric(beta.out[[1]]), as.numeric(beta.out5[[1]]),
+    tolerance = 0.05)
+  expect_equal(params.out[1], params.out5[1], tolerance = 0.9)
+  expect_equal(params.out[2] - params.out5[2], 0, tolerance = 0.2)
+  expect_equal(params.out[3], params.out5[3], tolerance = 0.3)
+  expect_equal(params.out[4], params.out5[4], tolerance = 0.2)
+
+  # Relaxed lasso fit
+  pgp.model6 <- new("VecchiaModel")
+  pgp.model6 <- prestogp_fit(pgp.model6, y, X, locs,
+    scaling = c(1, 1), common_scale = TRUE, quiet = TRUE, relax = TRUE,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  beta.out6 <- get_beta(pgp.model6)
+  params.out6 <- pgp.model6@covparams
+
+  expect_equal(as.numeric(beta.out6[[1]]), c(0.98, 1.04, 1.0, 1.02, rep(0, 6)),
+    tolerance = 0.006)
+  expect_equal(as.numeric(beta.out6[[2]] - mean(y)), 0.002, tolerance = 0.002)
+  expect_equal(params.out6[1], 1.5, tolerance = 0.2)
+  expect_equal(params.out6[2] - 0.4, 0, tolerance = 0.04)
+  expect_equal(params.out6[3] - 0.57, 0, tolerance = 0.05)
+  expect_equal(params.out6[4], 2.0, tolerance = 0.1)
 })
 
 test_that("Simulated dataset spatiotemporal", {

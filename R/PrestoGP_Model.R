@@ -1,5 +1,3 @@
-setOldClass("cv.glmnet")
-
 #' PrestoGPModel superclass
 #'
 #' This is the superclass for PrestoGP models. All other types of PrestoGP
@@ -13,8 +11,6 @@ setOldClass("cv.glmnet")
 #' @slot logparams A numeric vector containing the transformed versions of the
 #' Matern parameters (used internally for likelihood calculations).
 #' @slot beta A column matrix containing the regression coefficients.
-#' @slot lambda_1se_idx Stores the index of the optimal tuning parameter for
-#' the glmnet model. See \code{\link[glmnet]{glmnet}}.
 #' @slot vecchia_approx The output of the Vecchia specify function. See
 #' \code{\link[GPvecchia]{vecchia_specify}} and \code{\link{vecchia_Mspecify}}.
 #' @slot X_train A matrix containing the original predictors. This will be a
@@ -75,12 +71,11 @@ PrestoGPModel <- setClass("PrestoGPModel",
   slots = list(
     covparams = "numeric",
     beta = "matrix", # "numeric", #the beta matrix
-    lambda_1se_idx = "numeric", # "list", #the index of the best model
     vecchia_approx = "list", # the output of vecchia_specify
     y_tilde = "dgeMatrix", # iid transformed dependent variables matrix
     X_tilde = "dgeMatrix", # iid transformed independent variables matrix
     res = "numeric", # residuals
-    linear_model = "cv.glmnet", # the linear model
+    linear_model = "ANY", # the linear model
     X_train = "matrix", # the original independent variable matrix
     Y_train = "matrix", # the original dependent variable matrix
     X_ndx = "numeric", # used to map X_train to elements of the original X's
@@ -169,7 +164,7 @@ setGeneric(
     quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     family = c("gaussian", "binomial"), nfolds = 10, foldid = NULL,
-    parallel = FALSE) {
+    parallel = FALSE, adaptive = FALSE, relax = FALSE) {
     standardGeneric("prestogp_fit")
   }
 )
@@ -264,7 +259,7 @@ setGeneric("specify", function(model, ...) standardGeneric("specify"))
 setGeneric("compute_residuals", function(model, Y, Y.hat, family) standardGeneric("compute_residuals"))
 setGeneric("transform_data", function(model, Y, X) standardGeneric("transform_data"))
 setGeneric("estimate_theta", function(model, locs, optim.control, method) standardGeneric("estimate_theta"))
-setGeneric("estimate_betas", function(model, family, nfolds, foldid, parallel, lodv) standardGeneric("estimate_betas"))
+setGeneric("estimate_betas", function(model, family, nfolds, foldid, parallel, adaptive, relax) standardGeneric("estimate_betas"))
 setGeneric("impute_y", function(model) standardGeneric("impute_y"))
 setGeneric("impute_y_lod", function(model, lod, n.mi = 10, eps = 0.01, maxit = 5, family, nfolds, foldid, parallel, verbose) standardGeneric("impute_y_lod"))
 setGeneric("compute_error", function(model, y, X) standardGeneric("compute_error"))
@@ -782,6 +777,10 @@ setMethod(
 #' cross-validation. See \code{\link[glmnet]{cv.glmnet}}.
 #' @param parallel Should cv.glmnet use parallel "foreach" to fit each fold?
 #' Defaults to FALSE. See \code{\link[glmnet]{cv.glmnet}}.
+#' @param adaptive Should adaptive lasso be used? See Zou (2006) for details.
+#' Defaults to FALSE.
+#' @param relax Should relaxed lasso be used? See Meinshausen (2007) for
+#' details. Defaults to FALSE.
 #'
 #' @details If common_scale is TRUE, multivariate models will use the Matern
 #' cross-covariance function described in Apanasovich et al. (2012). This
@@ -805,9 +804,13 @@ setMethod(
 #' cross-covariance functions for multivariate random fields with any number
 #' of components", Journal of the American Statistical Association (2012)
 #' 107(497):180-193.
+#' \item Meinshausen, N. "Relaxed lasso", Computational Statistics and Data
+#' Analysis (2007) 52(1):374-393.
 #' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
 #' land-use regression for ground-level nitrogen dioxide", The Annals of
 #' Applied Statistics (2021) 15(2):688-710.
+#' \item Zou, H. "The adaptive lasso and its oracle properties", Journal of
+#' the American Statistical Association (2006) 101(476):1418-1429.
 #' }
 #'
 #' @aliases prestogp_fit
@@ -873,7 +876,8 @@ setMethod(
     quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     family = c("gaussian", "binomial"),
-    nfolds = 10, foldid = NULL, parallel = FALSE) {
+    nfolds = 10, foldid = NULL, parallel = FALSE, adaptive = FALSE,
+    relax = FALSE) {
     if (quiet & verbose) {
       verbose <- FALSE
     }
@@ -984,9 +988,9 @@ setMethod(
           cat("Estimating initial beta...", "\n")
         }
         beta0.glmnet <- cv.glmnet(model@X_train, model@Y_train,
-          parallel = parallel, foldid = foldid)
+          parallel = parallel, foldid = foldid, relax = relax)
         beta.hat <- as.matrix(predict(beta0.glmnet,
-            type = "coefficients", s = beta0.glmnet$lambda.1se))
+            type = "coefficients", s = "lambda.1se", gamma = "gamma.1se"))
         if (!quiet) {
           cat("Estimation of initial beta complete", "\n")
         }
@@ -1040,7 +1044,8 @@ setMethod(
         cat("Estimating beta...", "\n")
       }
       model <- transform_data(model, model@Y_train, model@X_train)
-      model <- estimate_betas(model, family, nfolds, foldid, parallel, lodv)
+      model <- estimate_betas(model, family, nfolds, foldid, parallel,
+        adaptive, relax)
       if (!quiet) {
         cat("Estimation of beta complete", "\n")
         if (verbose) {
@@ -1059,6 +1064,7 @@ setMethod(
             model@linear_model,
             newx = model@X_train,
             s = "lambda.1se",
+            gamma = "gamma.1se",
             type = "response")
         )
         if (sum(!model@Y_obs) > 0 & sum(lodv < Inf) == 0) {
@@ -1102,20 +1108,20 @@ setMethod(
 #' @return A model with updated coefficients
 #' @noRd
 setMethod("estimate_betas", "PrestoGPModel", function(model, family, nfolds,
-  foldid, parallel, lodv) {
-  if (min(lodv) < Inf) {
-    model@linear_model <- cv.glmnet(as.matrix(model@X_tilde),
-      as.matrix(model@y_tilde), alpha = model@alpha, family = family,
+  foldid, parallel, adaptive, relax) {
+  if (adaptive) {
+    ridge.model <- cv.glmnet(as.matrix(model@X_tilde),
+      as.matrix(model@y_tilde), alpha = 0, family = family,
       nfolds = nfolds, foldid = foldid, parallel = parallel)
+    pen.factor <- 1 / abs(as.numeric(coef(ridge.model,
+          s = ridge.model$lambda.min))[-1])
   } else {
-    model@linear_model <- cv.glmnet(as.matrix(model@X_tilde),
-      as.matrix(model@y_tilde), alpha = model@alpha, family = family,
-      nfolds = nfolds, foldid = foldid, parallel = parallel)
+    pen.factor <- rep(1, ncol(model@X_tilde))
   }
-  idmin <- which(model@linear_model$lambda == model@linear_model$lambda.min)
-  semin <- model@linear_model$cvm[idmin] + model@linear_model$cvsd[idmin]
-  lambda_1se <- max(model@linear_model$lambda[model@linear_model$cvm <= semin])
-  model@lambda_1se_idx <- which(model@linear_model$lambda == lambda_1se)
+  model@linear_model <- cv.glmnet(as.matrix(model@X_tilde),
+    as.matrix(model@y_tilde), alpha = model@alpha, family = family,
+    nfolds = nfolds, foldid = foldid, parallel = parallel,
+    penalty.factor = pen.factor, relax = relax)
   invisible(model)
 })
 
@@ -1160,16 +1166,19 @@ setMethod("compute_error", "PrestoGPModel", function(model) {
   # beta.iter <- as.numeric(coef(model@linear_model))
   # beta.iter <- do.call(cbind, coef(model@linear_model))
 
-  ### Lambdas
-  lambda.iter <- model@linear_model$lambda[model@lambda_1se_idx]
-
   ### Get SCAD penalty values
   # LL.vecchia.beta <- SCAD_Penalty_Loglike(beta.iter,lambda.iter)
 
   ### Compute log-likelihood
   # error <- model@LL_Vecchia_krig + LL.vecchia.beta[model@lambda_1se_idx[[1]]]
-  error <- model@LL_Vecchia_krig + glmnet_penalty(beta.iter, lambda.iter, model@alpha)
-
+  if (is.null(model@linear_model$relaxed)) {
+    error <- model@LL_Vecchia_krig + glmnet_penalty(beta.iter,
+      model@linear_model$lambda.1se, model@alpha)
+  } else {
+    error <- model@LL_Vecchia_krig + glmnet_penalty(beta.iter,
+      model@linear_model$relaxed$lambda.1se *
+        model@linear_model$relaxed$gamma.1se, model@alpha)
+  }
   # Min error (stopping criterion) is the log-likelihood
   error
 })

@@ -67,9 +67,11 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
     }
 
     # Vecchia prediction at new locations
-    Vecchia.Pred <- predict(model@linear_model, newx = X, s = model@linear_model$lambda[model@lambda_1se_idx])
+    Vecchia.Pred <- predict(model@linear_model, newx = X, s = "lambda.1se",
+      gamma = "gamma.1se")
     # Vecchia trend prediction at observed data
-    Vecchia.hat <- predict(model@linear_model, newx = model@X_train, s = model@linear_model$lambda[model@lambda_1se_idx])
+    Vecchia.hat <- predict(model@linear_model, newx = model@X_train,
+      s = "lambda.1se", gamma = "gamma.1se")
 
     # Test set prediction
     res <- model@Y_train - Vecchia.hat
@@ -322,11 +324,9 @@ setMethod("check_input_pred", "MultivariateVecchiaModel", function(model, X, loc
 
 setMethod("impute_y", "MultivariateVecchiaModel", function(model) {
   Vecchia.Pred <- predict(model@linear_model,
-    newx = model@X_train[!model@Y_obs, ],
-    s = model@linear_model$lambda[model@lambda_1se_idx])
+    newx = model@X_train[!model@Y_obs, ], s = "lambda.1se", gamma = "gamma.1se")
   Vecchia.hat <- predict(model@linear_model,
-    newx = model@X_train[model@Y_obs, ],
-    s = model@linear_model$lambda[model@lambda_1se_idx])
+    newx = model@X_train[model@Y_obs, ], s = "lambda.1se", gamma = "gamma.1se")
 
   # Test set prediction
   res <- model@Y_train[model@Y_obs] - Vecchia.hat
@@ -404,51 +404,20 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
 
   locs.scaled <- scale_locs(model, model@locs_train)
   locs.all <- NULL
-  nugget.seq <- NULL
-  ndx <- list()
+  y_ndx <- NULL
   for (i in seq_len(P)) {
     locs.all <- rbind(locs.all, locs.scaled[[i]])
-    nugget.seq <- c(nugget.seq, rep(params[param.seq[4, 1] + i - 1],
-        nrow(model@locs_train[[i]])))
-    ndx[[i]] <- seq_len(nrow(locs.scaled[[i]]))
-    if (i > 1) {
-      last.ndx <- ndx[[i - 1]]
-      ndx[[i]] <- ndx[[i]] + last.ndx[length(last.ndx)]
-    }
+    y_ndx <- c(y_ndx, rep(i, nrow(locs.scaled[[i]])))
   }
   locs.nn <- nn2(locs.all, k = model@n_neighbors)$nn.idx
 
-  sigma <- params[param.seq[1, 1]:param.seq[1, 2]]
-  rangep <- params[param.seq[2, 1]:param.seq[2, 2]]
-  smoothness <- params[param.seq[3, 1]:param.seq[3, 2]]
-
-  rho <- params[param.seq[5, 1]:param.seq[5, 2]]
-  rho.mat <- matrix(0, nrow = P, ncol = P)
-  rho.mat[upper.tri(rho.mat, diag = FALSE)] <- rho
-  rho.mat <- rho.mat + t(rho.mat)
-  diag(rho.mat) <- 1
-
-  Sigma.hat <- matrix(nrow = nrow(locs.all), ncol = nrow(locs.all))
-  for (i in seq_len(P)) {
-    for (j in i:P) {
-      smooth.ii <- smoothness[i]
-      smooth.jj <- smoothness[j]
-      smooth.ij <- (smooth.ii + smooth.jj) / 2
-      alpha.ii <- 1 / rangep[i]
-      alpha.jj <- 1 / rangep[j]
-      alpha.ij <- sqrt((alpha.ii^2 + alpha.jj^2) / 2)
-      Sigma.hat[ndx[[i]], ndx[[j]]] <- rho.mat[i, j] * sqrt(sigma[i]) *
-        sqrt(sigma[j]) * alpha.ii^smooth.ii * alpha.jj^smooth.jj *
-        gamma(smooth.ij) / (alpha.ij^(2 * smooth.ij) *
-          sqrt(gamma(smooth.ii) * gamma(smooth.jj))) *
-        Matern(rdist(locs.scaled[[i]], locs.scaled[[j]]),
-          alpha = alpha.ij, smoothness = smooth.ij)
-      if (i != j) {
-        Sigma.hat[ndx[[j]], ndx[[i]]] <- t(Sigma.hat[ndx[[i]], ndx[[j]]])
-      }
-    }
+  Sigma.hat <- array(dim = c(nrow(locs.all), nrow(locs.all), sum(is.na(y))))
+  k <- 1
+  for (i in which(is.na(y))) {
+    Sigma.hat[, , k] <- MMatern_cov(locs.all[locs.nn[i, ], , drop = FALSE],
+      y_ndx[locs.nn[i, ]], params, P)
+    k <- k + 1
   }
-  Sigma.hat <- Sigma.hat + nugget.seq * diag(nrow = nrow(Sigma.hat))
 
   cur.coef <- as.vector(model@beta)
   last.coef <- rep(Inf, ncol(X) + 1)
@@ -462,17 +431,15 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
     coef.mat <- matrix(nrow = n.mi, ncol = (ncol(X) + 1))
     if (parallel) {
       yi <- foreach(i = seq_len(n.mi), .combine = cbind) %dopar% {
-        out <- rtmvn_snn(y - yhat.ni, rep(-Inf, length(y)),
-          rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn,
-          covmat = Sigma.hat)
+        out <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
+          rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, Sigma.hat)
         out + yhat.ni
       }
     } else {
       yi <- matrix(nrow = length(yhat.ni), ncol = n.mi)
       for (i in seq_len(n.mi)) {
-        yi[, i] <- rtmvn_snn(y - yhat.ni, rep(-Inf, length(y)),
-          rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn,
-          covmat = Sigma.hat)
+        yi[, i] <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
+          rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, Sigma.hat)
         yi[, i] <- yi[, i] + yhat.ni
       }
     }
@@ -499,8 +466,8 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
 
   if (parallel) {
     y.na.mat <- foreach(i = seq_len(100), .combine = rbind) %dopar% {
-      yi <- rtmvn_snn(y - yhat.ni, rep(-Inf, length(y)),
-        rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, covmat = Sigma.hat)
+      yi <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
+        rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, Sigma.hat)
       yi <- yi + yhat.ni
       yi[miss]
     }
@@ -508,8 +475,8 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
     y.na.mat <- matrix(nrow = 100, ncol = sum(miss))
 
     for (i in seq_len(100)) {
-      yi <- rtmvn_snn(y - yhat.ni, rep(-Inf, length(y)),
-        rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, covmat = Sigma.hat)
+      yi <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
+        rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, Sigma.hat)
       yi <- yi + yhat.ni
       y.na.mat[i, ] <- yi[miss]
     }
