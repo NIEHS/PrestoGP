@@ -110,7 +110,11 @@ negloglik.full <- function(logparams, d, y, param.seq) {
 vecchia_Mlikelihood <- function(z, vecchia.approx, covparams) {
   U.obj <- createUMultivariate(vecchia.approx, covparams)
   vecchia_likelihood_U <- getFromNamespace("vecchia_likelihood_U", "GPvecchia")
-  vecchia_likelihood_U(z, U.obj)
+  res <- try(junk <- vecchia_likelihood_U(z, U.obj), silent = TRUE)
+  if (inherits(res, "try-error")) {
+    junk <- -1 * Inf
+  }
+  return(junk)
 }
 
 

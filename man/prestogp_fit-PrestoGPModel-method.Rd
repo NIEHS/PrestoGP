@@ -25,12 +25,14 @@
   verbose = FALSE,
   optim.method = "Nelder-Mead",
   optim.control = list(trace = 0, reltol = 0.001, maxit = 5000),
+  penalty = c("lasso", "relaxed", "MCP", "SCAD"),
+  alpha = 1,
   family = c("gaussian", "binomial"),
   nfolds = 10,
   foldid = NULL,
   parallel = FALSE,
-  adaptive = FALSE,
-  relax = FALSE
+  cluster = NULL,
+  adaptive = FALSE
 )
 }
 \arguments{
@@ -101,25 +103,44 @@ See \code{\link[stats]{optim}}.}
 \item{optim.control}{Control parameter that is passed to optim. See
 \code{\link[stats]{optim}}.}
 
-\item{family}{Family parameter for the glmnet model. Currently only
-"gaussian" and "binomial" are supported. Defaults to "gaussian". See
-\code{\link[glmnet]{glmnet}}.}
+\item{penalty}{The type of penalized regression to be used. Should be one
+of "lasso", "relaxed", "MCP", or "SCAD". Note that "lasso" and "relaxed"
+will fit the model using glmnet and "MCP" and "SCAD" will fit the model
+using ncvreg. See \code{\link[glmnet]{glmnet}} or
+\code{\link[ncvreg]{ncvreg}}. Defaults to "lasso".}
+
+\item{alpha}{The elastic net mixing parameter. 'alpha=1' corresponds to
+lasso (or SCAD/MCP) penalty; 'alpha=0' corresponds to ridge regression.
+See \code{\link[glmnet]{glmnet}} or \code{\link[ncvreg]{ncvreg}}. Defaults
+to 1.}
+
+\item{family}{Family parameter for the glmnet or ncvreg model. Currently
+only "gaussian" and "binomial" are supported. Defaults to "gaussian". See
+\code{\link[glmnet]{glmnet}} or \code{\link[ncvreg]{ncvreg}}.}
 
 \item{nfolds}{Number of cross-validation folds for cv.glmnet. Defaults to
 10. See \code{\link[glmnet]{cv.glmnet}}.}
 
 \item{foldid}{Optional vector of values between 1 and "nfolds" specifying
 what fold each observation should be assigned to in the cv.glmnet
-cross-validation. See \code{\link[glmnet]{cv.glmnet}}.}
+cross-validation. See \code{\link[glmnet]{cv.glmnet}} and
+\code{\link[ncvreg]{cv.ncvreg}}.}
 
-\item{parallel}{Should cv.glmnet use parallel "foreach" to fit each fold?
-Defaults to FALSE. See \code{\link[glmnet]{cv.glmnet}}.}
+\item{parallel}{Should parallel "foreach" be used to speed up the model
+fitting procedure where possible? Defaults to FALSE. Specifically,
+parallelization will be used for imputation and fitting the cv.glmnet
+object. See \code{\link[glmnet]{cv.glmnet}}. Note that this
+only applies to glmnet models (where penalty="lasso" or
+penalty="relaxed"). Models using ncvreg (where penalty="MCP" or
+penalty="SCAD") require a cluster argument for parallelization (see below).}
 
-\item{adaptive}{Should adaptive lasso be used? See Zou (2006) for details.
-Defaults to FALSE.}
+\item{cluster}{A cluster for running cv.ncvreg in parallel. See
+\code{\link[ncvreg]{cv.ncvreg}} and \code{\link[parallel]{makeCluster}}.
+This must be specified to run cv.ncvreg in parallel. It is ignored for
+glmnet models.}
 
-\item{relax}{Should relaxed lasso be used? See Meinshausen (2007) for
-details. Defaults to FALSE.}
+\item{adaptive}{Should adaptive lasso be used? Defaults to FALSE. It is
+ignored for SCAD and MCP models.}
 }
 \value{
 A PrestoGPModel object with slots updated based on the results of
@@ -199,8 +220,6 @@ soil.vm2 <- prestogp_fit(soil.vm2, y2, X2, locs2, scaling = c(1, 1, 2))
 cross-covariance functions for multivariate random fields with any number
 of components", Journal of the American Statistical Association (2012)
 107(497):180-193.
-\item Meinshausen, N. "Relaxed lasso", Computational Statistics and Data
-Analysis (2007) 52(1):374-393.
 \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
 land-use regression for ground-level nitrogen dioxide", The Annals of
 Applied Statistics (2021) 15(2):688-710.

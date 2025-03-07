@@ -11,17 +11,17 @@
 \item{model}{The PrestoGP model object}
 }
 \value{
-The fitted linear model (of class cv.glmnet).
+The fitted linear model (of class cv.glmnet or cv.ncvreg).
 }
 \description{
-This method return the fitted linear model (of class cv.glmnet) for a
-PrestoGP model.
+This method return the fitted linear model (of class cv.glmnet or cv.ncvreg)
+for a PrestoGP model.
 }
 \details{
 It is important to note that the model is fit to the
 transformed data. The CV error rate and predicted values of Y will not be
 correct for the original (untransformed) data. This method should be
-used primarily for examining the coefficient path and generating plots.
+used primarily for examining the coefficient paths and generating plots.
 }
 \examples{
 data(soil)
@@ -43,5 +43,5 @@ Applied Statistics (2021) 15(2):688-710.
 }
 \seealso{
 \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}},
-\code{\link[glmnet]{cv.glmnet}}
+\code{\link[glmnet]{cv.glmnet}}, \code{\link[ncvreg]{cv.ncvreg}}
 }
