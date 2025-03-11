@@ -31,7 +31,7 @@ setMethod("initialize", "VecchiaModel", function(.Object, n_neighbors = 25, ...)
 #' @rdname get_Y
 setMethod("get_Y", "VecchiaModel",
   function(model) {
-    return(as.vector(model@Y_train + model@Y_bar))
+    as.vector(model@Y_train + model@Y_bar)
   }
 )
 
@@ -105,7 +105,7 @@ setMethod("prestogp_predict", "VecchiaModel",
       return.list <- list(means = Vec.mean, sds = Vec.sds) # nolint
     }
 
-    return(return.list)
+    return.list
   }
 )
 

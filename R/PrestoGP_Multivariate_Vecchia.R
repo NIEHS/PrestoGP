@@ -41,7 +41,7 @@ setMethod("get_Y", "MultivariateVecchiaModel",
       Y.out[[i]] <- Y.all[cur.y] + model@Y_bar[i]
       Y.all <- Y.all[-cur.y]
     }
-    return(Y.out)
+    Y.out
   }
 )
 
@@ -138,7 +138,7 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
       return.list <- list(means = Vec.mean, sds = Vec.sds)
     }
 
-    return(return.list)
+    return.list
   }
 )
 
@@ -326,7 +326,7 @@ setMethod("check_input_pred", "MultivariateVecchiaModel", function(model, X, loc
   if (ncol(X) != ncol(model@X_train)) {
     stop("X and X_train must have the same number of predictors")
   }
-  return(list(X = X, Y_bar = Y_bar))
+  list(X = X, Y_bar = Y_bar)
 })
 
 setMethod("impute_y", "MultivariateVecchiaModel", function(model) {

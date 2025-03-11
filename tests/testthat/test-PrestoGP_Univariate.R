@@ -342,7 +342,7 @@ test_that("Simulated dataset spatial", {
   params.out6 <- pgp.model6@covparams
 
   expect_equal(as.numeric(beta.out6[[1]]), c(0.979, 1.037, 1.009, 1.015,
-    rep(0, 6)), tolerance = 0.003)
+      rep(0, 6)), tolerance = 0.003)
   expect_equal(as.numeric(beta.out6[[2]] - mean(y)), 0.002, tolerance = 0.003)
   expect_equal(params.out6[1], 1.44, tolerance = 0.2)
   expect_equal(params.out6[2] - 0.41, 0, tolerance = 0.06)
@@ -432,7 +432,7 @@ test_that("Simulated dataset spatial", {
   params.out10 <- pgp.model10@covparams
 
   expect_equal(as.numeric(beta.out10[[1]]), c(0.979, 1.038, 1.009, 1.015,
-    rep(0, 6)), tolerance = 0.03)
+      rep(0, 6)), tolerance = 0.03)
   expect_equal(as.numeric(beta.out10[[2]] - mean(y)), 0.002, tolerance = 0.003)
   expect_equal(params.out10[1], 1.46, tolerance = 0.2)
   expect_equal(params.out10[2] - 0.41, 0, tolerance = 0.05)

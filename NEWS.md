@@ -1,4 +1,10 @@
-# PrestoGP 0.2.0.9044
+# PrestoGP 0.2.0.9045 (2025-3-10)
+
+## MINOR IMPROVEMENTS
+
+* Fixed some linting issues
+
+# PrestoGP 0.2.0.9044 (2025-3-7)
 
 ## BREAKING CHANGES
 

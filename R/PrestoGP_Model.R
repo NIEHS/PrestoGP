@@ -111,7 +111,7 @@ validityPrestoGPModel <- function(object) {
 setValidity("PrestoGPModel", validityPrestoGPModel)
 
 setMethod("initialize", "PrestoGPModel", function(.Object, ...) {
-#  .Object@linear_model <- structure(list(), class = "cv.glmnet")
+  #  .Object@linear_model <- structure(list(), class = "cv.glmnet")
   .Object@alpha <- 1 # 0.5
   .Object <- callNextMethod()
   validObject(.Object)
@@ -255,24 +255,42 @@ setGeneric(
 #' soil.yhat <- prestogp_predict(soil.vm, X[otst,], locs[otst,])
 setGeneric(
   "prestogp_predict",
-  function(model, X = "matrix", locs = "matrix", m = "numeric", ordering.pred = c("obspred", "general"),
-    pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
+  function(model, X = "matrix", locs = "matrix", m = "numeric",
+    ordering.pred = c("obspred", "general"),
+    pred.cond = c("independent", "general"),
+    return.values = c("mean", "meanvar")) {
     standardGeneric("prestogp_predict")
   }
 )
-setGeneric("calc_covparams", function(model, locs, Y, covparams) standardGeneric("calc_covparams"))
+setGeneric("calc_covparams",
+  function(model, locs, Y, covparams) standardGeneric("calc_covparams"))
 setGeneric("specify", function(model, ...) standardGeneric("specify"))
-setGeneric("compute_residuals", function(model, Y, Y.hat, family) standardGeneric("compute_residuals"))
-setGeneric("transform_data", function(model, Y, X) standardGeneric("transform_data"))
-setGeneric("estimate_theta", function(model, locs, optim.control, method) standardGeneric("estimate_theta"))
-setGeneric("estimate_betas", function(model, family, nfolds, foldid, parallel, cluster, penalty, adaptive) standardGeneric("estimate_betas"))
+setGeneric("compute_residuals",
+  function(model, Y, Y.hat, family) standardGeneric("compute_residuals"))
+setGeneric("transform_data",
+  function(model, Y, X) standardGeneric("transform_data"))
+setGeneric("estimate_theta",
+  function(model, locs, optim.control, method) {
+    standardGeneric("estimate_theta")})
+setGeneric("estimate_betas",
+  function(model, family, nfolds, foldid, parallel, cluster, penalty,
+    adaptive) {
+    standardGeneric("estimate_betas")})
 setGeneric("impute_y", function(model) standardGeneric("impute_y"))
-setGeneric("impute_y_lod", function(model, lod, n.mi = 10, eps = 0.01, maxit = 5, family, nfolds, foldid, parallel, cluster, verbose) standardGeneric("impute_y_lod"))
-setGeneric("compute_error", function(model, y, X) standardGeneric("compute_error"))
+setGeneric("impute_y_lod",
+  function(model, lod, n.mi = 10, eps = 0.01, maxit = 5, family, nfolds,
+    foldid, parallel, cluster, verbose) {
+    standardGeneric("impute_y_lod")})
+setGeneric("compute_error",
+  function(model, y, X) standardGeneric("compute_error"))
 setGeneric("scale_locs", function(model, locs) standardGeneric("scale_locs"))
-setGeneric("transform_covariance_parameters", function(model) standardGeneric("transform_covariance_parameters"))
-setGeneric("check_input", function(model, Y, X, locs, Y.names, X.names, center.y, impute.y, lod) standardGeneric("check_input"))
-setGeneric("check_input_pred", function(model, X, locs) standardGeneric("check_input_pred"))
+setGeneric("transform_covariance_parameters",
+  function(model) standardGeneric("transform_covariance_parameters"))
+setGeneric("check_input",
+  function(model, Y, X, locs, Y.names, X.names, center.y, impute.y, lod) {
+    standardGeneric("check_input")})
+setGeneric("check_input_pred",
+  function(model, X, locs) standardGeneric("check_input_pred"))
 
 #' show method for PrestoGP models
 #'
@@ -401,7 +419,7 @@ setMethod(
       rownames(rho.mat) <- names(model@locs_train)
       junk$correlation <- rho.mat
     }
-    return(junk)
+    junk
   }
 )
 
@@ -473,7 +491,7 @@ setMethod(
     } else {
       names(junk) <- c("Y", "(Intercept)")
     }
-    return(junk)
+    junk
   }
 )
 
@@ -518,7 +536,7 @@ setMethod(
 setMethod(
   "get_linear_model", "PrestoGPModel",
   function(model) {
-    return(model@linear_model)
+    model@linear_model
   }
 )
 
@@ -557,7 +575,7 @@ setMethod(
 setMethod(
   "get_neighbors", "PrestoGPModel",
   function(model) {
-    return(model@n_neighbors)
+    model@n_neighbors
   }
 )
 
@@ -596,7 +614,7 @@ setMethod(
 setMethod(
   "get_scaling", "PrestoGPModel",
   function(model) {
-    return(model@scaling)
+    model@scaling
   }
 )
 
@@ -635,7 +653,7 @@ setMethod(
 setMethod(
   "get_converged", "PrestoGPModel",
   function(model) {
-    return(model@converged)
+    model@converged
   }
 )
 
@@ -675,7 +693,7 @@ setMethod(
 setMethod(
   "get_pen_loglik", "PrestoGPModel",
   function(model) {
-    return(model@error)
+    model@error
   }
 )
 
@@ -1110,8 +1128,8 @@ setMethod(
       if (min.error < prev.error * tol) {
         prev.error <- min.error
         model@error <- prev.error
-#        beta.hat <- sparseToDenseBeta(model@linear_model)
-#        model@beta <- beta.hat
+        #        beta.hat <- sparseToDenseBeta(model@linear_model)
+        #        model@beta <- beta.hat
         if (model@penalty == "lasso" || model@penalty == "relaxed") {
           beta.hat <- as.matrix(predict(model@linear_model, s = "lambda.min",
               gamma = "gamma.min", type = "coefficients"))
@@ -1149,7 +1167,7 @@ setMethod(
     if (!model@converged) {
       warning("Model fitting did not converge")
     }
-    return(model)
+    model
   }
 )
 
@@ -1198,15 +1216,15 @@ setMethod("estimate_betas", "PrestoGPModel", function(model, family, nfolds,
 #    coefs <- list(coefs)
 #  }
 #  beta_construct <- matrix(data = 0, nrow = coefs[[1]]@Dim[1], ncol = length(coefs))
-  # coefs[[1]]@Dim[1]+2s because dgCMatrix is 0 offset, and we want to include intercept
+# coefs[[1]]@Dim[1]+2s because dgCMatrix is 0 offset, and we want to include intercept
 #  for (i in seq_along(coefs)) {
 #    for (j in seq_along(coefs[[i]]@i)) {
 #      k <- coefs[[i]]@i[j]
-      # beta_construct[k+1,i] <- coefs[[i]]@x[j]
+# beta_construct[k+1,i] <- coefs[[i]]@x[j]
 #      beta_construct[k + 1, i] <- coefs[[i]]@x[j]
 #    }
 #  }
-  # show(beta_construct)
+# show(beta_construct)
 #  beta <- matrix(beta_construct, nrow = coefs[[1]]@Dim[1], ncol = length(coefs))
 #  beta
 #}
@@ -1281,7 +1299,7 @@ setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y, covparams)
     D.sample.bar <- rep(NA, model@nscale * P)
     for (i in 1:P) {
       col.vars[i] <- var(Y[[i]], na.rm = TRUE)
-      N <- length(Y[[i]])
+      # N <- length(Y[[i]])
       # TODO find a better way to compute initial spatial range
       for (j in 1:model@nscale) {
         # d.sample <- sample(1:N, max(2, ceiling(N / 50)), replace = FALSE)
@@ -1352,10 +1370,8 @@ setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y, covparams)
 #' @return a matrix with scaled locations
 #' @noRd
 setMethod("scale_locs", "PrestoGPModel", function(model, locs) {
-  if (model@common_scale) {
-    return(locs)
-  } else {
-    locs.out <- locs
+  locs.out <- locs
+  if (!model@common_scale) {
     for (i in seq_along(locs)) {
       for (j in 1:model@nscale) {
         locs.out[[i]][, model@scaling == j] <-
@@ -1363,8 +1379,8 @@ setMethod("scale_locs", "PrestoGPModel", function(model, locs) {
             model@covparams[model@param_sequence[2, 1] + model@nscale * (i - 1) + j - 1]
       }
     }
-    return(locs.out)
   }
+  locs.out
 })
 
 setMethod("transform_covariance_parameters", "PrestoGPModel", function(model) {

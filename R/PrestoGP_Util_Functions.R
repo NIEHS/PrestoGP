@@ -8,13 +8,13 @@ SCAD_penalty <- function(x, lambda, gamma) {
   pen1 <- lambda * abs(x[idx1])
   pen2 <- (2 * gamma * lambda * abs(x[idx2]) - x[idx2]^2 - lambda^2) /
     (2 * (gamma - 1))
-  return(sum(pen1) + sum(pen2) + sum(idx3) * lambda^2 * (gamma + 1) / 2)
+  sum(pen1) + sum(pen2) + sum(idx3) * lambda^2 * (gamma + 1) / 2
 }
 
 MCP_penalty <- function(x, lambda, gamma) {
   idx <- abs(x) <= (gamma * lambda)
-  return(sum(lambda * abs(x[idx]) - x[idx]^2 / (2 * gamma)) +
-      sum(!idx) * gamma * lambda^2)
+  sum(lambda * abs(x[idx]) - x[idx]^2 / (2 * gamma)) +
+    sum(!idx) * gamma * lambda^2
 }
 
 #' glmnet_penalty
@@ -140,7 +140,7 @@ transform_iid <- function(data, vecchia.approx, covparms, nuggets) {
   # return to original ordering
   # orig.order <- order(U.obj$ord)
   # transformed.data <- transform.ord[orig.order, ]
-  return(transform.ord)
+  transform.ord
 }
 
 ################################################################################
@@ -165,7 +165,7 @@ transform_miid <- function(data, vecchia.approx, params) {
   # return to original ordering
   # orig.order <- order(U.obj$ord)
   # transformed.data <- transform.ord[orig.order, ]
-  return(transform.ord)
+  transform.ord
 }
 
 ######  GPvecchia local function
@@ -201,18 +201,20 @@ U2V <- function(U.obj) {
     V.ord <- methods::as(cbind(V.pr, V.or), "triangularMatrix")
   }
 
-  return(V.ord)
+  V.ord
 }
 
 ###########################################################
 ## Reverse order of matrix rows,cols
 revMat <- function(mat) {
   if (nrow(mat) == 0 || ncol(mat) == 0) {
-    return(mat)
+    mat.out <- mat
+  } else {
+    row_seq <- rev(seq_len(nrow(mat)))
+    col_seq <- rev(seq_len(ncol(mat)))
+    mat.out <- mat[row_seq, col_seq, drop = FALSE]
   }
-  row_seq <- rev(seq_len(nrow(mat)))
-  col_seq <- rev(seq_len(ncol(mat)))
-  mat[row_seq, col_seq, drop = FALSE]
+  mat.out
 }
 
 #' Multivariate Vecchia prediction
@@ -303,7 +305,7 @@ vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL, r
     return.list$var.pred <- vars.vecchia$vars.pred
     return.list$var.obs <- vars.vecchia$vars.obs
   }
-  return(return.list)
+  return.list
 }
 
 # noise_locs
@@ -319,7 +321,7 @@ noise_locs <- function(locs, eps = 1e-4) {
       stats::rnorm(n * p),
     n, p
   )
-  return(locs)
+  locs
 }
 
 # eliminate_dupes
@@ -345,7 +347,7 @@ eliminate_dupes <- function(locs, locs.pred = NULL) {
       }
     }
   }
-  return(list(locs = locs, locs.pred = locs.pred))
+  list(locs = locs, locs.pred = locs.pred)
 }
 
 lod_reg_mi <- function(y, X, lod, miss, n.mi = 10, eps = 0.01, maxit = 10,
@@ -397,7 +399,7 @@ lod_reg_mi <- function(y, X, lod, miss, n.mi = 10, eps = 0.01, maxit = 10,
   cur.resid <- obs.means - y[!miss]
   cur.sd <- sqrt(sum(cur.resid^2) / (sum(!miss) - length(last.coef)))
   y.impute <- etruncnorm(b = lod, mean = miss.means, sd = cur.sd)
-  return(list(coef = cur.coef, y.impute = y.impute))
+  list(coef = cur.coef, y.impute = y.impute)
 }
 
 MMatern_cov <- function(locs, y_ndx, covparams, P) {
@@ -441,7 +443,7 @@ MMatern_cov <- function(locs, y_ndx, covparams, P) {
       }
     }
   }
-  return(Sigma.hat)
+  Sigma.hat
 }
 
 rtmvn_snn2 <- function(y, cens_lb, cens_ub, mask_cens, NN, cov_array) {
@@ -494,5 +496,5 @@ cv.ncvreg.wrap <- function(X, y, cluster, foldid, penalty, ...) {
       junk <- cv.ncvreg(X, y, penalty = penalty, ...)
     }
   }
-  return(junk)
+  junk
 }
