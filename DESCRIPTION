@@ -1,7 +1,7 @@
 Package: PrestoGP
 Type: Package
 Title: Penalized Regression for Spatio-Temporal Outcomes via Gaussian Processes 
-Version: 0.2.0.9043
+Version: 0.2.0.9045
 Authors@R: c(
     person(given = "Eric",
            family = "Bair",
@@ -39,7 +39,8 @@ Imports:
     Matrix,
     methods,
     truncnorm,
-    TruncatedNormal
+    TruncatedNormal,
+    ncvreg
 License: GPL-3
 Encoding: UTF-8
 VignetteBuilder: knitr 
@@ -62,6 +63,7 @@ Suggests:
     knitr,
     GpGp,
     geoR,
+    doParallel,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 URL: https://niehs.github.io/PrestoGP/, https://github.com/NIEHS/PrestoGP

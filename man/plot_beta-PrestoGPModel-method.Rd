@@ -10,12 +10,13 @@
 \arguments{
 \item{model}{The PrestoGP model object}
 
-\item{...}{Additional parameters to \code{\link[glmnet]{plot.glmnet}}}
+\item{...}{Additional parameters to \code{\link[glmnet]{plot.glmnet}} or
+\code{\link[ncvreg]{plot.ncvreg}}.}
 }
 \description{
 This method generates a plot showing the coefficients of the model for
 different values of the tuning parameter. It is a wrapper for
-\code{\link[glmnet]{plot.glmnet}}.
+\code{\link[glmnet]{plot.glmnet}} or \code{\link[ncvreg]{plot.ncvreg}}.
 }
 \examples{
 data(soil)
@@ -37,5 +38,5 @@ Applied Statistics (2021) 15(2):688-710.
 }
 \seealso{
 \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}},
-\code{\link[glmnet]{plot.glmnet}}
+\code{\link[glmnet]{plot.glmnet}}, \code{\link[ncvreg]{plot.ncvreg}}
 }

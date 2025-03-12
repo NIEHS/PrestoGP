@@ -41,7 +41,7 @@ setMethod("get_Y", "MultivariateVecchiaModel",
       Y.out[[i]] <- Y.all[cur.y] + model@Y_bar[i]
       Y.all <- Y.all[-cur.y]
     }
-    return(Y.out)
+    Y.out
   }
 )
 
@@ -66,12 +66,19 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
       m <- nrow(model@X_train) - 1
     }
 
-    # Vecchia prediction at new locations
-    Vecchia.Pred <- predict(model@linear_model, newx = X, s = "lambda.1se",
-      gamma = "gamma.1se")
-    # Vecchia trend prediction at observed data
-    Vecchia.hat <- predict(model@linear_model, newx = model@X_train,
-      s = "lambda.1se", gamma = "gamma.1se")
+    if (model@penalty == "lasso" || model@penalty == "relaxed") {
+      # Vecchia prediction at new locations
+      Vecchia.Pred <- predict(model@linear_model, newx = X, s = "lambda.min",
+        gamma = "gamma.min")
+      # Vecchia trend prediction at observed data
+      Vecchia.hat <- predict(model@linear_model, newx = model@X_train,
+        s = "lambda.min", gamma = "gamma.min")
+    } else {
+      # Vecchia prediction at new locations
+      Vecchia.Pred <- predict(model@linear_model, X)
+      # Vecchia trend prediction at observed data
+      Vecchia.hat <- predict(model@linear_model, model@X_train)
+    }
 
     # Test set prediction
     res <- model@Y_train - Vecchia.hat
@@ -131,7 +138,7 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
       return.list <- list(means = Vec.mean, sds = Vec.sds)
     }
 
-    return(return.list)
+    return.list
   }
 )
 
@@ -319,14 +326,25 @@ setMethod("check_input_pred", "MultivariateVecchiaModel", function(model, X, loc
   if (ncol(X) != ncol(model@X_train)) {
     stop("X and X_train must have the same number of predictors")
   }
-  return(list(X = X, Y_bar = Y_bar))
+  list(X = X, Y_bar = Y_bar)
 })
 
 setMethod("impute_y", "MultivariateVecchiaModel", function(model) {
-  Vecchia.Pred <- predict(model@linear_model,
-    newx = model@X_train[!model@Y_obs, ], s = "lambda.1se", gamma = "gamma.1se")
-  Vecchia.hat <- predict(model@linear_model,
-    newx = model@X_train[model@Y_obs, ], s = "lambda.1se", gamma = "gamma.1se")
+  if (model@penalty == "lasso" || model@penalty == "relaxed") {
+    # Vecchia prediction at missing values
+    Vecchia.Pred <- predict(model@linear_model,
+      newx = model@X_train[!model@Y_obs, ], s = "lambda.min",
+      gamma = "gamma.min")
+    # Vecchia trend prediction at observed data
+    Vecchia.hat <- predict(model@linear_model,
+      newx = model@X_train[model@Y_obs, ], s = "lambda.min",
+      gamma = "gamma.min")
+  } else {
+    # Vecchia prediction at missing values
+    Vecchia.Pred <- predict(model@linear_model, model@X_train[!model@Y_obs, ])
+    # Vecchia trend prediction at observed data
+    Vecchia.hat <- predict(model@linear_model, model@X_train[model@Y_obs, ])
+  }
 
   # Test set prediction
   res <- model@Y_train[model@Y_obs] - Vecchia.hat
@@ -377,7 +395,8 @@ setMethod("impute_y", "MultivariateVecchiaModel", function(model) {
 })
 
 setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
-  n.mi = 10, eps = 0.01, maxit = 5, family, nfolds, foldid, parallel, verbose) {
+  n.mi = 10, eps = 0.01, maxit = 1, family, nfolds, foldid, parallel,
+  cluster, verbose) {
   y <- model@Y_train
   X <- model@X_train
   miss <- !model@Y_obs
@@ -409,11 +428,11 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
     locs.all <- rbind(locs.all, locs.scaled[[i]])
     y_ndx <- c(y_ndx, rep(i, nrow(locs.scaled[[i]])))
   }
-  locs.nn <- nn2(locs.all, k = model@n_neighbors)$nn.idx
+  locs.nn <- nn2(locs.all, k = model@n_neighbors + 1)$nn.idx
 
-  Sigma.hat <- array(dim = c(nrow(locs.all), nrow(locs.all), sum(is.na(y))))
+  Sigma.hat <- array(dim = c(ncol(locs.nn), ncol(locs.nn), sum(miss)))
   k <- 1
-  for (i in which(is.na(y))) {
+  for (i in which(miss)) {
     Sigma.hat[, , k] <- MMatern_cov(locs.all[locs.nn[i, ], , drop = FALSE],
       y_ndx[locs.nn[i, ]], params, P)
     k <- k + 1
@@ -432,14 +451,14 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
     if (parallel) {
       yi <- foreach(i = seq_len(n.mi), .combine = cbind) %dopar% {
         out <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
-          rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, Sigma.hat)
+          lod - yhat.ni, miss, locs.nn, Sigma.hat)
         out + yhat.ni
       }
     } else {
       yi <- matrix(nrow = length(yhat.ni), ncol = n.mi)
       for (i in seq_len(n.mi)) {
         yi[, i] <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
-          rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, Sigma.hat)
+          lod - yhat.ni, miss, locs.nn, Sigma.hat)
         yi[, i] <- yi[, i] + yhat.ni
       }
     }
@@ -448,10 +467,19 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
     Xt <- as.matrix(tiid[, -(seq_len(ncol(yi)))])
 
     for (i in seq_len(n.mi)) {
-      cur.glmnet <- cv.glmnet(as.matrix(Xt), as.matrix(yt[, i]),
-        alpha = model@alpha, family = family, nfolds = nfolds,
-        foldid = foldid, parallel = parallel)
-      coef.mat[i, ] <- as.matrix(coef(cur.glmnet, s = "lambda.min"))
+      if (model@penalty == "lasso" || model@penalty == "relaxed") {
+        cur.glmnet <- cv.glmnet(as.matrix(Xt), as.matrix(yt[, i]),
+          alpha = model@alpha, family = family, nfolds = nfolds,
+          foldid = foldid, parallel = parallel,
+          relax = model@penalty == "relaxed")
+        coef.mat[i, ] <- as.matrix(coef(cur.glmnet, s = "lambda.min",
+            gamma = "gamma.min"))
+      } else {
+        cur.ncvreg <- cv.ncvreg.wrap(as.matrix(Xt), as.matrix(yt[, i]),
+          cluster = cluster, foldid = foldid, penalty = model@penalty,
+          alpha = model@alpha, family = family, nfolds = nfolds)
+        coef.mat[i, ] <- as.matrix(coef(cur.ncvreg))
+      }
     }
     last.coef <- cur.coef
     cur.coef <- colMeans(coef.mat)
@@ -467,7 +495,7 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
   if (parallel) {
     y.na.mat <- foreach(i = seq_len(100), .combine = rbind) %dopar% {
       yi <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
-        rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, Sigma.hat)
+        lod - yhat.ni, miss, locs.nn, Sigma.hat)
       yi <- yi + yhat.ni
       yi[miss]
     }
@@ -476,7 +504,7 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
 
     for (i in seq_len(100)) {
       yi <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
-        rep(lod, length(y)) - yhat.ni, is.na(y), locs.nn, Sigma.hat)
+        lod - yhat.ni, miss, locs.nn, Sigma.hat)
       yi <- yi + yhat.ni
       y.na.mat[i, ] <- yi[miss]
     }

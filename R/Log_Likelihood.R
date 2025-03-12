@@ -43,7 +43,7 @@ negloglik_full_ST <- function(logparms, locs, y, param.seq, scaling, nscale) {
     smoothness = parms[param.seq[3, 1]]
   ) +
     parms[param.seq[4, 1]] * diag(N)
-  return(-1 * mvtnorm::dmvnorm(y, rep(0, N), cov.mat, log = TRUE))
+  -1 * mvtnorm::dmvnorm(y, rep(0, N), cov.mat, log = TRUE)
 }
 
 # Spatial Full Kriging negative log likelihood
@@ -56,7 +56,7 @@ negloglik.full <- function(logparams, d, y, param.seq) {
     smoothness = params[3]
   ) +
     params[4] * diag(N)
-  return(-1 * mvtnorm::dmvnorm(y, rep(0, N), cov.mat, log = TRUE))
+  -1 * mvtnorm::dmvnorm(y, rep(0, N), cov.mat, log = TRUE)
 }
 
 #' Evaluation of the multivariate Vecchia likelihood
@@ -110,7 +110,11 @@ negloglik.full <- function(logparams, d, y, param.seq) {
 vecchia_Mlikelihood <- function(z, vecchia.approx, covparams) {
   U.obj <- createUMultivariate(vecchia.approx, covparams)
   vecchia_likelihood_U <- getFromNamespace("vecchia_likelihood_U", "GPvecchia")
-  vecchia_likelihood_U(z, U.obj)
+  res <- try(junk <- vecchia_likelihood_U(z, U.obj), silent = TRUE)
+  if (inherits(res, "try-error")) {
+    junk <- -1 * Inf
+  }
+  junk
 }
 
 
@@ -261,12 +265,12 @@ create.cov.upper.flex <- function(P, marg.var, marg.range, marg.smooth, nugget, 
     }
   }
 
-  return(list(
+  list(
     "variance" = sig2.mat,
     "range" = range.mat,
     "smoothness" = smoothness.mat,
     "nugget" = nugget.mat
-  ))
+  )
 }
 
 
@@ -331,7 +335,7 @@ cat.covariances <- function(locs.list, sig2, range, smoothness, nugget) {
   }
 
 
-  return(cov.mat.out)
+  cov.mat.out
 }
 
 ##############################################################################
@@ -349,7 +353,7 @@ create.initial.values.flex <- function(marg.var, marg.range, marg.smooth, nugget
   } else {
     logparams.init <- c(logparams.init, 0)
   }
-  return(logparams.init)
+  logparams.init
 }
 
 ##############################################################################
@@ -366,5 +370,5 @@ unlog.params <- function(logparams, param.seq, P) {
   } else {
     params <- c(params, 1)
   }
-  return(params)
+  params
 }

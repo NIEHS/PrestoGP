@@ -106,7 +106,7 @@ create_param_sequence <- function(P, ns = 1) {
   param.sequence.end <- c(P, ns * P, P, P, nk) %>% cumsum()
   param.sequence <- cbind(param.sequence.begin, param.sequence.end)
 
-  return(param.sequence)
+  param.sequence
 }
 
 #' Maximum minimum distance ordering
@@ -194,14 +194,15 @@ knn_indices <- function(ordered_locs, query, n_neighbors, dist_func, dist_func_c
     dists <- dist_func(query, ordered_locs)
     dists_order <- order(dists)
     nearest_neighbors <- dists_order[1:n_neighbors]
-    return(list(
+    junk <- list(
       "indices" = nearest_neighbors,
       "distances" = dists[nearest_neighbors]
-    ))
+    )
   } else {
     cur.nn <- nn2(ordered_locs, query, n_neighbors)
-    return(list("indices" = cur.nn$nn.idx, "distances" = cur.nn$nn.dists))
+    junk <- list("indices" = cur.nn$nn.idx, "distances" = cur.nn$nn.dists)
   }
+  junk
 }
 
 #' sparseNN
@@ -315,7 +316,7 @@ calc.q <- function(nn.obj, firstind.pred) {
       q.z[[i]] <- setdiff(q.z[[i]], latent.pred)
     }
   }
-  return(list(q.y = q.y, q.z = q.z))
+  list(q.y = q.y, q.z = q.z)
 }
 
 #' Specify a multivariate Vecchia approximation
@@ -464,13 +465,13 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
   last.obs <- max(which(obs))
   q.list <- calc.q(nn.mat$indices, last.obs + 1)
 
-  return(list(
+  list(
     locsord = olocs, obs = obs, ord = ord, ord.z = ord.z,
     ord.pred = ordering.pred, cond.yz = "SGV", conditioning = "NN",
     P = P, ondx = ondx, dist.func = dist.func,
     dist.func.code = dist.func.code, q.list = q.list,
     n.neighbors = m
-  ))
+  )
 }
 
 #' Create the sparse triangular matrix U for multivariate Vecchia models
@@ -754,9 +755,9 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
   }
   latent <- rep(TRUE, nrow(U))
   latent[seq(from = 2, to = (2 * sum(vec.approx$obs)), by = 2)] <- FALSE
-  return(list(
+  list(
     U = U, latent = latent, ord = vec.approx$ord, obs = vec.approx$obs,
     ord.pred = vec.approx$ord.pred, ord.z = vec.approx$ord.z,
     cond.yz = vec.approx$cond.yz, ic0 = FALSE
-  ))
+  )
 }
