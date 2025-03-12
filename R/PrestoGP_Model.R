@@ -30,8 +30,11 @@
 #' @slot locs_train A list containing the location coordinates. Each element
 #' of the list corresponds to a different outcome. (The list will have length
 #' 1 for univariate models.)
-#' @slot linear_model The glmnet model. See \code{\link[glmnet]{glmnet}} and
-#' \code{\link[glmnet]{cv.glmnet}}.
+#' @slot penalty The type of penalized regression used. Should be one
+#' of "lasso", "relaxed", "MCP", or "SCAD".
+#' @slot linear_model The glmnet or ncvreg model. See
+#' \code{\link[glmnet]{glmnet}}, \code{\link[ncvreg]{ncvreg}},
+#' \code{\link[glmnet]{cv.glmnet}}, and \code{\link[ncvreg]{cv.ncvreg}}.
 #' @slot converged Did the model fitting process converge (boolean)?
 #' @slot LL_Vecchia_krig The value of the negative log likelihood function
 #' after optimization.
@@ -39,7 +42,8 @@
 #' @slot n_neighbors Number of neighbors to condition on for the Vecchia
 #' approximation. Ignored for full models.
 #' @slot min_m Minimum permissible number of neighbors.
-#' @slot alpha Parameter alpha for glmnet. See \code{\link[glmnet]{glmnet}}.
+#' @slot alpha Parameter alpha for glmnet or ncvreg. See
+#' \code{\link[glmnet]{glmnet}} or \code{\link[ncvreg]{ncvreg}}.
 #' @slot scaling The indices of the scale parameters. See
 #' \code{link{prestogp_fit}}.
 #' @slot nscale The number of scale parameters in the model.
@@ -75,6 +79,7 @@ PrestoGPModel <- setClass("PrestoGPModel",
     y_tilde = "dgeMatrix", # iid transformed dependent variables matrix
     X_tilde = "dgeMatrix", # iid transformed independent variables matrix
     res = "numeric", # residuals
+    penalty = "character", # type of model (lasso, SCAD, etc.)
     linear_model = "ANY", # the linear model
     X_train = "matrix", # the original independent variable matrix
     Y_train = "matrix", # the original dependent variable matrix
@@ -106,7 +111,7 @@ validityPrestoGPModel <- function(object) {
 setValidity("PrestoGPModel", validityPrestoGPModel)
 
 setMethod("initialize", "PrestoGPModel", function(.Object, ...) {
-  .Object@linear_model <- structure(list(), class = "cv.glmnet")
+  #  .Object@linear_model <- structure(list(), class = "cv.glmnet")
   .Object@alpha <- 1 # 0.5
   .Object <- callNextMethod()
   validObject(.Object)
@@ -163,8 +168,9 @@ setGeneric(
     max_iters = 100, center.y = NULL, impute.y = FALSE, lod = NULL,
     quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
+    penalty = c("lasso", "relaxed", "MCP", "SCAD"), alpha = 1,
     family = c("gaussian", "binomial"), nfolds = 10, foldid = NULL,
-    parallel = FALSE, adaptive = FALSE, relax = FALSE) {
+    parallel = FALSE, cluster = NULL, adaptive = FALSE) {
     standardGeneric("prestogp_fit")
   }
 )
@@ -249,24 +255,42 @@ setGeneric(
 #' soil.yhat <- prestogp_predict(soil.vm, X[otst,], locs[otst,])
 setGeneric(
   "prestogp_predict",
-  function(model, X = "matrix", locs = "matrix", m = "numeric", ordering.pred = c("obspred", "general"),
-    pred.cond = c("independent", "general"), return.values = c("mean", "meanvar")) {
+  function(model, X = "matrix", locs = "matrix", m = "numeric",
+    ordering.pred = c("obspred", "general"),
+    pred.cond = c("independent", "general"),
+    return.values = c("mean", "meanvar")) {
     standardGeneric("prestogp_predict")
   }
 )
-setGeneric("calc_covparams", function(model, locs, Y, covparams) standardGeneric("calc_covparams"))
+setGeneric("calc_covparams",
+  function(model, locs, Y, covparams) standardGeneric("calc_covparams"))
 setGeneric("specify", function(model, ...) standardGeneric("specify"))
-setGeneric("compute_residuals", function(model, Y, Y.hat, family) standardGeneric("compute_residuals"))
-setGeneric("transform_data", function(model, Y, X) standardGeneric("transform_data"))
-setGeneric("estimate_theta", function(model, locs, optim.control, method) standardGeneric("estimate_theta"))
-setGeneric("estimate_betas", function(model, family, nfolds, foldid, parallel, adaptive, relax) standardGeneric("estimate_betas"))
+setGeneric("compute_residuals",
+  function(model, Y, Y.hat, family) standardGeneric("compute_residuals"))
+setGeneric("transform_data",
+  function(model, Y, X) standardGeneric("transform_data"))
+setGeneric("estimate_theta",
+  function(model, locs, optim.control, method) {
+    standardGeneric("estimate_theta")})
+setGeneric("estimate_betas",
+  function(model, family, nfolds, foldid, parallel, cluster, penalty,
+    adaptive) {
+    standardGeneric("estimate_betas")})
 setGeneric("impute_y", function(model) standardGeneric("impute_y"))
-setGeneric("impute_y_lod", function(model, lod, n.mi = 10, eps = 0.01, maxit = 5, family, nfolds, foldid, parallel, verbose) standardGeneric("impute_y_lod"))
-setGeneric("compute_error", function(model, y, X) standardGeneric("compute_error"))
+setGeneric("impute_y_lod",
+  function(model, lod, n.mi = 10, eps = 0.01, maxit = 5, family, nfolds,
+    foldid, parallel, cluster, verbose) {
+    standardGeneric("impute_y_lod")})
+setGeneric("compute_error",
+  function(model, y, X) standardGeneric("compute_error"))
 setGeneric("scale_locs", function(model, locs) standardGeneric("scale_locs"))
-setGeneric("transform_covariance_parameters", function(model) standardGeneric("transform_covariance_parameters"))
-setGeneric("check_input", function(model, Y, X, locs, Y.names, X.names, center.y, impute.y, lod) standardGeneric("check_input"))
-setGeneric("check_input_pred", function(model, X, locs) standardGeneric("check_input_pred"))
+setGeneric("transform_covariance_parameters",
+  function(model) standardGeneric("transform_covariance_parameters"))
+setGeneric("check_input",
+  function(model, Y, X, locs, Y.names, X.names, center.y, impute.y, lod) {
+    standardGeneric("check_input")})
+setGeneric("check_input_pred",
+  function(model, X, locs) standardGeneric("check_input_pred"))
 
 #' show method for PrestoGP models
 #'
@@ -395,7 +419,7 @@ setMethod(
       rownames(rho.mat) <- names(model@locs_train)
       junk$correlation <- rho.mat
     }
-    return(junk)
+    junk
   }
 )
 
@@ -467,26 +491,26 @@ setMethod(
     } else {
       names(junk) <- c("Y", "(Intercept)")
     }
-    return(junk)
+    junk
   }
 )
 
 #' Extract the fitted linear model for a PrestoGP model
 #'
-#' This method return the fitted linear model (of class cv.glmnet) for a
-#' PrestoGP model.
+#' This method return the fitted linear model (of class cv.glmnet or cv.ncvreg)
+#' for a PrestoGP model.
 #'
 #' @param model The PrestoGP model object
 #'
 #' @details It is important to note that the model is fit to the
 #' transformed data. The CV error rate and predicted values of Y will not be
 #' correct for the original (untransformed) data. This method should be
-#' used primarily for examining the coefficient path and generating plots.
+#' used primarily for examining the coefficient paths and generating plots.
 #'
-#' @return The fitted linear model (of class cv.glmnet).
+#' @return The fitted linear model (of class cv.glmnet or cv.ncvreg).
 #'
 #' @seealso \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}},
-#' \code{\link[glmnet]{cv.glmnet}}
+#' \code{\link[glmnet]{cv.glmnet}}, \code{\link[ncvreg]{cv.ncvreg}}
 #'
 #' @references
 #' \itemize{
@@ -512,7 +536,7 @@ setMethod(
 setMethod(
   "get_linear_model", "PrestoGPModel",
   function(model) {
-    return(model@linear_model)
+    model@linear_model
   }
 )
 
@@ -551,7 +575,7 @@ setMethod(
 setMethod(
   "get_neighbors", "PrestoGPModel",
   function(model) {
-    return(model@n_neighbors)
+    model@n_neighbors
   }
 )
 
@@ -590,7 +614,7 @@ setMethod(
 setMethod(
   "get_scaling", "PrestoGPModel",
   function(model) {
-    return(model@scaling)
+    model@scaling
   }
 )
 
@@ -629,7 +653,7 @@ setMethod(
 setMethod(
   "get_converged", "PrestoGPModel",
   function(model) {
-    return(model@converged)
+    model@converged
   }
 )
 
@@ -669,7 +693,7 @@ setMethod(
 setMethod(
   "get_pen_loglik", "PrestoGPModel",
   function(model) {
-    return(model@error)
+    model@error
   }
 )
 
@@ -677,14 +701,15 @@ setMethod(
 #'
 #' This method generates a plot showing the coefficients of the model for
 #' different values of the tuning parameter. It is a wrapper for
-#' \code{\link[glmnet]{plot.glmnet}}.
+#' \code{\link[glmnet]{plot.glmnet}} or \code{\link[ncvreg]{plot.ncvreg}}.
 #'
 #' @param model The PrestoGP model object
 #'
-#' @param ... Additional parameters to \code{\link[glmnet]{plot.glmnet}}
+#' @param ... Additional parameters to \code{\link[glmnet]{plot.glmnet}} or
+#' \code{\link[ncvreg]{plot.ncvreg}}.
 #'
 #' @seealso \code{\link{PrestoGPModel-class}}, \code{\link{prestogp_fit}},
-#' \code{\link[glmnet]{plot.glmnet}}
+#' \code{\link[glmnet]{plot.glmnet}}, \code{\link[ncvreg]{plot.ncvreg}}
 #'
 #' @references
 #' \itemize{
@@ -710,7 +735,11 @@ setMethod(
 setMethod(
   "plot_beta", "PrestoGPModel",
   function(model, ...) {
-    plot(model@linear_model$glmnet.fit, ...)
+    if (model@penalty == "lasso" || model@penalty == "relaxed") {
+      plot(model@linear_model$glmnet.fit, ...)
+    } else {
+      plot(model@linear_model$fit, ...)
+    }
   }
 )
 
@@ -767,20 +796,37 @@ setMethod(
 #' See \code{\link[stats]{optim}}.
 #' @param optim.control Control parameter that is passed to optim. See
 #' \code{\link[stats]{optim}}.
-#' @param family Family parameter for the glmnet model. Currently only
-#' "gaussian" and "binomial" are supported. Defaults to "gaussian". See
-#' \code{\link[glmnet]{glmnet}}.
+#' @param penalty The type of penalized regression to be used. Should be one
+#' of "lasso", "relaxed", "MCP", or "SCAD". Note that "lasso" and "relaxed"
+#' will fit the model using glmnet and "MCP" and "SCAD" will fit the model
+#' using ncvreg. See \code{\link[glmnet]{glmnet}} or
+#' \code{\link[ncvreg]{ncvreg}}. Defaults to "lasso".
+#' @param alpha The elastic net mixing parameter. 'alpha=1' corresponds to
+#' lasso (or SCAD/MCP) penalty; 'alpha=0' corresponds to ridge regression.
+#' See \code{\link[glmnet]{glmnet}} or \code{\link[ncvreg]{ncvreg}}. Defaults
+#' to 1.
+#' @param family Family parameter for the glmnet or ncvreg model. Currently
+#' only "gaussian" and "binomial" are supported. Defaults to "gaussian". See
+#' \code{\link[glmnet]{glmnet}} or \code{\link[ncvreg]{ncvreg}}.
 #' @param nfolds Number of cross-validation folds for cv.glmnet. Defaults to
 #' 10. See \code{\link[glmnet]{cv.glmnet}}.
 #' @param foldid Optional vector of values between 1 and "nfolds" specifying
 #' what fold each observation should be assigned to in the cv.glmnet
-#' cross-validation. See \code{\link[glmnet]{cv.glmnet}}.
-#' @param parallel Should cv.glmnet use parallel "foreach" to fit each fold?
-#' Defaults to FALSE. See \code{\link[glmnet]{cv.glmnet}}.
-#' @param adaptive Should adaptive lasso be used? See Zou (2006) for details.
-#' Defaults to FALSE.
-#' @param relax Should relaxed lasso be used? See Meinshausen (2007) for
-#' details. Defaults to FALSE.
+#' cross-validation. See \code{\link[glmnet]{cv.glmnet}} and
+#' \code{\link[ncvreg]{cv.ncvreg}}.
+#' @param parallel Should parallel "foreach" be used to speed up the model
+#' fitting procedure where possible? Defaults to FALSE. Specifically,
+#' parallelization will be used for imputation and fitting the cv.glmnet
+#' object. See \code{\link[glmnet]{cv.glmnet}}. Note that this
+#' only applies to glmnet models (where penalty="lasso" or
+#' penalty="relaxed"). Models using ncvreg (where penalty="MCP" or
+#' penalty="SCAD") require a cluster argument for parallelization (see below).
+#' @param cluster A cluster for running cv.ncvreg in parallel. See
+#' \code{\link[ncvreg]{cv.ncvreg}} and \code{\link[parallel]{makeCluster}}.
+#' This must be specified to run cv.ncvreg in parallel. It is ignored for
+#' glmnet models.
+#' @param adaptive Should adaptive lasso be used? Defaults to FALSE. It is
+#' ignored for SCAD and MCP models.
 #'
 #' @details If common_scale is TRUE, multivariate models will use the Matern
 #' cross-covariance function described in Apanasovich et al. (2012). This
@@ -804,8 +850,6 @@ setMethod(
 #' cross-covariance functions for multivariate random fields with any number
 #' of components", Journal of the American Statistical Association (2012)
 #' 107(497):180-193.
-#' \item Meinshausen, N. "Relaxed lasso", Computational Statistics and Data
-#' Analysis (2007) 52(1):374-393.
 #' \item Messier, K.P. and Katzfuss, M. "Scalable penalized spatiotemporal
 #' land-use regression for ground-level nitrogen dioxide", The Annals of
 #' Applied Statistics (2021) 15(2):688-710.
@@ -875,12 +919,12 @@ setMethod(
     max_iters = 100, center.y = NULL, impute.y = FALSE, lod = NULL,
     quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
+    penalty = c("lasso", "relaxed", "MCP", "SCAD"), alpha = 1,
     family = c("gaussian", "binomial"),
-    nfolds = 10, foldid = NULL, parallel = FALSE, adaptive = FALSE,
-    relax = FALSE) {
-    if (quiet & verbose) {
-      verbose <- FALSE
-    }
+    nfolds = 10, foldid = NULL, parallel = FALSE, cluster = NULL,
+    adaptive = FALSE) {
+    penalty <- match.arg(penalty)
+    model@penalty <- penalty
     family <- match.arg(family)
     if (is.null(center.y)) {
       if (family == "gaussian") {
@@ -914,6 +958,22 @@ setMethod(
         stop("Length of beta.hat must match the number of predictors")
       }
       beta.hat <- as.matrix(beta.hat)
+    }
+    if (!is.numeric(alpha)) {
+      stop("tol must be numeric")
+    }
+    if (length(alpha) != 1) {
+      stop("tol must be a scalar")
+    }
+    if (alpha < 0 || alpha > 1) {
+      stop("alpha must satisfy 0<=alpha<=1")
+    }
+    if (alpha == 0 && (penalty == "SCAD" || penalty == "MCP")) {
+      stop("alpha must be positive for SCAD/MCP penalties")
+    }
+    model@alpha <- alpha
+    if (quiet & verbose) {
+      verbose <- FALSE
     }
     if (!is.numeric(tol)) {
       stop("tol must be numeric")
@@ -977,7 +1037,9 @@ setMethod(
           cat("Imputing missing y's and estimating initial beta...", "\n")
         }
         cur.mi <- lod_reg_mi(model@Y_train, model@X_train, lodv, !model@Y_obs,
-          parallel = parallel, foldid = foldid, verbose = verbose)
+          penalty = model@penalty, alpha = model@alpha,
+          parallel = parallel, cluster = cluster, foldid = foldid,
+          verbose = verbose)
         model@Y_train[!model@Y_obs] <- cur.mi$y.impute
         beta.hat <- as.matrix(cur.mi$coef)
         if (!quiet) {
@@ -987,10 +1049,18 @@ setMethod(
         if (!quiet) {
           cat("Estimating initial beta...", "\n")
         }
-        beta0.glmnet <- cv.glmnet(model@X_train, model@Y_train,
-          parallel = parallel, foldid = foldid, relax = relax)
-        beta.hat <- as.matrix(predict(beta0.glmnet,
-            type = "coefficients", s = "lambda.1se", gamma = "gamma.1se"))
+        if (model@penalty == "lasso" || model@penalty == "relaxed") {
+          beta0.glmnet <- cv.glmnet(model@X_train, model@Y_train,
+            parallel = parallel, foldid = foldid, alpha = model@alpha,
+            relax = model@penalty == "relaxed")
+          beta.hat <- as.matrix(predict(beta0.glmnet,
+              type = "coefficients", s = "lambda.min", gamma = "gamma.min"))
+        } else {
+          beta0.ncvreg <- cv.ncvreg.wrap(model@X_train, model@Y_train,
+            cluster = cluster, foldid = foldid, alpha = model@alpha,
+            penalty = model@penalty)
+          beta.hat <- as.matrix(coef(beta0.ncvreg))
+        }
         if (!quiet) {
           cat("Estimation of initial beta complete", "\n")
         }
@@ -1009,7 +1079,7 @@ setMethod(
     if (!quiet) {
       cat("\n")
     }
-    while (!model@converged && (iter < max_iters)) {
+    while (!model@converged && (iter <= max_iters)) {
       if (!quiet) {
         cat("Beginning iteration", iter, "\n")
       }
@@ -1034,7 +1104,8 @@ setMethod(
           cat("Imputing missing y's...", "\n")
         }
         model <- impute_y_lod(model, lodv, family = family, nfolds = nfolds,
-          foldid = foldid, parallel = parallel, verbose = verbose)
+          foldid = foldid, parallel = parallel, cluster = cluster,
+          verbose = verbose)
         if (!quiet) {
           cat("Imputation complete", "\n")
         }
@@ -1045,7 +1116,7 @@ setMethod(
       }
       model <- transform_data(model, model@Y_train, model@X_train)
       model <- estimate_betas(model, family, nfolds, foldid, parallel,
-        adaptive, relax)
+        cluster, model@penalty, adaptive)
       if (!quiet) {
         cat("Estimation of beta complete", "\n")
         if (verbose) {
@@ -1057,16 +1128,18 @@ setMethod(
       if (min.error < prev.error * tol) {
         prev.error <- min.error
         model@error <- prev.error
-        beta.hat <- sparseToDenseBeta(model@linear_model)
+        #        beta.hat <- sparseToDenseBeta(model@linear_model)
+        #        model@beta <- beta.hat
+        if (model@penalty == "lasso" || model@penalty == "relaxed") {
+          beta.hat <- as.matrix(predict(model@linear_model, s = "lambda.min",
+              gamma = "gamma.min", type = "coefficients"))
+          Y.hat <- as.matrix(predict(model@linear_model, newx = model@X_train,
+              s = "lambda.min", gamma = "gamma.min", type = "response"))
+        } else {
+          beta.hat <- as.matrix(coef(model@linear_model))
+          Y.hat <- as.matrix(predict(model@linear_model, model@X_train))
+        }
         model@beta <- beta.hat
-        Y.hat <- as.matrix(
-          predict(
-            model@linear_model,
-            newx = model@X_train,
-            s = "lambda.1se",
-            gamma = "gamma.1se",
-            type = "response")
-        )
         if (sum(!model@Y_obs) > 0 & sum(lodv < Inf) == 0) {
           if (!quiet) {
             cat("Imputing missing y's...", "\n")
@@ -1095,7 +1168,7 @@ setMethod(
     if (!model@converged) {
       warning("Model fitting did not converge")
     }
-    return(model)
+    model
   }
 )
 
@@ -1108,20 +1181,26 @@ setMethod(
 #' @return A model with updated coefficients
 #' @noRd
 setMethod("estimate_betas", "PrestoGPModel", function(model, family, nfolds,
-  foldid, parallel, adaptive, relax) {
-  if (adaptive) {
-    ridge.model <- cv.glmnet(as.matrix(model@X_tilde),
-      as.matrix(model@y_tilde), alpha = 0, family = family,
-      nfolds = nfolds, foldid = foldid, parallel = parallel)
-    pen.factor <- 1 / abs(as.numeric(coef(ridge.model,
-          s = ridge.model$lambda.min))[-1])
+  foldid, parallel, cluster, penalty, adaptive) {
+  if (penalty == "lasso" || penalty == "relaxed") {
+    if (adaptive) {
+      ridge.model <- cv.glmnet(as.matrix(model@X_tilde),
+        as.matrix(model@y_tilde), alpha = 0, family = family,
+        nfolds = nfolds, foldid = foldid, parallel = parallel)
+      pen.factor <- 1 / abs(as.numeric(coef(ridge.model,
+            s = ridge.model$lambda.min))[-1])
+    } else {
+      pen.factor <- rep(1, ncol(model@X_tilde))
+    }
+    model@linear_model <- cv.glmnet(as.matrix(model@X_tilde),
+      as.matrix(model@y_tilde), alpha = model@alpha, family = family,
+      nfolds = nfolds, foldid = foldid, parallel = parallel,
+      penalty.factor = pen.factor, relax = penalty == "relaxed")
   } else {
-    pen.factor <- rep(1, ncol(model@X_tilde))
+    model@linear_model <- cv.ncvreg.wrap(as.matrix(model@X_tilde),
+      as.matrix(model@y_tilde), cluster = cluster, foldid = foldid,
+      penalty = penalty, alpha = model@alpha, family = family, nfolds = nfolds)
   }
-  model@linear_model <- cv.glmnet(as.matrix(model@X_tilde),
-    as.matrix(model@y_tilde), alpha = model@alpha, family = family,
-    nfolds = nfolds, foldid = foldid, parallel = parallel,
-    penalty.factor = pen.factor, relax = relax)
   invisible(model)
 })
 
@@ -1132,25 +1211,24 @@ setMethod("estimate_betas", "PrestoGPModel", function(model, family, nfolds,
 #' @param linear_model the glmnet model
 #'
 #' @return A dense matrix
-#' @noRd
-sparseToDenseBeta <- function(linear_model) {
-  coefs <- coef(linear_model)
-  if (!is.list(coefs)) {
-    coefs <- list(coefs)
-  }
-  beta_construct <- matrix(data = 0, nrow = coefs[[1]]@Dim[1], ncol = length(coefs))
-  # coefs[[1]]@Dim[1]+2s because dgCMatrix is 0 offset, and we want to include intercept
-  for (i in seq_along(coefs)) {
-    for (j in seq_along(coefs[[i]]@i)) {
-      k <- coefs[[i]]@i[j]
-      # beta_construct[k+1,i] <- coefs[[i]]@x[j]
-      beta_construct[k + 1, i] <- coefs[[i]]@x[j]
-    }
-  }
-  # show(beta_construct)
-  beta <- matrix(beta_construct, nrow = coefs[[1]]@Dim[1], ncol = length(coefs))
-  beta
-}
+#sparseToDenseBeta <- function(linear_model) {
+#  coefs <- coef(linear_model)
+#  if (!is.list(coefs)) {
+#    coefs <- list(coefs)
+#  }
+#  beta_construct <- matrix(data = 0, nrow = coefs[[1]]@Dim[1], ncol = length(coefs))
+# coefs[[1]]@Dim[1]+2s because dgCMatrix is 0 offset, and we want to include intercept
+#  for (i in seq_along(coefs)) {
+#    for (j in seq_along(coefs[[i]]@i)) {
+#      k <- coefs[[i]]@i[j]
+# beta_construct[k+1,i] <- coefs[[i]]@x[j]
+#      beta_construct[k + 1, i] <- coefs[[i]]@x[j]
+#    }
+#  }
+# show(beta_construct)
+#  beta <- matrix(beta_construct, nrow = coefs[[1]]@Dim[1], ncol = length(coefs))
+#  beta
+#}
 
 #' compute_error
 #'
@@ -1162,22 +1240,37 @@ sparseToDenseBeta <- function(linear_model) {
 #' @noRd
 setMethod("compute_error", "PrestoGPModel", function(model) {
   ### Betas
-  beta.iter <- sparseToDenseBeta(model@linear_model)
+  # beta.iter <- sparseToDenseBeta(model@linear_model)
   # beta.iter <- as.numeric(coef(model@linear_model))
   # beta.iter <- do.call(cbind, coef(model@linear_model))
+  if (model@penalty == "lasso" || model@penalty == "relaxed") {
+    beta.iter <- as.matrix(predict(model@linear_model, type = "coefficients",
+        s = "lambda.min", gamma = "gamma.min"))
+  } else {
+    beta.iter <- as.matrix(coef(model@linear_model))
+  }
 
   ### Get SCAD penalty values
   # LL.vecchia.beta <- SCAD_Penalty_Loglike(beta.iter,lambda.iter)
 
   ### Compute log-likelihood
   # error <- model@LL_Vecchia_krig + LL.vecchia.beta[model@lambda_1se_idx[[1]]]
-  if (is.null(model@linear_model$relaxed)) {
-    error <- model@LL_Vecchia_krig + glmnet_penalty(beta.iter,
-      model@linear_model$lambda.1se, model@alpha)
-  } else {
-    error <- model@LL_Vecchia_krig + glmnet_penalty(beta.iter,
-      model@linear_model$relaxed$lambda.1se *
-        model@linear_model$relaxed$gamma.1se, model@alpha)
+  alpha <- model@alpha
+  if (model@penalty == "lasso") {
+    error <- model@LL_Vecchia_krig + model@linear_model$lambda.min *
+      ((1 - alpha) * sqrt(sum(beta.iter^2)) + alpha * sum(abs(beta.iter)))
+  } else if (model@penalty == "relaxed") {
+    error <- model@LL_Vecchia_krig + model@linear_model$relaxed$lambda.min *
+      model@linear_model$relaxed$gamma.min * ((1 - alpha) *
+        sqrt(sum(beta.iter^2)) + alpha * sum(abs(beta.iter)))
+  } else if (model@penalty == "SCAD") {
+    error <- model@LL_Vecchia_krig + model@linear_model$lambda.min *
+      (1 - alpha) * sqrt(sum(beta.iter^2)) + alpha * SCAD_penalty(beta.iter,
+      model@linear_model$lambda.min, model@linear_model$fit$gamma)
+  } else if (model@penalty == "MCP") {
+    error <- model@LL_Vecchia_krig + model@linear_model$lambda.min *
+      (1 - alpha) * sqrt(sum(beta.iter^2)) + alpha * MCP_penalty(beta.iter,
+      model@linear_model$lambda.min, model@linear_model$fit$gamma)
   }
   # Min error (stopping criterion) is the log-likelihood
   error
@@ -1207,11 +1300,11 @@ setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y, covparams)
     D.sample.bar <- rep(NA, model@nscale * P)
     for (i in 1:P) {
       col.vars[i] <- var(Y[[i]], na.rm = TRUE)
-      N <- length(Y[[i]])
+      # N <- length(Y[[i]])
       # TODO find a better way to compute initial spatial range
       for (j in 1:model@nscale) {
-        d.sample <- sample(1:N, max(2, ceiling(N / 50)), replace = FALSE)
-        D.sample <- rdist(locs[[i]][d.sample, model@scaling == j])
+        # d.sample <- sample(1:N, max(2, ceiling(N / 50)), replace = FALSE)
+        D.sample <- rdist(locs[[i]][, model@scaling == j])
         D.sample.bar[(i - 1) * model@nscale + j] <- mean(D.sample) / 4
       }
     }
@@ -1278,10 +1371,8 @@ setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y, covparams)
 #' @return a matrix with scaled locations
 #' @noRd
 setMethod("scale_locs", "PrestoGPModel", function(model, locs) {
-  if (model@common_scale) {
-    return(locs)
-  } else {
-    locs.out <- locs
+  locs.out <- locs
+  if (!model@common_scale) {
     for (i in seq_along(locs)) {
       for (j in 1:model@nscale) {
         locs.out[[i]][, model@scaling == j] <-
@@ -1289,8 +1380,8 @@ setMethod("scale_locs", "PrestoGPModel", function(model, locs) {
             model@covparams[model@param_sequence[2, 1] + model@nscale * (i - 1) + j - 1]
       }
     }
-    return(locs.out)
   }
+  locs.out
 })
 
 setMethod("transform_covariance_parameters", "PrestoGPModel", function(model) {

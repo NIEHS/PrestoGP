@@ -1,4 +1,5 @@
 #define ARMA_64BIT_WORD 1
+#define ARMA_WARN_LEVEL 1
 #ifdef _OPENMP
 #include <omp.h>
 #endif

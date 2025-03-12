@@ -25,6 +25,42 @@ test_that("beta.hat incorrect length", {
   )
 })
 
+test_that("alpha not numeric", {
+  source("sim_vecchia_small.R")
+  pgp.model1 <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(pgp.model1, y, X, locs, alpha = "foo"),
+    "tol must be numeric"
+  )
+})
+
+test_that("alpha not a scalar", {
+  source("sim_vecchia_small.R")
+  pgp.model1 <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(pgp.model1, y, X, locs, alpha = 1:2),
+    "tol must be a scalar"
+  )
+})
+
+test_that("alpha out of range", {
+  source("sim_vecchia_small.R")
+  pgp.model1 <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(pgp.model1, y, X, locs, alpha = 1.1),
+    "alpha must satisfy 0<=alpha<=1"
+  )
+})
+
+test_that("alpha=0 for ncvreg model", {
+  source("sim_vecchia_small.R")
+  pgp.model1 <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(pgp.model1, y, X, locs, alpha = 0, penalty = "SCAD"),
+    "alpha must be positive for SCAD/MCP penalties"
+  )
+})
+
 test_that("tol not numeric", {
   source("sim_vecchia_small.R")
   pgp.model1 <- new("VecchiaModel")

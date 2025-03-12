@@ -1,23 +1,21 @@
 ################################################################################
-# SCAD Penalty value
+# SCAD/MCP penalty values
 ################################################################################
-#SCAD_Penalty_Loglike <- function(beta.in, lambda) {
-#  penalty <- matrix(NA, nrow = nrow(beta.in), ncol = ncol(beta.in))
-#  for (j in seq_len(nrow(beta.in))) {
-#    beta.j <- beta.in[j, ]
-#    idx1 <- abs(beta.j) <= lambda
-#    idx2 <- abs(beta.j) > lambda & abs(beta.j) <= 3.7 * lambda
-#    idx3 <- abs(beta.j) > 3.7 * lambda
-#    penalty[j, idx1] <- lambda[idx1] * beta.j[idx1]
-#    penalty[j, idx2] <- -(abs(beta.j[idx2])^2 - 7.4 * lambda[idx2] * abs(beta.j[idx2]) + lambda[idx2]^2) / (5.4)
-#    penalty[j, idx3] <- (3.7 * lambda[idx3]^2 + lambda[idx3]^2) / 2
-#  }
-#
-#
-#  loglik.penalty <- lambda * colSums(penalty)
-#
-#  return(loglik.penalty)
-#}
+SCAD_penalty <- function(x, lambda, gamma) {
+  idx1 <- abs(x) <= lambda
+  idx2 <- abs(x) > lambda & abs(x) <= gamma * lambda
+  idx3 <- abs(x) > gamma * lambda
+  pen1 <- lambda * abs(x[idx1])
+  pen2 <- (2 * gamma * lambda * abs(x[idx2]) - x[idx2]^2 - lambda^2) /
+    (2 * (gamma - 1))
+  sum(pen1) + sum(pen2) + sum(idx3) * lambda^2 * (gamma + 1) / 2
+}
+
+MCP_penalty <- function(x, lambda, gamma) {
+  idx <- abs(x) <= (gamma * lambda)
+  sum(lambda * abs(x[idx]) - x[idx]^2 / (2 * gamma)) +
+    sum(!idx) * gamma * lambda^2
+}
 
 #' glmnet_penalty
 #'
@@ -29,9 +27,9 @@
 #'
 #' @return a penalty score
 #' @noRd
-glmnet_penalty <- function(beta, lambda, alpha) {
-  return(lambda * ((1 - alpha) * sqrt(sum(beta^2)) + alpha * sum(abs(beta))))
-}
+#glmnet_penalty <- function(beta, lambda, alpha) {
+#  return(lambda * ((1 - alpha) * sqrt(sum(beta^2)) + alpha * sum(abs(beta))))
+#}
 
 # Ordinary Spatiotemporal Kriging Prediction with a Local S-T neighborhood.
 #
@@ -142,7 +140,7 @@ transform_iid <- function(data, vecchia.approx, covparms, nuggets) {
   # return to original ordering
   # orig.order <- order(U.obj$ord)
   # transformed.data <- transform.ord[orig.order, ]
-  return(transform.ord)
+  transform.ord
 }
 
 ################################################################################
@@ -167,7 +165,7 @@ transform_miid <- function(data, vecchia.approx, params) {
   # return to original ordering
   # orig.order <- order(U.obj$ord)
   # transformed.data <- transform.ord[orig.order, ]
-  return(transform.ord)
+  transform.ord
 }
 
 ######  GPvecchia local function
@@ -203,18 +201,20 @@ U2V <- function(U.obj) {
     V.ord <- methods::as(cbind(V.pr, V.or), "triangularMatrix")
   }
 
-  return(V.ord)
+  V.ord
 }
 
 ###########################################################
 ## Reverse order of matrix rows,cols
 revMat <- function(mat) {
   if (nrow(mat) == 0 || ncol(mat) == 0) {
-    return(mat)
+    mat.out <- mat
+  } else {
+    row_seq <- rev(seq_len(nrow(mat)))
+    col_seq <- rev(seq_len(ncol(mat)))
+    mat.out <- mat[row_seq, col_seq, drop = FALSE]
   }
-  row_seq <- rev(seq_len(nrow(mat)))
-  col_seq <- rev(seq_len(ncol(mat)))
-  mat[row_seq, col_seq, drop = FALSE]
+  mat.out
 }
 
 #' Multivariate Vecchia prediction
@@ -305,7 +305,7 @@ vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL, r
     return.list$var.pred <- vars.vecchia$vars.pred
     return.list$var.obs <- vars.vecchia$vars.obs
   }
-  return(return.list)
+  return.list
 }
 
 # noise_locs
@@ -321,7 +321,7 @@ noise_locs <- function(locs, eps = 1e-4) {
       stats::rnorm(n * p),
     n, p
   )
-  return(locs)
+  locs
 }
 
 # eliminate_dupes
@@ -347,17 +347,24 @@ eliminate_dupes <- function(locs, locs.pred = NULL) {
       }
     }
   }
-  return(list(locs = locs, locs.pred = locs.pred))
+  list(locs = locs, locs.pred = locs.pred)
 }
 
 lod_reg_mi <- function(y, X, lod, miss, n.mi = 10, eps = 0.01, maxit = 10,
-  parallel, foldid, verbose) {
+  penalty, alpha, parallel, cluster, foldid, verbose) {
   lod <- lod[miss]
   last.coef <- rep(Inf, ncol(X) + 1)
-  cur.glmnet <- cv.glmnet(X, y, parallel = parallel, foldid = foldid,
-    gamma = 0, relax = TRUE)
-  cur.coef <- as.matrix(predict(cur.glmnet, type = "coefficients",
-      s = "lambda.min"))
+  if (penalty == "lasso" || penalty == "relaxed") {
+    relax <- penalty == "relaxed"
+    cur.glmnet <- cv.glmnet(X, y, parallel = parallel, foldid = foldid,
+      alpha = alpha, relax = relax)
+    cur.coef <- as.matrix(predict(cur.glmnet, type = "coefficients",
+        s = "lambda.min", gamma = "gamma.min"))
+  } else {
+    cur.ncvreg <- cv.ncvreg.wrap(X, y, cluster = cluster, foldid = foldid,
+      penalty = penalty, alpha = alpha)
+    cur.coef <- as.matrix(coef(cur.ncvreg))
+  }
   itn <- 0
   while (max(abs(cur.coef - last.coef)) > eps && itn <= maxit) {
     itn <- itn + 1
@@ -369,10 +376,16 @@ lod_reg_mi <- function(y, X, lod, miss, n.mi = 10, eps = 0.01, maxit = 10,
     coef.mat <- matrix(nrow = n.mi, ncol = length(cur.coef))
     for (i in 1:n.mi) {
       y[miss] <- rtruncnorm(sum(miss), b = lod, mean = miss.means, sd = cur.sd)
-      cur.glmnet <- cv.glmnet(X, y, parallel = parallel, foldid = foldid,
-        gamma = 0, relax = TRUE)
-      coef.mat[i, ] <- as.matrix(predict(cur.glmnet, type = "coefficients",
-          s = "lambda.min"))
+      if (penalty == "lasso" || penalty == "relaxed") {
+        cur.glmnet <- cv.glmnet(X, y, parallel = parallel, foldid = foldid,
+          alpha = alpha, relax = relax)
+        coef.mat[i, ] <- as.matrix(predict(cur.glmnet, type = "coefficients",
+            s = "lambda.min", gamma = "gamma.min"))
+      } else {
+        cur.ncvreg <- cv.ncvreg.wrap(X, y, cluster = cluster, foldid = foldid,
+          penalty = penalty, alpha = alpha)
+        coef.mat[i, ] <- as.matrix(coef(cur.ncvreg))
+      }
     }
     cur.coef <- colMeans(coef.mat)
     if (verbose) {
@@ -386,7 +399,7 @@ lod_reg_mi <- function(y, X, lod, miss, n.mi = 10, eps = 0.01, maxit = 10,
   cur.resid <- obs.means - y[!miss]
   cur.sd <- sqrt(sum(cur.resid^2) / (sum(!miss) - length(last.coef)))
   y.impute <- etruncnorm(b = lod, mean = miss.means, sd = cur.sd)
-  return(list(coef = cur.coef, y.impute = y.impute))
+  list(coef = cur.coef, y.impute = y.impute)
 }
 
 MMatern_cov <- function(locs, y_ndx, covparams, P) {
@@ -425,12 +438,12 @@ MMatern_cov <- function(locs, y_ndx, covparams, P) {
           Sigma.hat[which.j, which.i] <- t(Sigma.hat[which.i, which.j])
         } else {
           Sigma.hat[which.i, which.i] <- Sigma.hat[which.i, which.i] +
-            nuggets[i] * diag(nrow = sum(which.i))
+            nuggets[i] * diag(nrow = length(which.i))
         }
       }
     }
   }
-  return(Sigma.hat)
+  Sigma.hat
 }
 
 rtmvn_snn2 <- function(y, cens_lb, cens_ub, mask_cens, NN, cov_array) {
@@ -466,4 +479,22 @@ rtmvn_snn2 <- function(y, cens_lb, cens_ub, mask_cens, NN, cov_array) {
     mask_cens[i] <- FALSE
   }
   y
+}
+
+cv.ncvreg.wrap <- function(X, y, cluster, foldid, penalty, ...) {
+  if (!is.null(cluster)) {
+    if (!is.null(foldid)) {
+      junk <- cv.ncvreg(X, y, cluster = cluster, fold = foldid,
+        penalty = penalty, ...)
+    } else {
+      junk <- cv.ncvreg(X, y, cluster = cluster, penalty = penalty, ...)
+    }
+  } else {
+    if (!is.null(foldid)) {
+      junk <- cv.ncvreg(X, y, fold = foldid, penalty = penalty, ...)
+    } else {
+      junk <- cv.ncvreg(X, y, penalty = penalty, ...)
+    }
+  }
+  junk
 }

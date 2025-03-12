@@ -197,13 +197,17 @@ test_that("Simulated dataset spatial", {
     as.numeric(pgp.model1@beta[1]))
   expect_identical(as.vector(beta.out[[1]]), as.vector(pgp.model1@beta[2:11]))
 
-  expect_equal(as.numeric(beta.out[[1]]), c(0.86, 0.98, 0.94, 0.9, rep(0, 6)),
-    tolerance = 0.03)
-  expect_equal(as.numeric(beta.out[[2]] - mean(y)), 0.01, tolerance = 0.03)
-  expect_equal(params.out[1], 1.6, tolerance = 0.5)
-  expect_equal(params.out[2] - 0.4, 0, tolerance = 0.2)
-  expect_equal(params.out[3], 0.59, tolerance = 0.2)
-  expect_equal(params.out[4], 2.0, tolerance = 0.15)
+  expect_equal(as.numeric(beta.out[[1]]), c(0.96, 1.03, 1.0, 1.0, rep(0, 6)),
+    tolerance = 0.02)
+  expect_equal(as.numeric(beta.out[[2]] - mean(y)), 0.002, tolerance = 0.003)
+  expect_gt(params.out[1], 1.28)
+  expect_lt(params.out[1], 1.65)
+  expect_gt(params.out[2], 0.35)
+  expect_lt(params.out[2], 0.46)
+  expect_gt(params.out[3], 0.52)
+  expect_lt(params.out[3], 0.62)
+  expect_gt(params.out[4], 1.9)
+  expect_lt(params.out[4], 2.005)
 
   pgp.model2 <- new("FullModel")
   pgp.model2 <- prestogp_fit(pgp.model2, y, X, locs,
@@ -226,23 +230,28 @@ test_that("Simulated dataset spatial", {
 
   expect_named(beta.out2, c("Y", "(Intercept)"))
 
-  expect_equal(beta.out2[[1]], c(0.86, 0.98, 0.95, 0.9, rep(0, 6)),
-    tolerance = 0.03)
-  expect_equal(as.numeric(beta.out2[[2]] - mean(y)), 0.01, tolerance = 0.03)
-  expect_equal(params.out2[1], 1.5, tolerance = 0.6)
-  expect_equal(params.out2[2] - 0.4, 0, tolerance = 0.15)
-  expect_equal(params.out2[3], 0.62, tolerance = 0.2)
-  expect_equal(params.out2[4], 2.0, tolerance = 0.15)
+  expect_equal(beta.out2[[1]], c(0.96, 1.03, 1.005, 0.99, rep(0, 6)),
+    tolerance = 0.04)
+  expect_equal(as.numeric(beta.out2[[2]] - mean(y)) - 0.0137, 0,
+    tolerance = 0.004)
+  expect_gt(params.out2[1], 1.50)
+  expect_lt(params.out2[1], 1.51)
+  expect_gt(params.out2[2], 0.35)
+  expect_lt(params.out2[2], 0.40)
+  expect_gt(params.out2[3], 0.574)
+  expect_lt(params.out2[3], 0.575)
+  expect_gt(params.out2[4], 1.92)
+  expect_lt(params.out2[4], 1.93)
 
   # Vecchia and full models should be approximately equal
   expect_equal(as.numeric(beta.out[[2]]), as.numeric(beta.out2[[2]]),
-    tolerance = 0.07)
+    tolerance = 0.03)
   expect_equal(as.numeric(beta.out[[1]]), as.numeric(beta.out2[[1]]),
-    tolerance = 0.04)
-  expect_equal(params.out[1], params.out2[1], tolerance = 1)
-  expect_equal(params.out[2] - params.out2[2], 0, tolerance = 0.2)
-  expect_equal(params.out[3], params.out2[3], tolerance = 0.3)
-  expect_equal(params.out[4], params.out2[4], tolerance = 0.2)
+    tolerance = 0.02)
+  expect_equal(params.out[1], params.out2[1], tolerance = 0.2)
+  expect_equal(params.out[2] - params.out2[2], 0, tolerance = 0.15)
+  expect_equal(params.out[3] - params.out2[3], 0, tolerance = 0.05)
+  expect_equal(params.out[4], params.out2[4], tolerance = 0.1)
 
   # Missing data
   set.seed(1234)
@@ -263,12 +272,12 @@ test_that("Simulated dataset spatial", {
 
   # Results should be the same after imputation
   expect_equal(as.numeric(beta.out[[2]] - mean(y)), beta.out3[1],
-    tolerance = 0.07)
-  expect_equal(as.numeric(beta.out[[1]]), beta.out3[-1], tolerance = 0.07)
-  expect_equal(params.out[1], params.out3[1], tolerance = 1.1)
+    tolerance = 0.005)
+  expect_equal(as.numeric(beta.out[[1]]), beta.out3[-1], tolerance = 0.06)
+  expect_equal(params.out[1], params.out3[1], tolerance = 0.9)
   expect_equal(params.out[2] - params.out3[2], 0, tolerance = 0.3)
-  expect_equal(params.out[3] - params.out3[3], 0, tolerance = 0.3)
-  expect_equal(params.out[4], params.out3[4], tolerance = 0.4)
+  expect_equal(params.out[3] - params.out3[3], 0, tolerance = 0.1)
+  expect_equal(params.out[4], params.out3[4], tolerance = 0.3)
 
   # Missing data with lod
   y.lod <- y + 10
@@ -276,9 +285,10 @@ test_that("Simulated dataset spatial", {
   y.na.lod <- y.lod
   y.na.lod[y.na.lod <= lod.cut] <- NA
 
+  doParallel::registerDoParallel(cores = 2)
   pgp.model4 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model4 <- prestogp_fit(pgp.model4, y.na.lod, X, locs,
-    scaling = c(1, 1), common_scale = TRUE, verbose = TRUE,
+    scaling = c(1, 1), common_scale = TRUE, verbose = TRUE, parallel = TRUE,
     impute.y = TRUE, lod = lod.cut,
     optim.control = list(
       trace = 0, maxit = 5000,
@@ -290,15 +300,15 @@ test_that("Simulated dataset spatial", {
 
   # Results should be the same after imputation
   expect_equal(as.numeric(beta.out[[2]] - mean(y)), beta.out4[1],
-    tolerance = 0.09)
-  expect_equal(as.numeric(beta.out[[1]]), beta.out4[-1], tolerance = 0.09)
-  expect_equal(params.out[1], params.out3[1], tolerance = 1.3)
-  expect_equal(params.out[2], params.out3[2], tolerance = 0.8)
-  expect_equal(params.out[3], params.out3[3], tolerance = 0.7)
-  expect_equal(params.out[4], params.out3[4], tolerance = 1)
+    tolerance = 0.004)
+  expect_equal(as.numeric(beta.out[[1]]), beta.out4[-1], tolerance = 0.04)
+  expect_equal(params.out[1] - params.out4[1], 0, tolerance = 0.9)
+  expect_equal(params.out[2] - params.out4[2], 0, tolerance = 0.3)
+  expect_equal(params.out[3], params.out4[3], tolerance = 0.4)
+  expect_equal(params.out[4], params.out4[4], tolerance = 0.3)
 
   # Adaptive lasso fit
-  pgp.model5 <- new("VecchiaModel")
+  pgp.model5 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model5 <- prestogp_fit(pgp.model5, y, X, locs,
     scaling = c(1, 1), common_scale = TRUE, quiet = TRUE, adaptive = TRUE,
     optim.control = list(
@@ -313,16 +323,16 @@ test_that("Simulated dataset spatial", {
   expect_equal(as.numeric(beta.out[[2]]), as.numeric(beta.out5[[2]]),
     tolerance = 0.005)
   expect_equal(as.numeric(beta.out[[1]]), as.numeric(beta.out5[[1]]),
-    tolerance = 0.05)
-  expect_equal(params.out[1], params.out5[1], tolerance = 0.9)
-  expect_equal(params.out[2] - params.out5[2], 0, tolerance = 0.2)
-  expect_equal(params.out[3], params.out5[3], tolerance = 0.3)
-  expect_equal(params.out[4], params.out5[4], tolerance = 0.2)
+    tolerance = 0.06)
+  expect_equal(params.out[1], params.out5[1], tolerance = 0.4)
+  expect_equal(params.out[2] - params.out5[2], 0, tolerance = 0.06)
+  expect_equal(params.out[3], params.out5[3], tolerance = 0.1)
+  expect_equal(params.out[4], params.out5[4], tolerance = 0.1)
 
   # Relaxed lasso fit
-  pgp.model6 <- new("VecchiaModel")
+  pgp.model6 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model6 <- prestogp_fit(pgp.model6, y, X, locs,
-    scaling = c(1, 1), common_scale = TRUE, quiet = TRUE, relax = TRUE,
+    scaling = c(1, 1), common_scale = TRUE, quiet = TRUE, penalty = "relaxed",
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -331,13 +341,103 @@ test_that("Simulated dataset spatial", {
   beta.out6 <- get_beta(pgp.model6)
   params.out6 <- pgp.model6@covparams
 
-  expect_equal(as.numeric(beta.out6[[1]]), c(0.98, 1.04, 1.0, 1.02, rep(0, 6)),
+  expect_equal(as.numeric(beta.out6[[1]]), c(0.979, 1.037, 1.009, 1.015,
+      rep(0, 6)), tolerance = 0.003)
+  expect_equal(as.numeric(beta.out6[[2]] - mean(y)), 0.002, tolerance = 0.003)
+  expect_equal(params.out6[1], 1.44, tolerance = 0.2)
+  expect_equal(params.out6[2] - 0.41, 0, tolerance = 0.06)
+  expect_equal(params.out6[3] - 0.56, 0, tolerance = 0.06)
+  expect_equal(params.out6[4], 1.99, tolerance = 0.1)
+
+  # SCAD fit
+  pgp.model7 <- new("VecchiaModel", n_neighbors = 25)
+  pgp.model7 <- prestogp_fit(pgp.model7, y, X, locs,
+    scaling = c(1, 1), common_scale = TRUE, quiet = TRUE, penalty = "SCAD",
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+
+  expect_silent(plot_beta(pgp.model7))
+  dev.off()
+
+  beta.out7 <- get_beta(pgp.model7)
+  params.out7 <- pgp.model7@covparams
+
+  expect_equal(as.numeric(beta.out7[[1]]), c(0.979, 1.038, 1.009, 1.015,
+      rep(0, 6)), tolerance = 0.006)
+  expect_equal(as.numeric(beta.out7[[2]] - mean(y)), 0.002, tolerance = 0.003)
+  expect_equal(params.out7[1], 1.47, tolerance = 0.2)
+  expect_equal(params.out7[2] - 0.405, 0, tolerance = 0.06)
+  expect_equal(params.out7[3] - 0.56, 0, tolerance = 0.06)
+  expect_equal(params.out7[4], 2.0, tolerance = 0.1)
+
+  # Missing data
+  pgp.model8 <- new("VecchiaModel", n_neighbors = 25)
+  pgp.model8 <- prestogp_fit(pgp.model8, y.na, X, locs,
+    scaling = c(1, 1), common_scale = TRUE, quiet = FALSE,
+    impute.y = TRUE, penalty = "SCAD",
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  beta.out8 <- as.vector(pgp.model8@beta)
+  params.out8 <- pgp.model8@covparams
+
+  # Results should be the same after imputation
+  expect_equal(as.numeric(beta.out7[[2]] - mean(y)), beta.out8[1],
     tolerance = 0.006)
-  expect_equal(as.numeric(beta.out6[[2]] - mean(y)), 0.002, tolerance = 0.002)
-  expect_equal(params.out6[1], 1.5, tolerance = 0.2)
-  expect_equal(params.out6[2] - 0.4, 0, tolerance = 0.04)
-  expect_equal(params.out6[3] - 0.57, 0, tolerance = 0.05)
-  expect_equal(params.out6[4], 2.0, tolerance = 0.1)
+  expect_equal(as.numeric(beta.out7[[1]]), beta.out8[-1], tolerance = 0.06)
+  expect_equal(params.out7[1], params.out8[1], tolerance = 0.7)
+  expect_equal(params.out7[2] - params.out8[2], 0, tolerance = 0.3)
+  expect_equal(params.out7[3] - params.out8[3], 0, tolerance = 0.1)
+  expect_equal(params.out7[4], params.out8[4], tolerance = 0.3)
+
+  # Missing data with lod
+  cl <- parallel::makeCluster(2)
+  pgp.model9 <- new("VecchiaModel", n_neighbors = 25)
+  pgp.model9 <- prestogp_fit(pgp.model9, y.na.lod, X, locs,
+    scaling = c(1, 1), common_scale = TRUE, verbose = TRUE,
+    impute.y = TRUE, lod = lod.cut, penalty = "SCAD", cluster = cl,
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  parallel::stopCluster(cl)
+  beta.out9 <- as.vector(pgp.model9@beta)
+  params.out9 <- pgp.model9@covparams
+
+  # Results should be the same after imputation
+  expect_equal(as.numeric(beta.out7[[2]] - mean(y)), beta.out9[1],
+    tolerance = 0.004)
+  expect_equal(as.numeric(beta.out7[[1]]), beta.out9[-1], tolerance = 0.02)
+  expect_equal(params.out7[1] - params.out9[1], 0, tolerance = 0.9)
+  expect_equal(params.out7[2] - params.out9[2], 0, tolerance = 0.2)
+  expect_equal(params.out7[3], params.out9[3], tolerance = 0.4)
+  expect_equal(params.out7[4], params.out9[4], tolerance = 0.3)
+
+  # MCP fit
+  pgp.model10 <- new("VecchiaModel", n_neighbors = 25)
+  pgp.model10 <- prestogp_fit(pgp.model10, y, X, locs,
+    scaling = c(1, 1), common_scale = TRUE, quiet = TRUE, penalty = "MCP",
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+  beta.out10 <- get_beta(pgp.model10)
+  params.out10 <- pgp.model10@covparams
+
+  expect_equal(as.numeric(beta.out10[[1]]), c(0.979, 1.038, 1.009, 1.015,
+      rep(0, 6)), tolerance = 0.03)
+  expect_equal(as.numeric(beta.out10[[2]] - mean(y)), 0.002, tolerance = 0.003)
+  expect_equal(params.out10[1], 1.46, tolerance = 0.2)
+  expect_equal(params.out10[2] - 0.41, 0, tolerance = 0.05)
+  expect_equal(params.out10[3] - 0.565, 0, tolerance = 0.05)
+  expect_equal(params.out10[4], 2.0, tolerance = 0.1)
 })
 
 test_that("Simulated dataset spatiotemporal", {
@@ -379,19 +479,18 @@ test_that("Simulated dataset spatiotemporal", {
   expect_identical(as.numeric(theta.out[[3]]), params.out[4])
   expect_identical(as.numeric(theta.out[[4]]), params.out[5])
 
-  expect_equal(beta.out, c(0, 0.9, 0.99, 0.93, 0.985, rep(0, 6)),
-    tolerance = 0.02
-  )
+  expect_equal(beta.out, c(0.002, 0.956, 1.023, 0.961, 1.03, 0, 0.011, 0.056,
+      -0.04, -0.026, 0), tolerance = 0.006)
   expect_gt(params.out[1], 0.87)
-  expect_lt(params.out[1], 1.5)
+  expect_lt(params.out[1], 1.2)
   expect_gt(params.out[2], 0.09)
-  expect_lt(params.out[2], 0.19)
-  expect_gt(params.out[3], 0.88)
-  expect_lt(params.out[3], 2.18)
-  expect_gt(params.out[4], 0.83)
-  expect_lt(params.out[4], 1.35)
-  expect_gt(params.out[5], 0.72)
-  expect_lt(params.out[5], 0.83)
+  expect_lt(params.out[2], 0.15)
+  expect_gt(params.out[3], 0.9)
+  expect_lt(params.out[3], 1.5)
+  expect_gt(params.out[4], 1)
+  expect_lt(params.out[4], 1.25)
+  expect_gt(params.out[5], 0.7)
+  expect_lt(params.out[5], 0.77)
 
   pgp.model2 <- new("FullModel", n_neighbors = 25)
   pgp.model2 <- prestogp_fit(pgp.model2, y, X, locs,
@@ -410,27 +509,26 @@ test_that("Simulated dataset spatiotemporal", {
 
   expect_length(beta.out2, 11)
   expect_length(params.out2, 6)
-  expect_equal(beta.out2, c(0.01, 0.91, 0.99, 0.93, 0.99, rep(0, 6)),
-    tolerance = 0.02
-  )
-  expect_gt(params.out2[1], 0.82)
-  expect_lt(params.out2[1], 1.4)
-  expect_gt(params.out2[2], 0.07)
-  expect_lt(params.out2[2], 0.13)
-  expect_gt(params.out2[3], 0.91)
-  expect_lt(params.out2[3], 1.73)
-  expect_gt(params.out2[4], 1.06)
-  expect_lt(params.out2[4], 1.61)
-  expect_gt(params.out2[5], 0.73)
-  expect_lt(params.out2[5], 0.85)
+  expect_equal(beta.out2, c(0.011, 0.956, 1.023, 0.958, 1.029, 0, 0.013, 0.059,
+      -0.04, -0.027, 0), tolerance = 0.02)
+  expect_gt(params.out2[1], 1)
+  expect_lt(params.out2[1], 1.03)
+  expect_gt(params.out2[2], 0.0875)
+  expect_lt(params.out2[2], 0.105)
+  expect_gt(params.out2[3], 1.1)
+  expect_lt(params.out2[3], 1.4)
+  expect_gt(params.out2[4], 1.1)
+  expect_lt(params.out2[4], 1.4)
+  expect_gt(params.out2[5], 0.74)
+  expect_lt(params.out2[5], 0.77)
 
   # Vecchia and full models should be approximately equal
-  expect_equal(beta.out, beta.out2, tolerance = 0.03)
-  expect_equal(params.out[1], params.out2[1], tolerance = 0.7)
-  expect_equal(params.out[2] - params.out2[2], 0, tolerance = 0.1)
-  expect_equal(params.out[3] - params.out2[3], 0, tolerance = 0.9)
-  expect_equal(params.out[4], params.out2[4], tolerance = 0.6)
-  expect_equal(params.out[5], params.out2[5], tolerance = 0.1)
+  expect_equal(beta.out, beta.out2, tolerance = 0.02)
+  expect_equal(params.out[1], params.out2[1], tolerance = 0.15)
+  expect_equal(params.out[2] - params.out2[2], 0, tolerance = 0.06)
+  expect_equal(params.out[3] - params.out2[3], 0, tolerance = 0.4)
+  expect_equal(params.out[4], params.out2[4], tolerance = 0.4)
+  expect_equal(params.out[5], params.out2[5], tolerance = 0.06)
 })
 
 test_that("Invalid locs input for prediction", {
@@ -581,7 +679,7 @@ test_that("m too large for prediction", {
 })
 
 test_that("Simulated spatial prediction", {
-  source("sim_vecchia_pred.R")
+  load("sim_vecchia_pred.RData")
   pgp.model1 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr, locs.otr,
     scaling = c(1, 1),
@@ -597,6 +695,25 @@ test_that("Simulated spatial prediction", {
   mse <- mean((pgp.model1.pred$means - y.otst)^2)
   me <- mean(pgp.model1.pred$means - y.otst)
 
-  expect_equal(mse, 2.24, tolerance = 0.07)
-  expect_equal(me, 0.03, tolerance = 0.05)
+  expect_equal(mse, 2.1733, tolerance = 0.0015)
+  expect_equal(me - 0.0442, 0, tolerance = 0.002)
+
+  # SCAD fit
+  pgp.model2 <- new("VecchiaModel", n_neighbors = 25)
+  pgp.model2 <- prestogp_fit(pgp.model2, y.otr, X.otr, locs.otr,
+    scaling = c(1, 1),
+    common_scale = TRUE, quiet = TRUE, penalty = "SCAD",
+    optim.control = list(
+      trace = 0, maxit = 5000,
+      reltol = 1e-3
+    )
+  )
+
+  pgp.model2.pred <- prestogp_predict(pgp.model2, X.otst, locs.otst)
+
+  mse <- mean((pgp.model2.pred$means - y.otst)^2)
+  me <- mean(pgp.model2.pred$means - y.otst)
+
+  expect_equal(mse, 2.1655, tolerance = 0.001)
+  expect_equal(me - 0.04496, 0, tolerance = 0.002)
 })

@@ -1,3 +1,47 @@
+# PrestoGP 0.2.0.9045 (2025-3-10)
+
+## MINOR IMPROVEMENTS
+
+* Fixed some linting issues
+
+# PrestoGP 0.2.0.9044 (2025-3-7)
+
+## BREAKING CHANGES
+
+* Removed the `relax` parameter from `prestogp_fit`
+
+* All glmnet-based models now use lambda.min (rather than lambda.1se) to
+  choose the optimal value of lambda
+
+## NEW FEATURES
+
+* Added the parameter `penalty` to `prestogp_fit` to specify the type of
+  penalized regression (relaxed lasso, SCAD, and MCP)
+
+* Added the parameter `alpha` to `prestogp_fit` to change the alpha parameter
+  in glmnet/ncvreg (which can be used to fit ridge regression or elastic
+  net models)
+
+## MINOR IMPROVEMENTS
+
+* Subsampling is no longer used to calculate the initial estimates of the
+  scale parameters in `calc_covparams`
+
+* Fixed an issue where the C++ code displayed repeated warnings when an
+  estimated submatrix was nearly numerically singular
+
+* Many new tests were added to test the new penalties
+
+## BUG FIXES
+
+* Fixed an issue where initial scale parameter estimates were sometimes set
+  to 0 due to subsampling
+
+* Fixed an issue where likelihood calculations could crash if the estimated
+  U matrix is numerically singular
+
+* Fixed an issue where imputed values were not being updated properly
+
 # PrestoGP 0.2.0.9043 (2025-1-29)
 
 ## BUG FIXES

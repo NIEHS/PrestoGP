@@ -2,7 +2,7 @@
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @import GPvecchia Matrix fields MASS glmnet
+#' @import GPvecchia Matrix fields MASS glmnet ncvreg
 #' @importFrom foreach %dopar%
 #' @importFrom foreach foreach
 #' @importFrom methods callNextMethod
