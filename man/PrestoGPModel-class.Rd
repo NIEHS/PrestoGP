@@ -52,8 +52,12 @@ last element of beta corresponding to predictors for outcome \emph{i}.}
 of the list corresponds to a different outcome. (The list will have length
 1 for univariate models.)}
 
-\item{\code{linear_model}}{The glmnet model. See \code{\link[glmnet]{glmnet}} and
-\code{\link[glmnet]{cv.glmnet}}.}
+\item{\code{penalty}}{The type of penalized regression used. Should be one
+of "lasso", "relaxed", "MCP", or "SCAD".}
+
+\item{\code{linear_model}}{The glmnet or ncvreg model. See
+\code{\link[glmnet]{glmnet}}, \code{\link[ncvreg]{ncvreg}},
+\code{\link[glmnet]{cv.glmnet}}, and \code{\link[ncvreg]{cv.ncvreg}}.}
 
 \item{\code{converged}}{Did the model fitting process converge (boolean)?}
 
@@ -67,7 +71,8 @@ approximation. Ignored for full models.}
 
 \item{\code{min_m}}{Minimum permissible number of neighbors.}
 
-\item{\code{alpha}}{Parameter alpha for glmnet. See \code{\link[glmnet]{glmnet}}.}
+\item{\code{alpha}}{Parameter alpha for glmnet or ncvreg. See
+\code{\link[glmnet]{glmnet}} or \code{\link[ncvreg]{ncvreg}}.}
 
 \item{\code{scaling}}{The indices of the scale parameters. See
 \code{link{prestogp_fit}}.}
