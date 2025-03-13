@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9043</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9045</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,6 +30,38 @@
       <small>Source: <a href="https://github.com/NIEHS/PrestoGP/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0.9045" id="prestogp-0209045-2025-3-10">PrestoGP 0.2.0.9045 (2025-3-10)<a class="anchor" aria-label="anchor" href="#prestogp-0209045-2025-3-10"></a></h2>
+<div class="section level3">
+<h3 id="minor-improvements-0-2-0-9045">MINOR IMPROVEMENTS<a class="anchor" aria-label="anchor" href="#minor-improvements-0-2-0-9045"></a></h3>
+<ul><li>Fixed some linting issues</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0.9044" id="prestogp-0209044-2025-3-7">PrestoGP 0.2.0.9044 (2025-3-7)<a class="anchor" aria-label="anchor" href="#prestogp-0209044-2025-3-7"></a></h2>
+<div class="section level3">
+<h3 id="breaking-changes-0-2-0-9044">BREAKING CHANGES<a class="anchor" aria-label="anchor" href="#breaking-changes-0-2-0-9044"></a></h3>
+<ul><li><p>Removed the <code>relax</code> parameter from <code>prestogp_fit</code></p></li>
+<li><p>All glmnet-based models now use lambda.min (rather than lambda.1se) to choose the optimal value of lambda</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-0-2-0-9044">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-0-2-0-9044"></a></h3>
+<ul><li><p>Added the parameter <code>penalty</code> to <code>prestogp_fit</code> to specify the type of penalized regression (relaxed lasso, SCAD, and MCP)</p></li>
+<li><p>Added the parameter <code>alpha</code> to <code>prestogp_fit</code> to change the alpha parameter in glmnet/ncvreg (which can be used to fit ridge regression or elastic net models)</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="minor-improvements-0-2-0-9044">MINOR IMPROVEMENTS<a class="anchor" aria-label="anchor" href="#minor-improvements-0-2-0-9044"></a></h3>
+<ul><li><p>Subsampling is no longer used to calculate the initial estimates of the scale parameters in <code>calc_covparams</code></p></li>
+<li><p>Fixed an issue where the C++ code displayed repeated warnings when an estimated submatrix was nearly numerically singular</p></li>
+<li><p>Many new tests were added to test the new penalties</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-2-0-9044">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0-9044"></a></h3>
+<ul><li><p>Fixed an issue where initial scale parameter estimates were sometimes set to 0 due to subsampling</p></li>
+<li><p>Fixed an issue where likelihood calculations could crash if the estimated U matrix is numerically singular</p></li>
+<li><p>Fixed an issue where imputed values were not being updated properly</p></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0.9043" id="prestogp-0209043-2025-1-29">PrestoGP 0.2.0.9043 (2025-1-29)<a class="anchor" aria-label="anchor" href="#prestogp-0209043-2025-1-29"></a></h2>
 <div class="section level3">

@@ -15,7 +15,7 @@ the appropriate inherited class for the type of model they are fitting."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9043</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9045</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -115,9 +115,15 @@ of the list corresponds to a different outcome. (The list will have length
 1 for univariate models.)</p></dd>
 
 
+<dt><code>penalty</code></dt>
+<dd><p>The type of penalized regression used. Should be one
+of "lasso", "relaxed", "MCP", or "SCAD".</p></dd>
+
+
 <dt><code>linear_model</code></dt>
-<dd><p>The glmnet model. See <code><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet</a></code> and
-<code><a href="https://glmnet.stanford.edu/reference/cv.glmnet.html" class="external-link">cv.glmnet</a></code>.</p></dd>
+<dd><p>The glmnet or ncvreg model. See
+<code><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet</a></code>, <code><a href="https://pbreheny.github.io/ncvreg/reference/ncvreg.html" class="external-link">ncvreg</a></code>,
+<code><a href="https://glmnet.stanford.edu/reference/cv.glmnet.html" class="external-link">cv.glmnet</a></code>, and <code><a href="https://pbreheny.github.io/ncvreg/reference/cv.ncvreg.html" class="external-link">cv.ncvreg</a></code>.</p></dd>
 
 
 <dt><code>converged</code></dt>
@@ -143,7 +149,8 @@ approximation. Ignored for full models.</p></dd>
 
 
 <dt><code>alpha</code></dt>
-<dd><p>Parameter alpha for glmnet. See <code><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet</a></code>.</p></dd>
+<dd><p>Parameter alpha for glmnet or ncvreg. See
+<code><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet</a></code> or <code><a href="https://pbreheny.github.io/ncvreg/reference/ncvreg.html" class="external-link">ncvreg</a></code>.</p></dd>
 
 
 <dt><code>scaling</code></dt>
