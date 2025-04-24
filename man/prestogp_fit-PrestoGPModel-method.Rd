@@ -17,10 +17,14 @@
   covparams = NULL,
   beta.hat = NULL,
   tol = 0.999999,
-  max_iters = 100,
+  max.iters = 100,
   center.y = NULL,
   impute.y = FALSE,
-  lod = NULL,
+  lod.upper = NULL,
+  lod.lower = NULL,
+  n.impute = 10,
+  eps.impute = 0.01,
+  maxit.impute = 1,
   quiet = FALSE,
   verbose = FALSE,
   optim.method = "Nelder-Mead",
@@ -71,7 +75,7 @@ is only one scale parameter for each outcome and FALSE otherwise.}
 \item{tol}{The model is considered converged when error is not less than
 tol*previous_error (optional). Defaults to 0.999999.}
 
-\item{max_iters}{Maximum number of iterations for the model fitting
+\item{max.iters}{Maximum number of iterations for the model fitting
 procedure. Defaults to 100.}
 
 \item{center.y}{Should the Y's be mean centered before fitting the model?
@@ -79,14 +83,28 @@ Defaults to TRUE for gaussian models and FALSE for binomial models.}
 
 \item{impute.y}{Should missing Y's be imputed? Defaults to FALSE.}
 
-\item{lod}{Limit of detection value(s). Any Y value less than lod is
-assumed to be missing when performing missing data imputation. Should be
-numeric for univariate models and a list for multivariate models, where
-each element of the list corresponds to an outcome. The ith element of
-the lod is the limit of detection for observation i. Alternatively, one
-can specify a single limit of detection that is assumed to be the same for
-all observations. If not specified, it is assumed that no limit of
-detection exists. Ignored if impute.y is FALSE.}
+\item{lod.upper}{Upper limit of detection value(s). Any missing Y is
+assumed to be less than lod.upper when performing missing data imputation.
+Should be numeric for univariate models and a list for multivariate models,
+where each element of the list corresponds to an outcome. The \emph{i}th
+element of the lod is the limit of detection for observation i.
+Alternatively, one can specify a single limit of detection that is assumed
+to be the same for all observations. If not specified, it is assumed that
+no upper limit of detection exists. Ignored if impute.y is FALSE.}
+
+\item{lod.lower}{Same as lod.upper, except it specifies the lower limit of
+detection: missing Y values are assumed to be greater than lod.lower. This
+is often equal to 0.}
+
+\item{n.impute}{How many multiply imputed values of missing y's should be
+generated? Defaults to 10.}
+
+\item{eps.impute}{The multiple imputation procedure will stop if successive
+coefficient estimates are within eps.impute of one another. Defaults to
+0.01.}
+
+\item{maxit.impute}{Maximum number of iterations for the multiple imputation
+procedure . Defaults to 1. See Details.}
 
 \item{quiet}{If FALSE, the penalized log likelihood and the model MSE
 will be printed for each iteration of the model fitting procedure. No
@@ -161,6 +179,17 @@ under the assumption that all scale parameters are equal to 1. For
 univariate models, the Vecchia approximation will not be recomputed in
 each iteration of the model fitting procedure if common_scale is TRUE,
 but the parameter is otherwise ignored.
+
+If impute.y is TRUE, missing values of y will be imputed. If there is no
+limit of detection specified, then missing y's will be imputed using an
+EM algorithm. If there are limits of detection, then missing y's will be
+imputed using a multiple imputation algorithm based on the current
+estimates of the Matern (theta) parameters. Unfortunately, this procedure
+is not robust to inaccurate estimates of theta and produce inaccurate
+results if theta is misspecified. Thus, the maximum number of iterations is
+set to 1 by default. Results can be improved by increasing the number of
+iterations if one has confidence in the theta estimates. If impute.y is
+FALSE, then any missing y's will produce an error.
 }
 \examples{
 data(soil)
@@ -185,7 +214,8 @@ soil.lod <- quantile(y, 0.1)
 y.lod <- y
 y.lod[y.lod <= soil.lod] <- NA
 soil.vm3 <- new("VecchiaModel", n_neighbors = 10)
-soil.vm3 <- prestogp_fit(soil.vm, y, X, locs, impute.y = TRUE, lod = soil.lod)
+soil.vm3 <- prestogp_fit(soil.vm, y, X, locs, impute.y = TRUE,
+lod.upper = soil.lod)
 
 # Full model
 soil.fm <- new("FullModel")
