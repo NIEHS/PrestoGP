@@ -1,3 +1,34 @@
+# PrestoGP 0.2.0.9047 (2025-4-28)
+
+## BUG FIXES
+
+* Fixed a bug in the multivariate version of `prestogp_predict`
+
+# PrestoGP 0.2.0.9046 (2025-4-24)
+
+## BREAKING CHANGES
+
+* The parameter `lod` has been renamed to be `lod.upper`
+
+* The parameter `max_iters` has been renamed as `max.iters` for a consistent
+  naming convention
+
+## NEW FEATURES
+
+* The `prestogp_fit` method now supports lower limits of detection via the
+  `lod.lower` parameter
+
+* Additional tuning parameters can be specified for the LOD imputation
+  procedure, namely `n.impute`, `eps.impute`, and `maxit.impute`
+
+## BUG FIXES
+
+* Added another set of fixes to avoid crashes when the estimated U matrix is
+  numerically singular
+
+* Subsampling is once again used for initial scale parameter estimates for
+  large (>10,000 observation) data sets for computational reasons
+
 # PrestoGP 0.2.0.9045 (2025-3-10)
 
 ## MINOR IMPROVEMENTS

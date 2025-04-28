@@ -101,15 +101,15 @@ setMethod("prestogp_predict", "VecchiaModel",
       return.list <- list(means = Vec.mean)
     } else {
       warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
-      Vec.sds <- sqrt(pred$var.pred + model@covparams[4]) # nolint
-      return.list <- list(means = Vec.mean, sds = Vec.sds) # nolint
+      Vec.sds <- sqrt(pred$var.pred + model@covparams[4])
+      return.list <- list(means = Vec.mean, sds = Vec.sds)
     }
 
     return.list
   }
 )
 
-setMethod("check_input", "VecchiaModel", function(model, Y, X, locs, Y.names, X.names, center.y, impute.y, lod) {
+setMethod("check_input", "VecchiaModel", function(model, Y, X, locs, Y.names, X.names, center.y, impute.y, lod.upper, lod.lower) {
   if (!is.matrix(locs)) {
     stop("locs must be a matrix")
   }
@@ -140,20 +140,34 @@ setMethod("check_input", "VecchiaModel", function(model, Y, X, locs, Y.names, X.
   if (sum(is.na(Y)) > 0 & !impute.y) {
     stop("Y contains NA's and impute.y is FALSE. Set impute.y=TRUE to impute missing Y's.")
   }
-  if (!is.null(lod)) {
-    if (!is.numeric(lod)) {
-      stop("lod must be numeric")
+  if (!is.null(lod.upper)) {
+    if (!is.numeric(lod.upper)) {
+      stop("lod.upper must be numeric")
     }
-    if (length(lod) != nrow(X) & length(lod) != 1) {
-      stop("Length of lod must equal the number of observations")
+    if (length(lod.upper) != nrow(X) & length(lod.upper) != 1) {
+      stop("Length of lod.upper must equal the number of observations")
+    }
+  }
+  if (!is.null(lod.lower)) {
+    if (!is.numeric(lod.lower)) {
+      stop("lod.lower must be numeric")
+    }
+    if (length(lod.lower) != nrow(X) & length(lod.lower) != 1) {
+      stop("Length of lod.lower must equal the number of observations")
     }
   }
   model@Y_obs <- !is.na(as.vector(Y))
-  if (!is.null(lod)) {
-    if (length(lod) > 1) {
-      Y[!model@Y_obs] <- lod[!model@Y_obs]
+  if (!is.null(lod.upper)) {
+    if (length(lod.upper) > 1) {
+      Y[!model@Y_obs] <- lod.upper[!model@Y_obs]
     } else {
-      Y[!model@Y_obs] <- lod
+      Y[!model@Y_obs] <- lod.upper
+    }
+  } else if (!is.null(lod.lower)) {
+    if (length(lod.lower) > 1) {
+      Y[!model@Y_obs] <- lod.lower[!model@Y_obs]
+    } else {
+      Y[!model@Y_obs] <- lod.lower
     }
   }
   if (center.y) {
@@ -255,7 +269,7 @@ setMethod("impute_y", "VecchiaModel", function(model) {
   invisible(model)
 })
 
-setMethod("impute_y_lod", "VecchiaModel", function(model, lod, n.mi = 10,
+setMethod("impute_y_lod", "VecchiaModel", function(model, lodu, lodl, n.mi = 10,
   eps = 0.01, maxit = 1, family, nfolds, foldid, parallel, cluster, verbose) {
   y <- model@Y_train
   X <- model@X_train
@@ -293,15 +307,15 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lod, n.mi = 10,
     coef.mat <- matrix(nrow = n.mi, ncol = (ncol(X) + 1))
     if (parallel) {
       yi <- foreach(i = seq_len(n.mi), .combine = cbind) %dopar% {
-        out <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
-          lod - yhat.ni, miss, locs.nn, Sigma.hat)
+        out <- rtmvn_snn2(y - yhat.ni, lodl - yhat.ni,
+          lodu - yhat.ni, miss, locs.nn, Sigma.hat)
         out + yhat.ni
       }
     } else {
       yi <- matrix(nrow = length(yhat.ni), ncol = n.mi)
       for (i in seq_len(n.mi)) {
-        yi[, i] <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
-          lod - yhat.ni, miss, locs.nn, Sigma.hat)
+        yi[, i] <- rtmvn_snn2(y - yhat.ni, lodl - yhat.ni,
+          lodu - yhat.ni, miss, locs.nn, Sigma.hat)
         yi[, i] <- yi[, i] + yhat.ni
       }
     }
@@ -338,8 +352,8 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lod, n.mi = 10,
 
   if (parallel) {
     y.na.mat <- foreach(i = seq_len(100), .combine = rbind) %dopar% {
-      yi <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
-        lod - yhat.ni, miss, locs.nn, Sigma.hat)
+      yi <- rtmvn_snn2(y - yhat.ni, lodl - yhat.ni,
+        lodu - yhat.ni, miss, locs.nn, Sigma.hat)
       yi <- yi + yhat.ni
       yi[miss]
     }
@@ -347,8 +361,8 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lod, n.mi = 10,
     y.na.mat <- matrix(nrow = 100, ncol = sum(miss))
 
     for (i in seq_len(100)) {
-      yi <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
-        lod - yhat.ni, miss, locs.nn, Sigma.hat)
+      yi <- rtmvn_snn2(y - yhat.ni, lodl - yhat.ni,
+        lodu - yhat.ni, miss, locs.nn, Sigma.hat)
       yi <- yi + yhat.ni
       y.na.mat[i, ] <- yi[miss]
     }
@@ -448,7 +462,7 @@ setMethod("transform_data", "VecchiaModel", function(model, Y, X) {
     )
   }
 
-  model@y_tilde <- Matrix(transformed.data[, 1])
+  model@y_tilde <- Matrix(transformed.data[, 1], sparse = FALSE)
   model@X_tilde <- Matrix(transformed.data[, -1], sparse = FALSE)
   invisible(model)
 })
