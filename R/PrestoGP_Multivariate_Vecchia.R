@@ -121,19 +121,19 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
     for (i in seq_along(locs)) {
       ndx.out <- c(ndx.out, rep(i, nrow(locs[[i]])))
     }
+    Vec.mean <- list()
+    for (i in seq_along(locs)) {
+      Vec.mean[[i]] <- Vec.mean.all[ndx.out == i]
+    }
+    names(Vec.mean) <- names(model@locs_train)
     if (return.values == "mean") {
-      Vec.mean <- list()
-      for (i in seq_along(locs)) {
-        Vec.mean[[i]] <- Vec.mean.all[ndx.out == i]
-      }
-      names(Vec.mean) <- names(model@locs_train)
       return.list <- list(means = Vec.mean)
     } else {
       warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
       Vec.sds <- list()
       for (i in seq_along(locs)) {
         Vec.sds[[i]] <- sqrt(pred$var.pred[ndx.out == i] +
-            model@covparams[model@param_sequence[4, i]])
+            model@covparams[model@param_sequence[4, 1] + i - 1])
       }
       return.list <- list(means = Vec.mean, sds = Vec.sds)
     }

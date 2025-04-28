@@ -101,8 +101,8 @@ setMethod("prestogp_predict", "VecchiaModel",
       return.list <- list(means = Vec.mean)
     } else {
       warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
-      Vec.sds <- sqrt(pred$var.pred + model@covparams[4]) # nolint
-      return.list <- list(means = Vec.mean, sds = Vec.sds) # nolint
+      Vec.sds <- sqrt(pred$var.pred + model@covparams[4])
+      return.list <- list(means = Vec.mean, sds = Vec.sds)
     }
 
     return.list

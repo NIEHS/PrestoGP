@@ -1,3 +1,9 @@
+# PrestoGP 0.2.0.9047 (2025-4-28)
+
+## BUG FIXES
+
+* Fixed a bug in the multivariate version of `prestogp_predict`
+
 # PrestoGP 0.2.0.9046 (2025-4-24)
 
 ## BREAKING CHANGES
