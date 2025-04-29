@@ -165,7 +165,8 @@ setGeneric(
   "prestogp_fit",
   function(model, Y, X, locs, Y.names = NULL, X.names = NULL, scaling = NULL,
     common_scale = NULL, covparams = NULL, beta.hat = NULL, tol = 0.999999,
-    max_iters = 100, center.y = NULL, impute.y = FALSE, lod = NULL,
+    max.iters = 100, center.y = NULL, impute.y = FALSE, lod.upper = NULL,
+    lod.lower = NULL, n.impute = 10, eps.impute = 0.01, maxit.impute = 1,
     quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     penalty = c("lasso", "relaxed", "MCP", "SCAD"), alpha = 1,
@@ -278,7 +279,7 @@ setGeneric("estimate_betas",
     standardGeneric("estimate_betas")})
 setGeneric("impute_y", function(model) standardGeneric("impute_y"))
 setGeneric("impute_y_lod",
-  function(model, lod, n.mi = 10, eps = 0.01, maxit = 5, family, nfolds,
+  function(model, lodu, lodl, n.mi = 10, eps = 0.01, maxit = 5, family, nfolds,
     foldid, parallel, cluster, verbose) {
     standardGeneric("impute_y_lod")})
 setGeneric("compute_error",
@@ -287,7 +288,8 @@ setGeneric("scale_locs", function(model, locs) standardGeneric("scale_locs"))
 setGeneric("transform_covariance_parameters",
   function(model) standardGeneric("transform_covariance_parameters"))
 setGeneric("check_input",
-  function(model, Y, X, locs, Y.names, X.names, center.y, impute.y, lod) {
+  function(model, Y, X, locs, Y.names, X.names, center.y, impute.y, lod.upper,
+    lod.lower) {
     standardGeneric("check_input")})
 setGeneric("check_input_pred",
   function(model, X, locs) standardGeneric("check_input_pred"))
@@ -772,19 +774,29 @@ setMethod(
 #' @param beta.hat The initial beta parameters estimates (optional).
 #' @param tol The model is considered converged when error is not less than
 #' tol*previous_error (optional). Defaults to 0.999999.
-#' @param max_iters Maximum number of iterations for the model fitting
+#' @param max.iters Maximum number of iterations for the model fitting
 #' procedure. Defaults to 100.
 #' @param center.y Should the Y's be mean centered before fitting the model?
 #' Defaults to TRUE for gaussian models and FALSE for binomial models.
 #' @param impute.y Should missing Y's be imputed? Defaults to FALSE.
-#' @param lod Limit of detection value(s). Any Y value less than lod is
-#' assumed to be missing when performing missing data imputation. Should be
-#' numeric for univariate models and a list for multivariate models, where
-#' each element of the list corresponds to an outcome. The ith element of
-#' the lod is the limit of detection for observation i. Alternatively, one
-#' can specify a single limit of detection that is assumed to be the same for
-#' all observations. If not specified, it is assumed that no limit of
-#' detection exists. Ignored if impute.y is FALSE.
+#' @param lod.upper Upper limit of detection value(s). Any missing Y is
+#' assumed to be less than lod.upper when performing missing data imputation.
+#' Should be numeric for univariate models and a list for multivariate models,
+#' where each element of the list corresponds to an outcome. The \emph{i}th
+#' element of the lod is the limit of detection for observation i.
+#' Alternatively, one can specify a single limit of detection that is assumed
+#' to be the same for all observations. If not specified, it is assumed that
+#' no upper limit of detection exists. Ignored if impute.y is FALSE.
+#' @param lod.lower Same as lod.upper, except it specifies the lower limit of
+#' detection: missing Y values are assumed to be greater than lod.lower. This
+#' is often equal to 0.
+#' @param n.impute How many multiply imputed values of missing y's should be
+#' generated? Defaults to 10.
+#' @param eps.impute The multiple imputation procedure will stop if successive
+#' coefficient estimates are within eps.impute of one another. Defaults to
+#' 0.01.
+#' @param maxit.impute Maximum number of iterations for the multiple imputation
+#' procedure . Defaults to 1. See Details.
 #' @param quiet If FALSE, the penalized log likelihood and the model MSE
 #' will be printed for each iteration of the model fitting procedure. No
 #' intermediate output will be printed if TRUE. Defaults to FALSE.
@@ -838,6 +850,17 @@ setMethod(
 #' each iteration of the model fitting procedure if common_scale is TRUE,
 #' but the parameter is otherwise ignored.
 #'
+#' If impute.y is TRUE, missing values of y will be imputed. If there is no
+#' limit of detection specified, then missing y's will be imputed using an
+#' EM algorithm. If there are limits of detection, then missing y's will be
+#' imputed using a multiple imputation algorithm based on the current
+#' estimates of the Matern (theta) parameters. Unfortunately, this procedure
+#' is not robust to inaccurate estimates of theta and produce inaccurate
+#' results if theta is misspecified. Thus, the maximum number of iterations is
+#' set to 1 by default. Results can be improved by increasing the number of
+#' iterations if one has confidence in the theta estimates. If impute.y is
+#' FALSE, then any missing y's will produce an error.
+#'
 #' @return A PrestoGPModel object with slots updated based on the results of
 #' the model fitting procedure. See \code{\link{PrestoGPModel-class}} for
 #' details.
@@ -883,7 +906,8 @@ setMethod(
 #' y.lod <- y
 #' y.lod[y.lod <= soil.lod] <- NA
 #' soil.vm3 <- new("VecchiaModel", n_neighbors = 10)
-#' soil.vm3 <- prestogp_fit(soil.vm, y, X, locs, impute.y = TRUE, lod = soil.lod)
+#' soil.vm3 <- prestogp_fit(soil.vm, y, X, locs, impute.y = TRUE,
+#' lod.upper = soil.lod)
 #'
 #' # Full model
 #' soil.fm <- new("FullModel")
@@ -916,7 +940,8 @@ setMethod(
   "prestogp_fit", "PrestoGPModel",
   function(model, Y, X, locs, Y.names = NULL, X.names = NULL, scaling = NULL,
     common_scale = NULL, covparams = NULL, beta.hat = NULL, tol = 0.999999,
-    max_iters = 100, center.y = NULL, impute.y = FALSE, lod = NULL,
+    max.iters = 100, center.y = NULL, impute.y = FALSE, lod.upper = NULL,
+    lod.lower = NULL, n.impute = 10, eps.impute = 0.01, maxit.impute = 1,
     quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     penalty = c("lasso", "relaxed", "MCP", "SCAD"), alpha = 1,
@@ -934,19 +959,33 @@ setMethod(
       }
     }
     model <- check_input(model, Y, X, locs, Y.names, X.names, center.y,
-      impute.y, lod)
-    if (is.null(lod)) {
-      lodv <- rep(Inf, nrow(model@Y_train))
+      impute.y, lod.upper, lod.lower)
+    if (is.null(lod.upper)) {
+      lodvu <- rep(Inf, nrow(model@Y_train))
     } else {
-      if (is.numeric(lod)) {
-        lod <- list(lod)
+      if (is.numeric(lod.upper)) {
+        lod.upper <- list(lod.upper)
       }
-      lodv <- NULL
-      for (i in seq_along(lod)) {
-        if (length(lod[[i]] == 1)) {
-          lod[[i]] <- rep(lod[[i]], nrow(model@locs_train[[i]]))
+      lodvu <- NULL
+      for (i in seq_along(lod.upper)) {
+        if (length(lod.upper[[i]] == 1)) {
+          lod.upper[[i]] <- rep(lod.upper[[i]], nrow(model@locs_train[[i]]))
         }
-        lodv <- c(lodv, lod[[i]] - model@Y_bar[i])
+        lodvu <- c(lodvu, lod.upper[[i]] - model@Y_bar[i])
+      }
+    }
+    if (is.null(lod.lower)) {
+      lodvl <- rep(-Inf, nrow(model@Y_train))
+    } else {
+      if (is.numeric(lod.lower)) {
+        lod.lower <- list(lod.lower)
+      }
+      lodvl <- NULL
+      for (i in seq_along(lod.lower)) {
+        if (length(lod.lower[[i]] == 1)) {
+          lod.lower[[i]] <- rep(lod.lower[[i]], nrow(model@locs_train[[i]]))
+        }
+        lodvl <- c(lodvl, lod.lower[[i]] - model@Y_bar[i])
       }
     }
     if (!is.null(beta.hat)) {
@@ -1032,12 +1071,12 @@ setMethod(
       if (!quiet) {
         cat("\n")
       }
-      if (sum(!model@Y_obs) > 0 & min(lodv) < Inf) {
+      if (sum(!model@Y_obs) > 0 & ((min(lodvu) < Inf) | (max(lodvl) > -Inf))) {
         if (!quiet) {
           cat("Imputing missing y's and estimating initial beta...", "\n")
         }
-        cur.mi <- lod_reg_mi(model@Y_train, model@X_train, lodv, !model@Y_obs,
-          penalty = model@penalty, alpha = model@alpha,
+        cur.mi <- lod_reg_mi(model@Y_train, model@X_train, lodvu, lodvl,
+          !model@Y_obs, penalty = model@penalty, alpha = model@alpha,
           parallel = parallel, cluster = cluster, foldid = foldid,
           verbose = verbose)
         model@Y_train[!model@Y_obs] <- cur.mi$y.impute
@@ -1079,7 +1118,7 @@ setMethod(
     if (!quiet) {
       cat("\n")
     }
-    while (!model@converged && (iter <= max_iters)) {
+    while (!model@converged && (iter <= max.iters)) {
       if (!quiet) {
         cat("Beginning iteration", iter, "\n")
       }
@@ -1099,13 +1138,14 @@ setMethod(
         model <- specify(model)
       }
 
-      if (sum(!model@Y_obs) > 0 & min(lodv) < Inf) {
+      if (sum(!model@Y_obs) > 0 & ((min(lodvu) < Inf) | (max(lodvl) > -Inf))) {
         if (!quiet) {
           cat("Imputing missing y's...", "\n")
         }
-        model <- impute_y_lod(model, lodv, family = family, nfolds = nfolds,
-          foldid = foldid, parallel = parallel, cluster = cluster,
-          verbose = verbose)
+        model <- impute_y_lod(model, lodvu, lodvl, n.mi = n.impute,
+          eps = eps.impute, maxit = maxit.impute, family = family,
+          nfolds = nfolds, foldid = foldid, parallel = parallel,
+          cluster = cluster, verbose = verbose)
         if (!quiet) {
           cat("Imputation complete", "\n")
         }
@@ -1140,7 +1180,8 @@ setMethod(
           Y.hat <- as.matrix(predict(model@linear_model, model@X_train))
         }
         model@beta <- beta.hat
-        if (sum(!model@Y_obs) > 0 & sum(lodv < Inf) == 0) {
+        if (sum(!model@Y_obs) > 0 & sum(lodvu < Inf) == 0 &
+            sum(lodvl > -Inf) == 0) {
           if (!quiet) {
             cat("Imputing missing y's...", "\n")
           }
@@ -1300,11 +1341,11 @@ setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y, covparams)
     D.sample.bar <- rep(NA, model@nscale * P)
     for (i in 1:P) {
       col.vars[i] <- var(Y[[i]], na.rm = TRUE)
-      # N <- length(Y[[i]])
+      N <- length(Y[[i]])
       # TODO find a better way to compute initial spatial range
       for (j in 1:model@nscale) {
-        # d.sample <- sample(1:N, max(2, ceiling(N / 50)), replace = FALSE)
-        D.sample <- rdist(locs[[i]][, model@scaling == j])
+        d.sample <- sample(1:N, min(N, 10000), replace = FALSE)
+        D.sample <- rdist(locs[[i]][d.sample, model@scaling == j])
         D.sample.bar[(i - 1) * model@nscale + j] <- mean(D.sample) / 4
       }
     }

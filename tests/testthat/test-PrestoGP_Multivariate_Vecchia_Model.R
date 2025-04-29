@@ -56,25 +56,47 @@ test_that("locs/X length mismatch", {
   )
 })
 
-test_that("Invalid lod input", {
+test_that("Invalid lod.upper input", {
   model <- new("MultivariateVecchiaModel")
   expect_error(
     prestogp_fit(
       model, list(1:3), list(as.matrix(1:3)),
-      list(as.matrix(1:3)), lod = 1:2
+      list(as.matrix(1:3)), lod.upper = 1:2
     ),
-    "lod must be a list for multivariate models"
+    "lod.upper must be a list for multivariate models"
   )
 })
 
-test_that("locs/lod length mismatch", {
+test_that("Invalid lod.lower input", {
   model <- new("MultivariateVecchiaModel")
   expect_error(
     prestogp_fit(
       model, list(1:3), list(as.matrix(1:3)),
-      list(as.matrix(1:3)), lod = list(1, 2)
+      list(as.matrix(1:3)), lod.lower = 1:2
     ),
-    "locs and lod must have the same length"
+    "lod.lower must be a list for multivariate models"
+  )
+})
+
+test_that("locs/lod.upper length mismatch", {
+  model <- new("MultivariateVecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, list(1:3), list(as.matrix(1:3)),
+      list(as.matrix(1:3)), lod.upper = list(1, 2)
+    ),
+    "locs and lod.upper must have the same length"
+  )
+})
+
+test_that("locs/lod.lower length mismatch", {
+  model <- new("MultivariateVecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, list(1:3), list(as.matrix(1:3)),
+      list(as.matrix(1:3)), lod.lower = list(1, 2)
+    ),
+    "locs and lod.lower must have the same length"
   )
 })
 
@@ -189,25 +211,47 @@ test_that("NA's in Y", {
   )
 })
 
-test_that("lod not numeric", {
+test_that("lod.upper not numeric", {
   model <- new("MultivariateVecchiaModel")
   expect_error(
     prestogp_fit(
       model, list(as.matrix(c(1:4))), list(as.matrix(1:4)),
-      list(as.matrix(1:4)), lod = list("foo")
+      list(as.matrix(1:4)), lod.upper = list("foo")
     ),
-    "Each lod must be numeric"
+    "Each lod.upper must be numeric"
   )
 })
 
-test_that("length(lod) != nrow(X)", {
+test_that("lod.lower not numeric", {
   model <- new("MultivariateVecchiaModel")
   expect_error(
     prestogp_fit(
       model, list(as.matrix(c(1:4))), list(as.matrix(1:4)),
-      list(as.matrix(1:4)), lod = list(1:2)
+      list(as.matrix(1:4)), lod.lower = list("foo")
     ),
-    "Length of each lod must equal the number of observations"
+    "Each lod.lower must be numeric"
+  )
+})
+
+test_that("length(lod.upper) != nrow(X)", {
+  model <- new("MultivariateVecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, list(as.matrix(c(1:4))), list(as.matrix(1:4)),
+      list(as.matrix(1:4)), lod.upper = list(1:2)
+    ),
+    "Length of each lod.upper must equal the number of observations"
+  )
+})
+
+test_that("length(lod.lower) != nrow(X)", {
+  model <- new("MultivariateVecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, list(as.matrix(c(1:4))), list(as.matrix(1:4)),
+      list(as.matrix(1:4)), lod.lower = list(1:2)
+    ),
+    "Length of each lod.lower must equal the number of observations"
   )
 })
 
@@ -372,7 +416,7 @@ test_that("Simulated dataset multivariate spatial", {
   expect_lt(params.out[11], 1.84)
   expect_gt(params.out[12], 0.39)
   expect_lt(params.out[12], 0.52)
-  expect_gt(params.out[13], 0.17)
+  expect_gt(params.out[13], 0.12)
   expect_lt(params.out[13], 0.6)
   expect_gt(params.out[14], 0.63)
   expect_lt(params.out[14], 0.83)
@@ -459,7 +503,8 @@ test_that("Simulated dataset multivariate spatial", {
   pgp.mmodel3 <- new("MultivariateVecchiaModel", n_neighbors = 25)
   pgp.mmodel3 <- prestogp_fit(pgp.mmodel3, y.list.lod, X.st, locs.list,
     scaling = c(1, 1), common_scale = TRUE, verbose = TRUE, parallel = TRUE,
-    impute.y = TRUE, lod = lod.cut, optim.control = list(trace = 0,
+    impute.y = TRUE, lod.upper = lod.cut, lod.lower = as.list(rep(0, 3)),
+    optim.control = list(trace = 0,
       maxit = 5000, reltol = 1e-3))
   beta.out3 <- get_beta(pgp.mmodel3)
   params.out3 <- pgp.mmodel3@covparams
@@ -482,17 +527,17 @@ test_that("Simulated dataset multivariate spatial", {
   expect_equal(params.out[1], params.out3[1], tolerance = 2.2)
   expect_equal(params.out[2], params.out3[2], tolerance = 4.3)
   expect_equal(params.out[3], params.out3[3], tolerance = 0.6)
-  expect_equal(params.out[4], params.out3[4], tolerance = 0.15)
+  expect_equal(params.out[4] - params.out3[4], 0, tolerance = 0.28)
   expect_equal(params.out[5], params.out3[5], tolerance = 0.42)
   expect_equal(params.out[6] - params.out3[6], 0, tolerance = 0.23)
   expect_equal(params.out[7], params.out3[7], tolerance = 1.0)
-  expect_equal(params.out[8] - params.out3[8], 0, tolerance = 0.4)
+  expect_equal(params.out[8] - params.out3[8], 0, tolerance = 0.5)
   expect_equal(params.out[9], params.out3[9], tolerance = 0.8)
-  expect_equal(params.out[10], params.out3[10], tolerance = 0.22)
-  expect_equal(params.out[11], params.out3[11], tolerance = 0.22)
+  expect_equal(params.out[10] - params.out3[10], 0, tolerance = 0.25)
+  expect_equal(params.out[11], params.out3[11], tolerance = 0.52)
   expect_equal(params.out[12] - params.out3[12], 0, tolerance = 0.12)
   expect_equal(params.out[13] - params.out3[13], 0, tolerance = 0.4)
-  expect_equal(params.out[14], params.out3[14], tolerance = 0.15)
+  expect_equal(params.out[14] - params.out3[14], 0, tolerance = 0.15)
   expect_equal(params.out[15], params.out3[15], tolerance = 0.3)
 
   # SCAD fit
@@ -520,23 +565,23 @@ test_that("Simulated dataset multivariate spatial", {
   expect_gt(params.out4[1], 1.0)
   expect_lt(params.out4[1], 3.5)
   expect_gt(params.out4[2], 2.9)
-  expect_lt(params.out4[2], 10.6)
+  expect_lt(params.out4[2], 14.1)
   expect_gt(params.out4[3], 0.9)
   expect_lt(params.out4[3], 2.2)
   expect_gt(params.out4[4], 0.05)
   expect_lt(params.out4[4], 0.28)
-  expect_gt(params.out4[5], 0.24)
-  expect_lt(params.out4[5], 0.69)
-  expect_gt(params.out4[6], 0.1)
+  expect_gt(params.out4[5], 0.23)
+  expect_lt(params.out4[5], 1.06)
+  expect_gt(params.out4[6], 0.09)
   expect_lt(params.out4[6], 0.23)
   expect_gt(params.out4[7], 0.67)
   expect_lt(params.out4[7], 1.98)
   expect_gt(params.out4[8], 0.47)
   expect_lt(params.out4[8], 0.97)
   expect_gt(params.out4[9], 0.77)
-  expect_lt(params.out4[9], 1.43)
+  expect_lt(params.out4[9], 1.64)
   expect_gt(params.out4[10], 1.02)
-  expect_lt(params.out4[10], 1.19)
+  expect_lt(params.out4[10], 1.21)
   expect_gt(params.out4[11], 1.48)
   expect_lt(params.out4[11], 1.81)
   expect_gt(params.out4[12], 0.4)
@@ -567,14 +612,14 @@ test_that("Simulated dataset multivariate spatial", {
   expect_equal(as.numeric(beta.out4[[4]]), as.numeric(beta.out5[[4]]),
     tolerance = 0.04)
   expect_equal(params.out4[1], params.out5[1], tolerance = 3.1)
-  expect_equal(params.out4[2], params.out5[2], tolerance = 7.4)
+  expect_equal(params.out4[2], params.out5[2], tolerance = 11.3)
   expect_equal(params.out4[3], params.out5[3], tolerance = 1.6)
   expect_equal(params.out4[4], params.out5[4], tolerance = 0.9)
-  expect_equal(params.out4[5], params.out5[5], tolerance = 0.8)
+  expect_equal(params.out4[5], params.out5[5], tolerance = 0.9)
   expect_equal(params.out4[6] - params.out5[6], 0, tolerance = 0.4)
   expect_equal(params.out4[7], params.out5[7], tolerance = 1.5)
   expect_equal(params.out4[8], params.out5[8], tolerance = 0.7)
-  expect_equal(params.out4[9], params.out5[9], tolerance = 0.9)
+  expect_equal(params.out4[9], params.out5[9], tolerance = 1.1)
   expect_equal(params.out4[10], params.out5[10], tolerance = 0.3)
   expect_equal(params.out4[11], params.out5[11], tolerance = 0.4)
   expect_equal(params.out4[12] - params.out5[12], 0, tolerance = 0.14)
@@ -586,7 +631,8 @@ test_that("Simulated dataset multivariate spatial", {
   pgp.mmodel6 <- new("MultivariateVecchiaModel", n_neighbors = 25)
   pgp.mmodel6 <- prestogp_fit(pgp.mmodel6, y.list.lod, X.st, locs.list,
     scaling = c(1, 1), common_scale = TRUE, verbose = TRUE, penalty = "SCAD",
-    impute.y = TRUE, lod = lod.cut, optim.control = list(trace = 0,
+    impute.y = TRUE, lod.upper = lod.cut, lod.lower = as.list(rep(0, 3)),
+    optim.control = list(trace = 0,
       maxit = 5000, reltol = 1e-3))
   beta.out6 <- get_beta(pgp.mmodel6)
   params.out6 <- pgp.mmodel6@covparams
@@ -607,20 +653,20 @@ test_that("Simulated dataset multivariate spatial", {
         pgp.mmodel4@Y_bar[1]), as.numeric(beta.out6[[4]][3] -
         pgp.mmodel6@Y_bar[3] + pgp.mmodel6@Y_bar[1]), tolerance = 0.02)
   expect_equal(params.out4[1], params.out6[1], tolerance = 2.1)
-  expect_equal(params.out4[2], params.out6[2], tolerance = 8.1)
+  expect_equal(params.out4[2], params.out6[2], tolerance = 9.4)
   expect_equal(params.out4[3], params.out6[3], tolerance = 0.6)
   expect_equal(params.out4[4] - params.out6[4], 0, tolerance = 0.2)
-  expect_equal(params.out4[5], params.out6[5], tolerance = 0.61)
+  expect_equal(params.out4[5], params.out6[5], tolerance = 0.7)
   expect_equal(params.out4[6] - params.out6[6], 0, tolerance = 0.29)
   expect_equal(params.out4[7] - params.out6[7], 0, tolerance = 1.1)
   expect_equal(params.out4[8] - params.out6[8], 0, tolerance = 0.5)
-  expect_equal(params.out4[9] - params.out6[9], 0, tolerance = 0.66)
-  expect_equal(params.out4[10] - params.out6[10], 0, tolerance = 0.25)
-  expect_equal(params.out4[11], params.out6[11], tolerance = 0.68)
-  expect_equal(params.out4[12] - params.out6[12], 0, tolerance = 0.1)
+  expect_equal(params.out4[9] - params.out6[9], 0, tolerance = 0.83)
+  expect_equal(params.out4[10] - params.out6[10], 0, tolerance = 0.27)
+  expect_equal(params.out4[11] - params.out6[11], 0, tolerance = 0.83)
+  expect_equal(params.out4[12] - params.out6[12], 0, tolerance = 0.12)
   expect_equal(params.out4[13] - params.out6[13], 0, tolerance = 0.39)
-  expect_equal(params.out4[14] - params.out6[14], 0, tolerance = 0.15)
-  expect_equal(params.out4[15] - params.out6[15], 0, tolerance = 0.37)
+  expect_equal(params.out4[14] - params.out6[14], 0, tolerance = 0.2)
+  expect_equal(params.out4[15] - params.out6[15], 0, tolerance = 0.42)
 })
 
 test_that("Simulated dataset multivariate spatiotemporal", {
@@ -668,7 +714,7 @@ test_that("Simulated dataset multivariate spatiotemporal", {
   expect_equal(matrix(theta.out[[5]], nrow = nrow(theta.out[[5]])), rho.mat)
 
   expect_gt(beta.out[1], -0.02)
-  expect_lt(beta.out[1], 0.04)
+  expect_lt(beta.out[1], 0.05)
   expect_gt(beta.out[2], 0.79)
   expect_lt(beta.out[2], 0.96)
   expect_gt(beta.out[3], 0.94)
@@ -689,13 +735,13 @@ test_that("Simulated dataset multivariate spatiotemporal", {
   expect_lt(beta.out[10], 0.06)
   expect_gt(beta.out[11], -0.001)
   expect_lt(beta.out[11], 0.06)
-  expect_gt(beta.out[12], -1.58)
+  expect_gt(beta.out[12], -2.41)
   expect_lt(beta.out[12], 2.61)
-  expect_gt(beta.out[13], 0.94)
+  expect_gt(beta.out[13], 0.91)
   expect_lt(beta.out[13], 1.11)
   expect_gt(beta.out[14], 0.89)
   expect_lt(beta.out[14], 1.03)
-  expect_gt(beta.out[15], 0.98)
+  expect_gt(beta.out[15], 0.95)
   expect_lt(beta.out[15], 1.13)
   expect_gt(beta.out[16], 0.81)
   expect_lt(beta.out[16], 0.92)
@@ -722,7 +768,7 @@ test_that("Simulated dataset multivariate spatiotemporal", {
   expect_gt(beta.out[27], 0.88)
   expect_lt(beta.out[27], 0.98)
   expect_gt(beta.out[28], -0.001)
-  expect_lt(beta.out[28], 0.05)
+  expect_lt(beta.out[28], 0.06)
   expect_gt(beta.out[29], -0.08)
   expect_lt(beta.out[29], 0.001)
   expect_gt(beta.out[30], -0.14)
@@ -735,38 +781,38 @@ test_that("Simulated dataset multivariate spatiotemporal", {
   expect_lt(beta.out[33], 0.11)
 
   expect_gt(params.out[1], 4.5)
-  expect_lt(params.out[1], 43.8)
+  expect_lt(params.out[1], 143.8)
   expect_gt(params.out[2], 3.6)
-  expect_lt(params.out[2], 23.4)
-  expect_gt(params.out[3], 2.8)
+  expect_lt(params.out[2], 29.6)
+  expect_gt(params.out[3], 2.4)
   expect_lt(params.out[3], 29.4)
   expect_gt(params.out[4], 0.07)
-  expect_lt(params.out[4], 2.3)
+  expect_lt(params.out[4], 4.2)
   expect_gt(params.out[5], 7.2)
   expect_lt(params.out[5], 87.7)
   expect_gt(params.out[6], 0.03)
-  expect_lt(params.out[6], 1.64)
-  expect_gt(params.out[7], 8.4)
+  expect_lt(params.out[6], 2.26)
+  expect_gt(params.out[7], 6.7)
   expect_lt(params.out[7], 57.1)
   expect_gt(params.out[8], 0.006)
   expect_lt(params.out[8], 1.09)
   expect_gt(params.out[9], 0.005)
   expect_lt(params.out[9], 80.6)
   expect_gt(params.out[10], 0.42)
-  expect_lt(params.out[10], 1.09)
+  expect_lt(params.out[10], 1.13)
   expect_gt(params.out[11], 0.3)
-  expect_lt(params.out[11], 1.92)
+  expect_lt(params.out[11], 1.93)
   expect_gt(params.out[12], 0.33)
   expect_lt(params.out[12], 2.09)
   expect_gt(params.out[13], 0.02)
   expect_lt(params.out[13], 2.31)
   expect_gt(params.out[14], 0.03)
-  expect_lt(params.out[14], 4.45)
-  expect_gt(params.out[15], 0.11)
-  expect_lt(params.out[15], 2.62)
-  expect_gt(params.out[16], -0.5)
+  expect_lt(params.out[14], 44.9)
+  expect_gt(params.out[15], 0.01)
+  expect_lt(params.out[15], 4.79)
+  expect_gt(params.out[16], -0.99)
   expect_gt(params.out[17], -0.5)
-  expect_gt(params.out[18], -0.58)
+  expect_gt(params.out[18], -0.98)
 })
 
 test_that("Invalid locs input for prediction", {

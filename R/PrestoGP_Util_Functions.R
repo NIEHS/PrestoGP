@@ -178,7 +178,11 @@ U2V <- function(U.obj) {
   } else if (U.obj$ord.pred != "obspred") {
     W <- Matrix::tcrossprod(U.y)
     W.rev <- revMat(W)
-    V.ord <- Matrix::t(Matrix::chol(W.rev))
+    res <- try(V.ord <- Matrix::t(Matrix::chol(W.rev)), silent = TRUE)
+    if (inherits(res, "try-error")) {
+      W.rev <- Matrix::nearPD(W.rev)
+      V.ord <- Matrix::t(Matrix::chol(W.rev))
+    }
   } else { # for obspred ordering
 
     last.obs <- max(which(!U.obj$latent))
@@ -192,7 +196,11 @@ U2V <- function(U.obj) {
     U.oo <- U.y[1:latents.before, 1:last.obs]
     A <- Matrix::tcrossprod(U.oo)
     A.rev <- revMat(A)
-    V.oor <- Matrix::t(Matrix::chol(A.rev))
+    res <- try(V.oor <- Matrix::t(Matrix::chol(A.rev)), silent = TRUE)
+    if (inherits(res, "try-error")) {
+      A.rev <- Matrix::nearPD(A.rev)
+      V.oor <- Matrix::t(Matrix::chol(A.rev))
+    }
 
     # combine the blocks into one matrix
     zeromat.sparse <- Matrix::sparseMatrix(c(), c(), dims = c(latents.after, latents.before))
@@ -350,9 +358,10 @@ eliminate_dupes <- function(locs, locs.pred = NULL) {
   list(locs = locs, locs.pred = locs.pred)
 }
 
-lod_reg_mi <- function(y, X, lod, miss, n.mi = 10, eps = 0.01, maxit = 10,
-  penalty, alpha, parallel, cluster, foldid, verbose) {
-  lod <- lod[miss]
+lod_reg_mi <- function(y, X, lodu, lodl, miss, n.mi = 10, eps = 0.01,
+  maxit = 10, penalty, alpha, parallel, cluster, foldid, verbose) {
+  lodu <- lodu[miss]
+  lodl <- lodl[miss]
   last.coef <- rep(Inf, ncol(X) + 1)
   if (penalty == "lasso" || penalty == "relaxed") {
     relax <- penalty == "relaxed"
@@ -375,7 +384,8 @@ lod_reg_mi <- function(y, X, lod, miss, n.mi = 10, eps = 0.01, maxit = 10,
     cur.sd <- sqrt(sum(cur.resid^2) / (sum(!miss) - length(last.coef)))
     coef.mat <- matrix(nrow = n.mi, ncol = length(cur.coef))
     for (i in 1:n.mi) {
-      y[miss] <- rtruncnorm(sum(miss), b = lod, mean = miss.means, sd = cur.sd)
+      y[miss] <- rtruncnorm(sum(miss), a = lodl, b = lodu, mean = miss.means,
+        sd = cur.sd)
       if (penalty == "lasso" || penalty == "relaxed") {
         cur.glmnet <- cv.glmnet(X, y, parallel = parallel, foldid = foldid,
           alpha = alpha, relax = relax)
@@ -398,7 +408,7 @@ lod_reg_mi <- function(y, X, lod, miss, n.mi = 10, eps = 0.01, maxit = 10,
   obs.means <- X[!miss, ] %*% cur.coef[-1] + cur.coef[1]
   cur.resid <- obs.means - y[!miss]
   cur.sd <- sqrt(sum(cur.resid^2) / (sum(!miss) - length(last.coef)))
-  y.impute <- etruncnorm(b = lod, mean = miss.means, sd = cur.sd)
+  y.impute <- etruncnorm(a = lodl, b = lodu, mean = miss.means, sd = cur.sd)
   list(coef = cur.coef, y.impute = y.impute)
 }
 
