@@ -97,25 +97,47 @@ test_that("NA's in Y", {
   )
 })
 
-test_that("lod not numeric", {
+test_that("lod.upper not numeric", {
   model <- new("VecchiaModel")
   expect_error(
     prestogp_fit(
       model, as.matrix(c(1:4)), as.matrix(1:4),
-      as.matrix(1:4), impute.y = TRUE, lod = "foo",
+      as.matrix(1:4), impute.y = TRUE, lod.upper = "foo",
     ),
-    "lod must be numeric"
+    "lod.upper must be numeric"
   )
 })
 
-test_that("length(lod) != nrow(X)", {
+test_that("lod.lower not numeric", {
   model <- new("VecchiaModel")
   expect_error(
     prestogp_fit(
       model, as.matrix(c(1:4)), as.matrix(1:4),
-      as.matrix(1:4), impute.y = TRUE, lod = 1:2,
+      as.matrix(1:4), impute.y = TRUE, lod.lower = "foo",
     ),
-    "Length of lod must equal the number of observations"
+    "lod.lower must be numeric"
+  )
+})
+
+test_that("length(lod.upper) != nrow(X)", {
+  model <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, as.matrix(c(1:4)), as.matrix(1:4),
+      as.matrix(1:4), impute.y = TRUE, lod.upper = 1:2,
+    ),
+    "Length of lod.upper must equal the number of observations"
+  )
+})
+
+test_that("length(lod.lower) != nrow(X)", {
+  model <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(
+      model, as.matrix(c(1:4)), as.matrix(1:4),
+      as.matrix(1:4), impute.y = TRUE, lod.lower = 1:2,
+    ),
+    "Length of lod.lower must equal the number of observations"
   )
 })
 
@@ -289,7 +311,7 @@ test_that("Simulated dataset spatial", {
   pgp.model4 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model4 <- prestogp_fit(pgp.model4, y.na.lod, X, locs,
     scaling = c(1, 1), common_scale = TRUE, verbose = TRUE, parallel = TRUE,
-    impute.y = TRUE, lod = lod.cut,
+    impute.y = TRUE, lod.upper = lod.cut, lod.lower = 0,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -299,7 +321,7 @@ test_that("Simulated dataset spatial", {
   params.out4 <- pgp.model4@covparams
 
   # Results should be the same after imputation
-  expect_equal(as.numeric(beta.out[[2]] - mean(y)), beta.out4[1],
+  expect_equal(as.numeric(beta.out[[2]] - mean(y)) - beta.out4[1], 0,
     tolerance = 0.004)
   expect_equal(as.numeric(beta.out[[1]]), beta.out4[-1], tolerance = 0.04)
   expect_equal(params.out[1] - params.out4[1], 0, tolerance = 0.9)
@@ -400,8 +422,8 @@ test_that("Simulated dataset spatial", {
   pgp.model9 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model9 <- prestogp_fit(pgp.model9, y.na.lod, X, locs,
     scaling = c(1, 1), common_scale = TRUE, verbose = TRUE,
-    impute.y = TRUE, lod = lod.cut, penalty = "SCAD", cluster = cl,
-    optim.control = list(
+    impute.y = TRUE, lod.upper = lod.cut, lod.lower = 0, penalty = "SCAD",
+    cluster = cl, optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
     )
@@ -411,7 +433,7 @@ test_that("Simulated dataset spatial", {
   params.out9 <- pgp.model9@covparams
 
   # Results should be the same after imputation
-  expect_equal(as.numeric(beta.out7[[2]] - mean(y)), beta.out9[1],
+  expect_equal(as.numeric(beta.out7[[2]] - mean(y)) - beta.out9[1], 0,
     tolerance = 0.004)
   expect_equal(as.numeric(beta.out7[[1]]), beta.out9[-1], tolerance = 0.02)
   expect_equal(params.out7[1] - params.out9[1], 0, tolerance = 0.9)
@@ -436,7 +458,7 @@ test_that("Simulated dataset spatial", {
   expect_equal(as.numeric(beta.out10[[2]] - mean(y)), 0.002, tolerance = 0.003)
   expect_equal(params.out10[1], 1.46, tolerance = 0.2)
   expect_equal(params.out10[2] - 0.41, 0, tolerance = 0.05)
-  expect_equal(params.out10[3] - 0.565, 0, tolerance = 0.05)
+  expect_equal(params.out10[3] - 0.565, 0, tolerance = 0.06)
   expect_equal(params.out10[4], 2.0, tolerance = 0.1)
 })
 

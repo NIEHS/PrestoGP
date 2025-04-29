@@ -121,19 +121,19 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
     for (i in seq_along(locs)) {
       ndx.out <- c(ndx.out, rep(i, nrow(locs[[i]])))
     }
+    Vec.mean <- list()
+    for (i in seq_along(locs)) {
+      Vec.mean[[i]] <- Vec.mean.all[ndx.out == i]
+    }
+    names(Vec.mean) <- names(model@locs_train)
     if (return.values == "mean") {
-      Vec.mean <- list()
-      for (i in seq_along(locs)) {
-        Vec.mean[[i]] <- Vec.mean.all[ndx.out == i]
-      }
-      names(Vec.mean) <- names(model@locs_train)
       return.list <- list(means = Vec.mean)
     } else {
       warning("Variance estimates do not include model fitting variance and are anticonservative. Use with caution.")
       Vec.sds <- list()
       for (i in seq_along(locs)) {
         Vec.sds[[i]] <- sqrt(pred$var.pred[ndx.out == i] +
-            model@covparams[model@param_sequence[4, i]])
+            model@covparams[model@param_sequence[4, 1] + i - 1])
       }
       return.list <- list(means = Vec.mean, sds = Vec.sds)
     }
@@ -142,7 +142,7 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
   }
 )
 
-setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs, Y.names, X.names, center.y, impute.y, lod) {
+setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs, Y.names, X.names, center.y, impute.y, lod.upper, lod.lower) {
   if (!is.list(locs)) {
     stop("locs must be a list for multivariate models")
   }
@@ -171,12 +171,20 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
   if (is.null(names(locs))) {
     names(locs) <- paste0("Y", seq_along(locs))
   }
-  if (!is.null(lod)) {
-    if (!is.list(lod)) {
-      stop("lod must be a list for multivariate models")
+  if (!is.null(lod.upper)) {
+    if (!is.list(lod.upper)) {
+      stop("lod.upper must be a list for multivariate models")
     }
-    if (length(locs) != length(lod)) {
-      stop("locs and lod must have the same length")
+    if (length(locs) != length(lod.upper)) {
+      stop("locs and lod.upper must have the same length")
+    }
+  }
+  if (!is.null(lod.lower)) {
+    if (!is.list(lod.lower)) {
+      stop("lod.lower must be a list for multivariate models")
+    }
+    if (length(locs) != length(lod.lower)) {
+      stop("locs and lod.lower must have the same length")
     }
   }
   for (i in seq_along(locs)) {
@@ -215,12 +223,22 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
     if (sum(is.na(Y[[i]])) > 0 & !impute.y) {
       stop("Y contains NA's and impute.y is FALSE. Set impute.y=TRUE to impute missing Y's.")
     }
-    if (!is.null(lod[[i]])) {
-      if (!is.numeric(lod[[i]])) {
-        stop("Each lod must be numeric")
+    if (!is.null(lod.upper[[i]])) {
+      if (!is.numeric(lod.upper[[i]])) {
+        stop("Each lod.upper must be numeric")
       }
-      if (length(lod[[i]]) != nrow(X[[i]]) & length(lod[[i]]) != 1) {
-        stop("Length of each lod must equal the number of observations")
+      if (length(lod.upper[[i]]) != nrow(X[[i]]) &
+          length(lod.upper[[i]]) != 1) {
+        stop("Length of each lod.upper must equal the number of observations")
+      }
+    }
+    if (!is.null(lod.lower[[i]])) {
+      if (!is.numeric(lod.lower[[i]])) {
+        stop("Each lod.lower must be numeric")
+      }
+      if (length(lod.lower[[i]]) != nrow(X[[i]]) &
+          length(lod.lower[[i]]) != 1) {
+        stop("Length of each lod.lower must equal the number of observations")
       }
     }
   }
@@ -243,11 +261,17 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
   Y_obs <- NULL
   for (i in seq_along(Y)) {
     Y_obs <- c(Y_obs, !is.na(Y[[i]]))
-    if (!is.null(lod)) {
-      if (length(lod[[i]]) > 1) {
-        Y[[i]][is.na(Y[[i]])] <- lod[[i]][is.na(Y[[i]])]
+    if (!is.null(lod.upper)) {
+      if (length(lod.upper[[i]]) > 1) {
+        Y[[i]][is.na(Y[[i]])] <- lod.upper[[i]][is.na(Y[[i]])]
       } else {
-        Y[[i]][is.na(Y[[i]])] <- lod[[i]]
+        Y[[i]][is.na(Y[[i]])] <- lod.upper[[i]]
+      }
+    } else if (!is.null(lod.lower)) {
+      if (length(lod.lower[[i]]) > 1) {
+        Y[[i]][is.na(Y[[i]])] <- lod.lower[[i]][is.na(Y[[i]])]
+      } else {
+        Y[[i]][is.na(Y[[i]])] <- lod.lower[[i]]
       }
     }
     if (center.y) {
@@ -394,8 +418,8 @@ setMethod("impute_y", "MultivariateVecchiaModel", function(model) {
   invisible(model)
 })
 
-setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
-  n.mi = 10, eps = 0.01, maxit = 1, family, nfolds, foldid, parallel,
+setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lodu,
+  lodl, n.mi = 10, eps = 0.01, maxit = 1, family, nfolds, foldid, parallel,
   cluster, verbose) {
   y <- model@Y_train
   X <- model@X_train
@@ -450,15 +474,15 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
     coef.mat <- matrix(nrow = n.mi, ncol = (ncol(X) + 1))
     if (parallel) {
       yi <- foreach(i = seq_len(n.mi), .combine = cbind) %dopar% {
-        out <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
-          lod - yhat.ni, miss, locs.nn, Sigma.hat)
+        out <- rtmvn_snn2(y - yhat.ni, lodl - yhat.ni,
+          lodu - yhat.ni, miss, locs.nn, Sigma.hat)
         out + yhat.ni
       }
     } else {
       yi <- matrix(nrow = length(yhat.ni), ncol = n.mi)
       for (i in seq_len(n.mi)) {
-        yi[, i] <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
-          lod - yhat.ni, miss, locs.nn, Sigma.hat)
+        yi[, i] <- rtmvn_snn2(y - yhat.ni, lodl - yhat.ni,
+          lodu - yhat.ni, miss, locs.nn, Sigma.hat)
         yi[, i] <- yi[, i] + yhat.ni
       }
     }
@@ -494,8 +518,8 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
 
   if (parallel) {
     y.na.mat <- foreach(i = seq_len(100), .combine = rbind) %dopar% {
-      yi <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
-        lod - yhat.ni, miss, locs.nn, Sigma.hat)
+      yi <- rtmvn_snn2(y - yhat.ni, lodl - yhat.ni,
+        lodu - yhat.ni, miss, locs.nn, Sigma.hat)
       yi <- yi + yhat.ni
       yi[miss]
     }
@@ -503,8 +527,8 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lod,
     y.na.mat <- matrix(nrow = 100, ncol = sum(miss))
 
     for (i in seq_len(100)) {
-      yi <- rtmvn_snn2(y - yhat.ni, rep(-Inf, length(y)),
-        lod - yhat.ni, miss, locs.nn, Sigma.hat)
+      yi <- rtmvn_snn2(y - yhat.ni, lodl - yhat.ni,
+        lodu - yhat.ni, miss, locs.nn, Sigma.hat)
       yi <- yi + yhat.ni
       y.na.mat[i, ] <- yi[miss]
     }
