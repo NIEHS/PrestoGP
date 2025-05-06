@@ -306,12 +306,14 @@ test_that("Simulated dataset spatial", {
   lod.cut <- quantile(y.lod, 0.1)
   y.na.lod <- y.lod
   y.na.lod[y.na.lod <= lod.cut] <- NA
+  lodupper <- rep(lod.cut, length(y))
+  lodlower <- rep(0, length(y))
 
   doParallel::registerDoParallel(cores = 2)
   pgp.model4 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model4 <- prestogp_fit(pgp.model4, y.na.lod, X, locs,
     scaling = c(1, 1), common_scale = TRUE, verbose = TRUE, parallel = TRUE,
-    impute.y = TRUE, lod.upper = lod.cut, lod.lower = 0,
+    impute.y = TRUE, lod.upper = lodupper, lod.lower = lodlower,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
