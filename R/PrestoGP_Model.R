@@ -968,7 +968,7 @@ setMethod(
       }
       lodvu <- NULL
       for (i in seq_along(lod.upper)) {
-        if (length(lod.upper[[i]] == 1)) {
+        if (length(lod.upper[[i]]) == 1) {
           lod.upper[[i]] <- rep(lod.upper[[i]], nrow(model@locs_train[[i]]))
         }
         lodvu <- c(lodvu, lod.upper[[i]] - model@Y_bar[i])
@@ -982,7 +982,7 @@ setMethod(
       }
       lodvl <- NULL
       for (i in seq_along(lod.lower)) {
-        if (length(lod.lower[[i]] == 1)) {
+        if (length(lod.lower[[i]]) == 1) {
           lod.lower[[i]] <- rep(lod.lower[[i]], nrow(model@locs_train[[i]]))
         }
         lodvl <- c(lodvl, lod.lower[[i]] - model@Y_bar[i])

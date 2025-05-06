@@ -1,3 +1,15 @@
+
+# PrestoGP 0.2.0.9048 (2025-5-2)
+
+## BUG FIXES
+
+* Fixed a bug that occurred when lod.upper or lod.lower is a vector of values
+
+## MINOR IMPROVEMENTS
+
+* Modified some tests to verify that the bug mentioned above is patched
+  and does not recur
+
 # PrestoGP 0.2.0.9047 (2025-4-28)
 
 ## BUG FIXES
