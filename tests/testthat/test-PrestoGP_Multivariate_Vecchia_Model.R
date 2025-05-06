@@ -507,7 +507,7 @@ test_that("Simulated dataset multivariate spatial", {
   pgp.mmodel3 <- new("MultivariateVecchiaModel", n_neighbors = 25)
   pgp.mmodel3 <- prestogp_fit(pgp.mmodel3, y.list.lod, X.st, locs.list,
     scaling = c(1, 1), common_scale = TRUE, verbose = TRUE, parallel = TRUE,
-    impute.y = TRUE, lod.upper = lodupper, lod.lower = lodlower,
+    impute.y = TRUE, lod.upper = lod.cut, lod.lower = as.list(rep(0, 3)),
     optim.control = list(trace = 0,
       maxit = 5000, reltol = 1e-3))
   beta.out3 <- get_beta(pgp.mmodel3)
