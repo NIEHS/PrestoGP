@@ -1202,6 +1202,7 @@ setMethod(
       if (!quiet) {
         cat("Iteration", iter, "complete", "\n")
         cat("Current penalized negative log likelihood:", model@error, "\n")
+        cat("Current MSE:", mean(model@res^2), "\n")
       }
       iter <- iter + 1
     }
