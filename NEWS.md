@@ -1,3 +1,9 @@
+# PrestoGP 0.2.0.9049 (2025-5-13)
+
+## BUG FIXES
+
+* Fixed another bug in `prestogp_predict` caused by numerically singular
+  matrices
 
 # PrestoGP 0.2.0.9048 (2025-5-2)
 
