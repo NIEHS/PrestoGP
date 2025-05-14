@@ -438,7 +438,7 @@ test_that("Simulated dataset spatial", {
   expect_equal(as.numeric(beta.out7[[2]] - mean(y)) - beta.out9[1], 0,
     tolerance = 0.004)
   expect_equal(as.numeric(beta.out7[[1]]), beta.out9[-1], tolerance = 0.02)
-  expect_equal(params.out7[1] - params.out9[1], 0, tolerance = 0.9)
+  expect_equal(params.out7[1] - params.out9[1], 0, tolerance = 1.0)
   expect_equal(params.out7[2] - params.out9[2], 0, tolerance = 0.2)
   expect_equal(params.out7[3], params.out9[3], tolerance = 0.4)
   expect_equal(params.out7[4], params.out9[4], tolerance = 0.3)

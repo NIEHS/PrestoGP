@@ -180,7 +180,7 @@ U2V <- function(U.obj) {
     W.rev <- revMat(W)
     res <- try(V.ord <- Matrix::t(Matrix::chol(W.rev)), silent = TRUE)
     if (inherits(res, "try-error")) {
-      W.rev <- Matrix::nearPD(W.rev)
+      W.rev <- Matrix::nearPD(W.rev)$mat
       V.ord <- Matrix::t(Matrix::chol(W.rev))
     }
   } else { # for obspred ordering
@@ -198,12 +198,13 @@ U2V <- function(U.obj) {
     A.rev <- revMat(A)
     res <- try(V.oor <- Matrix::t(Matrix::chol(A.rev)), silent = TRUE)
     if (inherits(res, "try-error")) {
-      A.rev <- Matrix::nearPD(A.rev)
+      A.rev <- Matrix::nearPD(A.rev)$mat
       V.oor <- Matrix::t(Matrix::chol(A.rev))
     }
 
     # combine the blocks into one matrix
-    zeromat.sparse <- Matrix::sparseMatrix(c(), c(), dims = c(latents.after, latents.before))
+    zeromat.sparse <- Matrix::sparseMatrix(c(), c(),
+      dims = c(latents.after, latents.before))
     V.or <- rbind(zeromat.sparse, V.oor)
 
     V.ord <- methods::as(cbind(V.pr, V.or), "triangularMatrix")
