@@ -347,7 +347,6 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lodu, lodl, n.mi = 10,
       print(cur.coef)
     }
   }
-
   yhat.ni <- X %*% cur.coef[-1]
   yhat.ni <- yhat.ni + mean(y[!miss]) - mean(yhat.ni[!miss])
 
