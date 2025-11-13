@@ -19,7 +19,7 @@ x.variance <- runif(1, 1.5, 4)
 marg.var <- nuggets + x.variance
 ranges <- runif(1, 0.5, 1.2)
 
-params.all <- c(x.variance, ranges, marg.smoothness, nuggets)
+params.all <- c(marg.var, ranges, marg.smoothness, nuggets)
 
 
 loc1 <- seq(0, 1, length.out = n.spatial.xy) + rnorm(n.spatial.xy, 0, 0.001)
@@ -38,6 +38,6 @@ y <- mean.trend.st + st.error + nug.error
 
 rm(
   p, p.nz, n.spatial.xy, beta1, Sigma.X, mean.trend.st, loc1, loc2, L.C,
-  st.error, nug.error, ranges, Sigma.All, nuggets, marg.smoothness, marg.var,
+  st.error, nug.error, ranges, nuggets, marg.smoothness, marg.var,
   x.variance
 )

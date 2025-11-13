@@ -166,7 +166,7 @@ setGeneric(
   function(model, Y, X, locs, Y.names = NULL, X.names = NULL, scaling = NULL,
     common_scale = NULL, covparams = NULL, beta.hat = NULL, tol = 0.999999,
     max.iters = 100, center.y = NULL, impute.y = FALSE, lod.upper = NULL,
-    lod.lower = NULL, n.impute = 10, eps.impute = 0.01, maxit.impute = 1,
+    lod.lower = NULL, n.impute = 10, eps.impute = 0.01, maxit.impute = 0,
     quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     penalty = c("lasso", "relaxed", "MCP", "SCAD"), alpha = 1,
@@ -279,7 +279,7 @@ setGeneric("estimate_betas",
     standardGeneric("estimate_betas")})
 setGeneric("impute_y", function(model) standardGeneric("impute_y"))
 setGeneric("impute_y_lod",
-  function(model, lodu, lodl, n.mi = 10, eps = 0.01, maxit = 5, family, nfolds,
+  function(model, lodu, lodl, n.mi = 10, eps = 0.01, maxit = 0, family, nfolds,
     foldid, parallel, cluster, verbose) {
     standardGeneric("impute_y_lod")})
 setGeneric("compute_error",
@@ -796,7 +796,8 @@ setMethod(
 #' coefficient estimates are within eps.impute of one another. Defaults to
 #' 0.01.
 #' @param maxit.impute Maximum number of iterations for the multiple imputation
-#' procedure . Defaults to 1. See Details.
+#' procedure . Defaults to 0 (meaning that the multiple imputation procedure
+#' is not executed). See Details.
 #' @param quiet If FALSE, the penalized log likelihood and the model MSE
 #' will be printed for each iteration of the model fitting procedure. No
 #' intermediate output will be printed if TRUE. Defaults to FALSE.
@@ -857,9 +858,10 @@ setMethod(
 #' estimates of the Matern (theta) parameters. Unfortunately, this procedure
 #' is not robust to inaccurate estimates of theta and produce inaccurate
 #' results if theta is misspecified. Thus, the maximum number of iterations is
-#' set to 1 by default. Results can be improved by increasing the number of
-#' iterations if one has confidence in the theta estimates. If impute.y is
-#' FALSE, then any missing y's will produce an error.
+#' set to 0 by default, meaning that this step is skipped. Results can be
+#' improved by increasing the number of iterations if one has confidence in
+#' the theta estimates. If impute.y is FALSE, then any missing y's will
+#' produce an error.
 #'
 #' @return A PrestoGPModel object with slots updated based on the results of
 #' the model fitting procedure. See \code{\link{PrestoGPModel-class}} for
@@ -941,7 +943,7 @@ setMethod(
   function(model, Y, X, locs, Y.names = NULL, X.names = NULL, scaling = NULL,
     common_scale = NULL, covparams = NULL, beta.hat = NULL, tol = 0.999999,
     max.iters = 100, center.y = NULL, impute.y = FALSE, lod.upper = NULL,
-    lod.lower = NULL, n.impute = 10, eps.impute = 0.01, maxit.impute = 1,
+    lod.lower = NULL, n.impute = 10, eps.impute = 0.01, maxit.impute = 0,
     quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     penalty = c("lasso", "relaxed", "MCP", "SCAD"), alpha = 1,
@@ -1133,7 +1135,6 @@ setMethod(
           print(get_theta(model))
         }
       }
-      # transform data to iid
       if (!model@common_scale) {
         model <- specify(model)
       }
@@ -1154,9 +1155,20 @@ setMethod(
       if (!quiet) {
         cat("Estimating beta...", "\n")
       }
+      # transform data to iid
       model <- transform_data(model, model@Y_train, model@X_train)
       model <- estimate_betas(model, family, nfolds, foldid, parallel,
         cluster, model@penalty, adaptive)
+      if (model@penalty == "lasso" || model@penalty == "relaxed") {
+        beta.hat <- as.matrix(predict(model@linear_model, s = "lambda.min",
+            gamma = "gamma.min", type = "coefficients"))
+        Y.hat <- as.matrix(predict(model@linear_model, newx = model@X_train,
+            s = "lambda.min", gamma = "gamma.min", type = "response"))
+      } else {
+        beta.hat <- as.matrix(coef(model@linear_model))
+        Y.hat <- as.matrix(predict(model@linear_model, model@X_train))
+      }
+      model@beta <- beta.hat
       if (!quiet) {
         cat("Estimation of beta complete", "\n")
         if (verbose) {
@@ -1170,16 +1182,6 @@ setMethod(
         model@error <- prev.error
         #        beta.hat <- sparseToDenseBeta(model@linear_model)
         #        model@beta <- beta.hat
-        if (model@penalty == "lasso" || model@penalty == "relaxed") {
-          beta.hat <- as.matrix(predict(model@linear_model, s = "lambda.min",
-              gamma = "gamma.min", type = "coefficients"))
-          Y.hat <- as.matrix(predict(model@linear_model, newx = model@X_train,
-              s = "lambda.min", gamma = "gamma.min", type = "response"))
-        } else {
-          beta.hat <- as.matrix(coef(model@linear_model))
-          Y.hat <- as.matrix(predict(model@linear_model, model@X_train))
-        }
-        model@beta <- beta.hat
         if (sum(!model@Y_obs) > 0 & sum(lodvu < Inf) == 0 &
             sum(lodvl > -Inf) == 0) {
           if (!quiet) {
@@ -1190,11 +1192,12 @@ setMethod(
             cat("Imputation complete", "\n")
           }
         }
+        beta.iter <- model@beta
         covparams.iter <- model@covparams
         Vecchia.SCAD.iter <- model@linear_model
       } else {
         model@converged <- TRUE
-        model@beta <- beta.hat
+        model@beta <- beta.iter
         model@covparams <- covparams.iter
         model@linear_model <- Vecchia.SCAD.iter
         model@error <- prev.error

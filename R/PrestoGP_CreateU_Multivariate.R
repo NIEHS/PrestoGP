@@ -599,9 +599,9 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
 
     full_const <- sigs * gammas * expprod * rho.mat / (aijs^(2 * vijs))
 
-    if (sum(is.na(full_const)) > 0) {
-      browser()
-    }
+    #if (sum(is.na(full_const)) > 0) {
+    #  browser()
+    #}
 
     m <- length(q.list$q.y[[n]]) + length(q.list$q.z[[n]])
     q.list$q.y <- lapply(q.list$q.y, function(x) c(x, rep(NA, m - length(x))))

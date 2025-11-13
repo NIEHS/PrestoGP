@@ -31,7 +31,7 @@ x.variance <- runif(ny, 1.5, 4)
 marg.var <- nuggets + x.variance
 ranges <- runif(ny, 0.5, 1.2)
 
-params.all <- c(x.variance, ranges, marg.smoothness, nuggets, rho.vec)
+params.all <- c(marg.var, ranges, marg.smoothness, nuggets, rho.vec)
 
 locs.list <- list()
 for (i in 1:ny) {
@@ -80,8 +80,7 @@ for (i in 1:ny) {
 }
 
 rm(
-  ny, p, p.nz, n.spatial.xy, beta1, i, j, Sigma.X, mean.trend.st, n.rho,
+  ny, p, p.nz, beta1, i, j, Sigma.X, mean.trend.st, n.rho,
   loc1, loc2, ndx1, ndx2, dij, vii, vjj, vij, aii, ajj, aij, L.C,
-  st.error, nug.error, X.all, rho, rho.vec, ranges, Sigma.All, nuggets,
-  marg.smoothness, marg.var
+  st.error, nug.error, X.all, rho, rho.vec, ranges, marg.smoothness, marg.var
 )
