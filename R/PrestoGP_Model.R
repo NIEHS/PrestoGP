@@ -1159,16 +1159,6 @@ setMethod(
       model <- transform_data(model, model@Y_train, model@X_train)
       model <- estimate_betas(model, family, nfolds, foldid, parallel,
         cluster, model@penalty, adaptive)
-      if (model@penalty == "lasso" || model@penalty == "relaxed") {
-        beta.hat <- as.matrix(predict(model@linear_model, s = "lambda.min",
-            gamma = "gamma.min", type = "coefficients"))
-        Y.hat <- as.matrix(predict(model@linear_model, newx = model@X_train,
-            s = "lambda.min", gamma = "gamma.min", type = "response"))
-      } else {
-        beta.hat <- as.matrix(coef(model@linear_model))
-        Y.hat <- as.matrix(predict(model@linear_model, model@X_train))
-      }
-      model@beta <- beta.hat
       if (!quiet) {
         cat("Estimation of beta complete", "\n")
         if (verbose) {
@@ -1182,6 +1172,16 @@ setMethod(
         model@error <- prev.error
         #        beta.hat <- sparseToDenseBeta(model@linear_model)
         #        model@beta <- beta.hat
+        if (model@penalty == "lasso" || model@penalty == "relaxed") {
+          beta.hat <- as.matrix(predict(model@linear_model, s = "lambda.min",
+              gamma = "gamma.min", type = "coefficients"))
+          Y.hat <- as.matrix(predict(model@linear_model, newx = model@X_train,
+              s = "lambda.min", gamma = "gamma.min", type = "response"))
+        } else {
+          beta.hat <- as.matrix(coef(model@linear_model))
+          Y.hat <- as.matrix(predict(model@linear_model, model@X_train))
+        }
+        model@beta <- beta.hat
         if (sum(!model@Y_obs) > 0 & sum(lodvu < Inf) == 0 &
             sum(lodvl > -Inf) == 0) {
           if (!quiet) {
@@ -1192,12 +1192,11 @@ setMethod(
             cat("Imputation complete", "\n")
           }
         }
-        beta.iter <- model@beta
         covparams.iter <- model@covparams
         Vecchia.SCAD.iter <- model@linear_model
       } else {
         model@converged <- TRUE
-        model@beta <- beta.iter
+        model@beta <- beta.hat
         model@covparams <- covparams.iter
         model@linear_model <- Vecchia.SCAD.iter
         model@error <- prev.error
