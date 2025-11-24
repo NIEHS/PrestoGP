@@ -376,7 +376,7 @@ lod_reg_mi <- function(y, X, lodu, lodl, miss, n.mi = 10, eps = 0.01,
     cur.coef <- as.matrix(coef(cur.ncvreg))
   }
   itn <- 0
-  while (max(abs(cur.coef - last.coef)) > eps && itn <= maxit) {
+  while (max(abs(cur.coef - last.coef)) > eps && itn < maxit) {
     itn <- itn + 1
     last.coef <- cur.coef
     miss.means <- X[miss, ] %*% last.coef[-1] + last.coef[1]
@@ -442,9 +442,9 @@ MMatern_cov <- function(locs, y_ndx, covparams, P) {
           sqrt(sigma[j]) * alpha.ii^smooth.ii * alpha.jj^smooth.jj *
           gamma(smooth.ij) / (alpha.ij^(2 * smooth.ij) *
             sqrt(gamma(smooth.ii) * gamma(smooth.jj))) *
-          Matern(rdist(locs[which.i, drop = FALSE],
-              locs[which.j, drop = FALSE]),
-            alpha = alpha.ij, smoothness = smooth.ij)
+          Matern(rdist(locs[which.i, , drop = FALSE],
+              locs[which.j, , drop = FALSE]), alpha = alpha.ij,
+            smoothness = smooth.ij)
         if (i != j) {
           Sigma.hat[which.j, which.i] <- t(Sigma.hat[which.i, which.j])
         } else {
