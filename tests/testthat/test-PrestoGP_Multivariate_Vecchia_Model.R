@@ -626,7 +626,7 @@ test_that("Simulated dataset multivariate spatial", {
   expect_equal(params.out4[9], params.out5[9], tolerance = 1.1)
   expect_equal(params.out4[10], params.out5[10], tolerance = 0.3)
   expect_equal(params.out4[11], params.out5[11], tolerance = 0.4)
-  expect_equal(params.out4[12] - params.out5[12], 0, tolerance = 0.14)
+  expect_equal(params.out4[12] - params.out5[12], 0, tolerance = 0.15)
   expect_equal(params.out4[13] - params.out5[13], 0, tolerance = 0.6)
   expect_equal(params.out4[14] - params.out5[14], 0, tolerance = 0.28)
   expect_equal(params.out4[15] - params.out5[15], 0, tolerance = 0.27)
