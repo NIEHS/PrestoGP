@@ -270,7 +270,7 @@ setMethod("impute_y", "VecchiaModel", function(model) {
 })
 
 setMethod("impute_y_lod", "VecchiaModel", function(model, lodu, lodl, n.mi = 10,
-  eps = 0.01, maxit = 1, family, nfolds, foldid, parallel, cluster, verbose) {
+  eps = 0.01, maxit = 0, family, nfolds, foldid, parallel, cluster, verbose) {
   y <- model@Y_train
   X <- model@X_train
   miss <- !model@Y_obs
@@ -281,7 +281,7 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lodu, lodl, n.mi = 10,
       model,
       list(vecchia.approx$locsord)
     )[[1]]
-    params <- c(params[1], 1, params[3:4])
+    params <- c(params[1], 1, params[3:4], 1)
   }
 
   locs.scaled <- scale_locs(model, model@locs_train)[[1]]
@@ -298,7 +298,7 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lodu, lodl, n.mi = 10,
   cur.coef <- as.vector(model@beta)
   last.coef <- rep(Inf, ncol(X) + 1)
   itn <- 0
-  while (max(abs(cur.coef - last.coef)) > eps & itn <= maxit) {
+  while (max(abs(cur.coef - last.coef)) > eps & itn < maxit) {
     itn <- itn + 1
 
     yhat.ni <- X %*% cur.coef[-1]

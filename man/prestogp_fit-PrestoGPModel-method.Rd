@@ -24,7 +24,7 @@
   lod.lower = NULL,
   n.impute = 10,
   eps.impute = 0.01,
-  maxit.impute = 1,
+  maxit.impute = 0,
   quiet = FALSE,
   verbose = FALSE,
   optim.method = "Nelder-Mead",
@@ -104,7 +104,8 @@ coefficient estimates are within eps.impute of one another. Defaults to
 0.01.}
 
 \item{maxit.impute}{Maximum number of iterations for the multiple imputation
-procedure . Defaults to 1. See Details.}
+procedure . Defaults to 0 (meaning that the multiple imputation procedure
+is not executed). See Details.}
 
 \item{quiet}{If FALSE, the penalized log likelihood and the model MSE
 will be printed for each iteration of the model fitting procedure. No
@@ -187,9 +188,10 @@ imputed using a multiple imputation algorithm based on the current
 estimates of the Matern (theta) parameters. Unfortunately, this procedure
 is not robust to inaccurate estimates of theta and produce inaccurate
 results if theta is misspecified. Thus, the maximum number of iterations is
-set to 1 by default. Results can be improved by increasing the number of
-iterations if one has confidence in the theta estimates. If impute.y is
-FALSE, then any missing y's will produce an error.
+set to 0 by default, meaning that this step is skipped. Results can be
+improved by increasing the number of iterations if one has confidence in
+the theta estimates. If impute.y is FALSE, then any missing y's will
+produce an error.
 }
 \examples{
 data(soil)

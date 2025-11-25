@@ -419,7 +419,7 @@ setMethod("impute_y", "MultivariateVecchiaModel", function(model) {
 })
 
 setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lodu,
-  lodl, n.mi = 10, eps = 0.01, maxit = 1, family, nfolds, foldid, parallel,
+  lodl, n.mi = 10, eps = 0.01, maxit = 0, family, nfolds, foldid, parallel,
   cluster, verbose) {
   y <- model@Y_train
   X <- model@X_train
@@ -465,7 +465,7 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lodu,
   cur.coef <- as.vector(model@beta)
   last.coef <- rep(Inf, ncol(X) + 1)
   itn <- 0
-  while (max(abs(cur.coef - last.coef)) > eps & itn <= maxit) {
+  while (max(abs(cur.coef - last.coef)) > eps & itn < maxit) {
     itn <- itn + 1
 
     yhat.ni <- X %*% cur.coef[-1]

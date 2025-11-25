@@ -1,3 +1,20 @@
+# PrestoGP 0.2.0.9050 (2025-11-13)
+
+## BUG FIXES
+
+* Fixed a bug where covariance matrices were computed incorrectly during
+  imputation
+
+* Fixed a bug that caused the imputation procedure to crash for univariate
+  models without a common scale parameter
+
+* Fixed a bug where the incorrect number of imputations was performed
+
+## MINOR IMPROVEMENTS
+
+* Added additional tests to confirm that imputation covariance matrices are
+  computed correctly
+
 # PrestoGP 0.2.0.9049 (2025-5-13)
 
 ## BUG FIXES
