@@ -103,7 +103,7 @@ create_param_sequence <- function(P, ns = 1) {
   }
 
   param.sequence.begin <- c(1, P + 1, seq(P * (ns + 1) + 1, length = 3, by = P))
-  param.sequence.end <- c(P, ns * P, P, P, nk) %>% cumsum()
+  param.sequence.end <- c(P, ns * P, P, P, nk) |> cumsum()
   param.sequence <- cbind(param.sequence.begin, param.sequence.end)
 
   param.sequence
@@ -470,7 +470,7 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
     ord.pred = ordering.pred, cond.yz = "SGV", conditioning = "NN",
     P = P, ondx = ondx, dist.func = dist.func,
     dist.func.code = dist.func.code, q.list = q.list,
-    n.neighbors = m
+    n.neighbors = m, n.cores = -1
   )
 }
 
@@ -609,7 +609,8 @@ createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
     cur.qys <- do.call(cbind, q.list$q.y)
     cur.qzs <- do.call(cbind, q.list$q.z)
     # browser()
-    U <- createU_helper_mat(olocs, ondx, cur.qys, cur.qzs, vijs, aijs, full_const, nugget, sig2, uvec)
+    U <- createU_helper_mat(olocs, ondx, cur.qys, cur.qzs, vijs, aijs,
+      full_const, nugget, sig2, uvec, vec.approx$n.cores)
     # U <- sparseMatrix(i=U1[1,], j=U1[2,], x = U1[3,], triangular = TRUE)
   }
 

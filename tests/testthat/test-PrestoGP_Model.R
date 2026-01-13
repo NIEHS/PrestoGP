@@ -1,3 +1,48 @@
+test_that("omp.cores not numeric", {
+  source("sim_vecchia_small.R")
+  pgp.model1 <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(pgp.model1, y, X, locs, omp.cores = "foo"),
+    "omp.cores must be a positive integer >= 1"
+  )
+})
+
+test_that("omp.cores not a scalar", {
+  source("sim_vecchia_small.R")
+  pgp.model1 <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(pgp.model1, y, X, locs, omp.cores = c(1, 2)),
+    "omp.cores must be a positive integer >= 1"
+  )
+})
+
+test_that("omp.cores negative", {
+  source("sim_vecchia_small.R")
+  pgp.model1 <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(pgp.model1, y, X, locs, omp.cores = -2),
+    "omp.cores must be a positive integer >= 1"
+  )
+})
+
+test_that("omp.cores zero", {
+  source("sim_vecchia_small.R")
+  pgp.model1 <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(pgp.model1, y, X, locs, omp.cores = 0),
+    "omp.cores must be a positive integer >= 1"
+  )
+})
+
+test_that("omp.cores not an integer", {
+  source("sim_vecchia_small.R")
+  pgp.model1 <- new("VecchiaModel")
+  expect_error(
+    prestogp_fit(pgp.model1, y, X, locs, omp.cores = 2.5),
+    "omp.cores must be a positive integer >= 1"
+  )
+})
+
 test_that("beta.hat not numeric", {
   source("sim_vecchia_small.R")
   pgp.model1 <- new("VecchiaModel")
