@@ -1,3 +1,21 @@
+# PrestoGP 0.2.0.9052 (2026-1-20)
+
+## BUG FIXES
+
+* Created local versions of several GPvecchia utility functions (e.g.,
+  `vecchia_likelihood`, `vecchia_prediction`) that are robust to numerically
+  singular U/V matrices.
+
+* Modified `vecchia_prediction` and `vecchia_Mprediction` to avoid crashes
+  when the estimated V matrix is numerically singular.
+
+# PrestoGP 0.2.0.9051 (2026-1-14)
+
+## NEW FEATURES
+
+* Added a parameter `omp.cores` to `prestogp_fit` to specify the number of
+  cores used by OMP when computing the U matrix.
+
 # PrestoGP 0.2.0.9050 (2025-11-13)
 
 ## BUG FIXES
