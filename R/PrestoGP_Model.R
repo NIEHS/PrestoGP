@@ -1013,8 +1013,7 @@ setMethod(
       if (!is.vector(beta.hat) | !is.numeric(beta.hat)) {
         stop("beta.hat parameter must be a numeric vector")
       }
-      if (length(beta.hat) != (ncol(model@X_train) +
-            length(model@locs_train))) {
+      if (length(beta.hat) != (ncol(model@X_train) + 1)) {
         stop("Length of beta.hat must match the number of predictors")
       }
       beta.hat <- as.matrix(beta.hat)

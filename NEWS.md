@@ -1,3 +1,10 @@
+# PrestoGP 0.2.0.9053 (2026-5-26)
+
+## BUG FIXES
+
+* Fixed a bug where specifying the beta.hat parameter to `prestogp_fit`
+  caused an error due to a faulty length check.
+
 # PrestoGP 0.2.0.9052 (2026-1-20)
 
 ## BUG FIXES

@@ -23,6 +23,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Eric Bair \email{eric.bair@sciome.com}
   \item Brian Kidd
   \item Eric Wimberley
   \item Deepak Mav
