@@ -226,6 +226,44 @@ revMat <- function(mat) {
   mat.out
 }
 
+vecchia_prediction <- function(z, vecchia.approx, covparms, nuggets,
+  var.exact, covmodel = "matern", return.values = "all") {
+  removeNAs <- getFromNamespace("removeNAs", "GPvecchia")
+  removeNAs()
+  U.obj <- createU(vecchia.approx, covparms, nuggets, covmodel)
+  V.ord <- U2V(U.obj)
+  if (length(U.obj$zero.nugg) > 0)
+    warning("Rows/cols of V have been removed for data with zero noise")
+  vecchia_mean <- getFromNamespace("vecchia_mean", "GPvecchia")
+  V.singular <- FALSE
+  res <- try(vecchia.mean <- vecchia_mean(z, U.obj, V.ord), silent = TRUE)
+  if (inherits(res, "try-error")) {
+    warning("V is numerically singular. Predicted means are unreliable.")
+    V.ord.pd <- Matrix::nearPD(V.ord)$mat
+    V.singular <- TRUE
+    vecchia.mean <- vecchia_mean(z, U.obj, V.ord.pd)
+  }
+  return.list <- list(mu.pred = vecchia.mean$mu.pred,
+    mu.obs = vecchia.mean$mu.obs, var.pred = NULL, var.obs = NULL,
+    V.ord = NULL, U.obj = NULL)
+  if (return.values == "meanmat" || return.values == "all") {
+    return.list$V.ord <- V.ord
+    return.list$U.obj <- U.obj
+  }
+  if (return.values == "meanvar" || return.values == "all") {
+    if (V.singular) {
+      stop("V is numerically singular. Prediction variance cannot be computed.")
+    }
+    if (missing(var.exact))
+      var.exact <- (sum(!vecchia.approx$obs) < 4 * 10000)
+    vecchia_var <- getFromNamespace("vecchia_var", "GPvecchia")
+    vars.vecchia <- vecchia_var(U.obj, V.ord, exact = var.exact)
+    return.list$var.pred <- vars.vecchia$vars.pred
+    return.list$var.obs <- vars.vecchia$vars.obs
+  }
+  return.list
+}
+
 #' Multivariate Vecchia prediction
 #'
 #' This function is used to make predictions based on multivariate Vecchia
@@ -296,7 +334,14 @@ vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL, r
   #    if (length(U.obj$zero.nugg) > 0)
   #        warning("Rows/cols of V have been removed for data with zero noise")
   vecchia_mean <- getFromNamespace("vecchia_mean", "GPvecchia")
-  vecchia.mean <- vecchia_mean(z, U.obj, V.ord)
+  V.singular <- FALSE
+  res <- try(vecchia.mean <- vecchia_mean(z, U.obj, V.ord), silent = TRUE)
+  if (inherits(res, "try-error")) {
+    warning("V is numerically singular. Predicted means are unreliable.")
+    V.ord.pd <- Matrix::nearPD(V.ord)$mat
+    V.singular <- TRUE
+    vecchia.mean <- vecchia_mean(z, U.obj, V.ord.pd)
+  }
   return.list <- list(
     mu.pred = vecchia.mean$mu.pred, mu.obs = vecchia.mean$mu.obs,
     var.pred = NULL, var.obs = NULL, V.ord = NULL, U.obj = NULL
@@ -306,6 +351,9 @@ vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL, r
     return.list$U.obj <- U.obj
   }
   if (return.values == "meanvar" || return.values == "all") {
+    if (V.singular) {
+      stop("V is numerically singular. Prediction variance cannot be computed.")
+    }
     if (is.null(var.exact)) {
       var.exact <- (sum(!vecchia.approx$obs) < 4 * 10000)
     }

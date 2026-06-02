@@ -542,6 +542,7 @@ setMethod("specify", "MultivariateVecchiaModel", function(model) {
   locs <- model@locs_train
   locs.scaled <- scale_locs(model, locs)
   model@vecchia_approx <- vecchia_Mspecify(locs.scaled, model@n_neighbors)
+  model@vecchia_approx$n.cores <- model@omp_cores
   if (!model@common_scale) {
     olocs.scaled <- model@vecchia_approx$locsord
     for (i in seq_along(locs)) {

@@ -23,8 +23,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // createU_helper_mat
-arma::sp_mat createU_helper_mat(const arma::mat& olocs, const arma::vec& ondx, const arma::mat& curqys, const arma::mat& curqzs, const arma::mat& vijs, const arma::mat& aijs, const arma::mat& full_const, const arma::vec& nugget, const arma::vec& sig2, const arma::vec& U_beginning);
-RcppExport SEXP _PrestoGP_createU_helper_mat(SEXP olocsSEXP, SEXP ondxSEXP, SEXP curqysSEXP, SEXP curqzsSEXP, SEXP vijsSEXP, SEXP aijsSEXP, SEXP full_constSEXP, SEXP nuggetSEXP, SEXP sig2SEXP, SEXP U_beginningSEXP) {
+arma::sp_mat createU_helper_mat(const arma::mat& olocs, const arma::vec& ondx, const arma::mat& curqys, const arma::mat& curqzs, const arma::mat& vijs, const arma::mat& aijs, const arma::mat& full_const, const arma::vec& nugget, const arma::vec& sig2, const arma::vec& U_beginning, const int n_cores);
+RcppExport SEXP _PrestoGP_createU_helper_mat(SEXP olocsSEXP, SEXP ondxSEXP, SEXP curqysSEXP, SEXP curqzsSEXP, SEXP vijsSEXP, SEXP aijsSEXP, SEXP full_constSEXP, SEXP nuggetSEXP, SEXP sig2SEXP, SEXP U_beginningSEXP, SEXP n_coresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -38,14 +38,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type nugget(nuggetSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type sig2(sig2SEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type U_beginning(U_beginningSEXP);
-    rcpp_result_gen = Rcpp::wrap(createU_helper_mat(olocs, ondx, curqys, curqzs, vijs, aijs, full_const, nugget, sig2, U_beginning));
+    Rcpp::traits::input_parameter< const int >::type n_cores(n_coresSEXP);
+    rcpp_result_gen = Rcpp::wrap(createU_helper_mat(olocs, ondx, curqys, curqzs, vijs, aijs, full_const, nugget, sig2, U_beginning, n_cores));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_PrestoGP_na_omit_c", (DL_FUNC) &_PrestoGP_na_omit_c, 1},
-    {"_PrestoGP_createU_helper_mat", (DL_FUNC) &_PrestoGP_createU_helper_mat, 10},
+    {"_PrestoGP_createU_helper_mat", (DL_FUNC) &_PrestoGP_createU_helper_mat, 11},
     {NULL, NULL, 0}
 };
 
