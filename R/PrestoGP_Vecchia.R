@@ -383,6 +383,9 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lodu, lodl, n.mi = 10,
 setMethod("specify", "VecchiaModel", function(model) {
   locs.scaled <- scale_locs(model, model@locs_train)
   model@vecchia_approx <- vecchia_specify(locs.scaled[[1]], model@n_neighbors)
+  if (model@omp_cores > -1) {
+    model@vecchia_approx$U.prep$n.cores <- model@omp_cores
+  }
   if (!model@common_scale) {
     olocs.scaled <- model@vecchia_approx$locsord
     for (j in 1:model@nscale) {

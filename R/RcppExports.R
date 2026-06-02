@@ -5,7 +5,7 @@ na_omit_c <- function(x) {
     .Call('_PrestoGP_na_omit_c', PACKAGE = 'PrestoGP', x)
 }
 
-createU_helper_mat <- function(olocs, ondx, curqys, curqzs, vijs, aijs, full_const, nugget, sig2, U_beginning) {
-    .Call('_PrestoGP_createU_helper_mat', PACKAGE = 'PrestoGP', olocs, ondx, curqys, curqzs, vijs, aijs, full_const, nugget, sig2, U_beginning)
+createU_helper_mat <- function(olocs, ondx, curqys, curqzs, vijs, aijs, full_const, nugget, sig2, U_beginning, n_cores) {
+    .Call('_PrestoGP_createU_helper_mat', PACKAGE = 'PrestoGP', olocs, ondx, curqys, curqzs, vijs, aijs, full_const, nugget, sig2, U_beginning, n_cores)
 }
 

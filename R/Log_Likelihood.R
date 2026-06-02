@@ -59,6 +59,20 @@ negloglik.full <- function(logparams, d, y, param.seq) {
   -1 * mvtnorm::dmvnorm(y, rep(0, N), cov.mat, log = TRUE)
 }
 
+vecchia_likelihood <- function(z, vecchia.approx, covparms, nuggets,
+  covmodel = "matern") {
+  if (vecchia.approx$cond.yz == "zy")
+    warning("cond.yz='zy' will produce a poor likelihood approximation. Use 'SGV' instead.")
+  removeNAs <- getFromNamespace("removeNAs", "GPvecchia")
+  removeNAs()
+  U.obj <- createU(vecchia.approx, covparms, nuggets, covmodel)
+  res <- try(junk <- vecchia_likelihood_U(z, U.obj), silent = TRUE)
+  if (inherits(res, "try-error")) {
+    junk <- -1 * Inf
+  }
+  junk
+}
+
 #' Evaluation of the multivariate Vecchia likelihood
 #'
 #' This function is used to evaluate the multivariate Vecchia likelihood.
@@ -117,6 +131,30 @@ vecchia_Mlikelihood <- function(z, vecchia.approx, covparams) {
   junk
 }
 
+
+vecchia_likelihood_U <- function(z, U.obj) {
+  U <- U.obj$U
+  latent <- U.obj$latent
+  zord <- z[U.obj$ord.z]
+  const <- sum(!latent) * log(2 * pi)
+  z1 <- Matrix::crossprod(U[!latent, ], zord)
+  quadform.num <- sum(z1^2)
+  logdet.num <- -2 * sum(log(Matrix::diag(U)))
+  if (sum(latent) == 0) {
+    logdet.denom <- quadform.denom <- 0
+  } else {
+    U.y <- U[latent, ]
+    z2 <- as.numeric(U.y %*% z1)
+    V.ord <- U2V(U.obj)
+    z3 <- Matrix::solve(V.ord, rev(z2), system = "L")
+    quadform.denom <- sum(z3^2)
+    logdet.denom <- -2 * sum(log(Matrix::diag(V.ord)))
+  }
+  neg2loglik <- logdet.num - logdet.denom + quadform.num - quadform.denom +
+    const
+  loglik <- -neg2loglik / 2
+  loglik
+}
 
 ##############################################################################
 ### Flexible Multivariate Matern Negative Loglikelihood Function ###########

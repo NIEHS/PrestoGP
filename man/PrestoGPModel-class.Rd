@@ -81,7 +81,11 @@ approximation. Ignored for full models.}
 
 \item{\code{common_scale}}{Do all columns of locs have the same scale parameter?}
 
-\item{\code{param_sequence}}{Records the indices of the various Matern parameters.
+\item{\code{param_sequence}}{Records the indices of the various Matern parameters.}
+
+\item{\code{omp_cores}}{Number of cores used by OMP to compute the U matrix.}
+
+\item{\code{logparams}}{Transformed version of the Matern parameters.
 See \code{\link{create_param_sequence}}.}
 }}
 
