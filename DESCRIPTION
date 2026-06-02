@@ -44,6 +44,7 @@ Imports:
 License: GPL-3
 Encoding: UTF-8
 VignetteBuilder: knitr 
+RoxygenNote: 7.3.3
 Collate: 
     'Log_Likelihood.R'
     'PrestoGP-package.R'
