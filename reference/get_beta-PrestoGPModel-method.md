@@ -63,7 +63,7 @@ soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 1 complete 
-#> Current penalized negative log likelihood: 487.7725 
+#> Current penalized negative log likelihood: 487.7128 
 #> Current MSE: 9.104869 
 #> Beginning iteration 2 
 #> Estimating theta... 
@@ -71,39 +71,55 @@ soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 2 complete 
-#> Current penalized negative log likelihood: 482.5488 
-#> Current MSE: 9.051937 
+#> Current penalized negative log likelihood: 482.404 
+#> Current MSE: 9.045658 
 #> Beginning iteration 3 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 3 complete 
-#> Current penalized negative log likelihood: 482.3033 
-#> Current MSE: 9.047946 
+#> Current penalized negative log likelihood: 481.9397 
+#> Current MSE: 9.044008 
 #> Beginning iteration 4 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 4 complete 
-#> Current penalized negative log likelihood: 482.2019 
-#> Current MSE: 9.053872 
+#> Current penalized negative log likelihood: 481.9032 
+#> Current MSE: 9.055591 
 #> Beginning iteration 5 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 5 complete 
-#> Current penalized negative log likelihood: 482.2019 
-#> Current MSE: 9.059818 
+#> Current penalized negative log likelihood: 481.9015 
+#> Current MSE: 9.049309 
+#> Beginning iteration 6 
+#> Estimating theta... 
+#> Estimation of theta complete 
+#> Estimating beta... 
+#> Estimation of beta complete 
+#> Iteration 6 complete 
+#> Current penalized negative log likelihood: 481.8722 
+#> Current MSE: 9.053637 
+#> Beginning iteration 7 
+#> Estimating theta... 
+#> Estimation of theta complete 
+#> Estimating beta... 
+#> Estimation of beta complete 
+#> Iteration 7 complete 
+#> Current penalized negative log likelihood: 481.8722 
+#> Current MSE: 9.053637 
 get_beta(soil.vm)
 #> $Y
 #>        NO3.N      Total.N        NH4.N          DOC         N20N 
-#> -0.040460428  0.000000000  0.030763142  0.002767606 36.685263768 
+#> -0.039571218  0.000000000  0.030227966  0.002593518 43.653075235 
 #> 
 #> $`(Intercept)`
 #> (Intercept) 
-#>    11.38784 
+#>    11.39381 
 #> 
 ```

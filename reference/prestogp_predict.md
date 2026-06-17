@@ -164,32 +164,24 @@ soil.vm <- prestogp_fit(soil.vm, y[otr], X[otr,], locs[otr,])
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 1 complete 
-#> Current penalized negative log likelihood: 253.7902 
-#> Current MSE: 9.779005 
+#> Current penalized negative log likelihood: 245.4097 
+#> Current MSE: 8.553852 
 #> Beginning iteration 2 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 2 complete 
-#> Current penalized negative log likelihood: 253.0128 
-#> Current MSE: 9.689043 
+#> Current penalized negative log likelihood: 236.377 
+#> Current MSE: 8.499242 
 #> Beginning iteration 3 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 3 complete 
-#> Current penalized negative log likelihood: 252.2248 
-#> Current MSE: 9.683512 
-#> Beginning iteration 4 
-#> Estimating theta... 
-#> Estimation of theta complete 
-#> Estimating beta... 
-#> Estimation of beta complete 
-#> Iteration 4 complete 
-#> Current penalized negative log likelihood: 252.2248 
-#> Current MSE: 9.692544 
+#> Current penalized negative log likelihood: 236.377 
+#> Current MSE: 8.557256 
 
 # Perform predictions on the test set
 soil.yhat <- prestogp_predict(soil.vm, X[otst,], locs[otst,])

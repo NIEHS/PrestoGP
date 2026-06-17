@@ -44,6 +44,7 @@ include the following important feature:
 You can install the development version of PrestoGP from GitHub with:
 
 ``` r
+
 # install.packages("devtools")
 devtools::install_github("NIEHS/PrestoGP")
 ```
@@ -53,6 +54,7 @@ devtools::install_github("NIEHS/PrestoGP")
 ## Data Preprocessing
 
 ``` r
+
 data(soil)
 soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
 y <- soil[,4]                   # predict moisture content
@@ -63,6 +65,7 @@ locs <- as.matrix(soil[,1:2])
 ## Vecchia Model
 
 ``` r
+
 soil.vm <- new("VecchiaModel", n_neighbors = 10)
 soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 ```
@@ -70,6 +73,7 @@ soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 ## Impute Missing y’s
 
 ``` r
+
 miss <- sample(1:nrow(soil), 20)
 y.miss <- y
 y.miss[miss] <- NA
@@ -80,6 +84,7 @@ soil.vm2 <- prestogp_fit(soil.vm, y, X, locs, impute.y = TRUE)
 ## Impute y’s Missing Due to Limit of Detection
 
 ``` r
+
 soil.lod <- quantile(y, 0.1)
 y.lod <- y
 y.lod[y.lod <= soil.lod] <- NA
@@ -90,6 +95,7 @@ soil.vm3 <- prestogp_fit(soil.vm, y, X, locs, impute.y = TRUE, lod = soil.lod)
 ## Full Model
 
 ``` r
+
 soil.fm <- new("FullModel")
 soil.fm <- prestogp_fit(soil.fm, y, X, locs)
 ```
@@ -97,6 +103,7 @@ soil.fm <- prestogp_fit(soil.fm, y, X, locs)
 ## Multivariate Model
 
 ``` r
+
 ym <- list()
 ym[[1]] <- soil[,5]             # predict two nitrogen concentration levels
 ym[[2]] <- soil[,7]
@@ -112,6 +119,7 @@ soil.mvm <- prestogp_fit(soil.mvm, ym, Xm, locsm)
 ## Space/Elevation Model
 
 ``` r
+
 data(soil250, package="geoR")
 y2 <- soil250[,7]               # predict pH level
 X2 <- as.matrix(soil250[,c(4:6,8:22)])
@@ -126,6 +134,7 @@ soil.vm2 <- prestogp_fit(soil.vm2, y2, X2, locs2, scaling = c(1, 1, 2))
 ## Test Set Prediction
 
 ``` r
+
 # Create training and test sets
 n <- length(y)
 otr <- rep(FALSE, n)

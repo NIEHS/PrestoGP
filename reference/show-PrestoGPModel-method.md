@@ -41,7 +41,7 @@ soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 1 complete 
-#> Current penalized negative log likelihood: 487.4952 
+#> Current penalized negative log likelihood: 487.6106 
 #> Current MSE: 9.104869 
 #> Beginning iteration 2 
 #> Estimating theta... 
@@ -49,74 +49,42 @@ soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 2 complete 
-#> Current penalized negative log likelihood: 482.95 
-#> Current MSE: 9.019932 
+#> Current penalized negative log likelihood: 482.1937 
+#> Current MSE: 9.057586 
 #> Beginning iteration 3 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 3 complete 
-#> Current penalized negative log likelihood: 482.3916 
-#> Current MSE: 9.052201 
-#> Beginning iteration 4 
-#> Estimating theta... 
-#> Estimation of theta complete 
-#> Estimating beta... 
-#> Estimation of beta complete 
-#> Iteration 4 complete 
-#> Current penalized negative log likelihood: 482.1548 
-#> Current MSE: 9.042599 
-#> Beginning iteration 5 
-#> Estimating theta... 
-#> Estimation of theta complete 
-#> Estimating beta... 
-#> Estimation of beta complete 
-#> Iteration 5 complete 
-#> Current penalized negative log likelihood: 482.0701 
-#> Current MSE: 9.048612 
-#> Beginning iteration 6 
-#> Estimating theta... 
-#> Estimation of theta complete 
-#> Estimating beta... 
-#> Estimation of beta complete 
-#> Iteration 6 complete 
-#> Current penalized negative log likelihood: 482.0552 
-#> Current MSE: 9.0508 
-#> Beginning iteration 7 
-#> Estimating theta... 
-#> Estimation of theta complete 
-#> Estimating beta... 
-#> Estimation of beta complete 
-#> Iteration 7 complete 
-#> Current penalized negative log likelihood: 482.0552 
-#> Current MSE: 9.0508 
+#> Current penalized negative log likelihood: 482.1937 
+#> Current MSE: 9.046636 
 show(soil.vm)
 #> Matern covariance parameters (theta): 
 #> $sigma
-#> [1] 10.51871
+#> [1] 10.63738
 #> 
 #> $scale
-#> [1] 15.58912
+#> [1] 14.44042
 #> 
 #> $smoothness
-#> [1] 0.7962241
+#> [1] 0.796426
 #> 
 #> $nuggets
-#> [1] 0.8344075
+#> [1] 0.7330837
 #> 
 #> Regression coefficients (beta): 
 #> $Y
 #>        NO3.N        NH4.N          DOC         N20N 
-#> -0.039103489  0.029995180  0.002587154 28.703457422 
+#> -0.037611577  0.028946406  0.002497739 34.120803768 
 #> 
 #> $`(Intercept)`
 #> (Intercept) 
-#>    11.39708 
+#>    11.39514 
 #> 
 #> Model type: VecchiaModel 
 #> Nearest neighbors: 10 
 #> Scaling: 1 1 
-#> Penalized likelihood: 482.0552 
-#> MSE: 9.0508 
+#> Penalized likelihood: 482.1937 
+#> MSE: 9.046636 
 ```

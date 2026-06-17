@@ -53,7 +53,7 @@ soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 1 complete 
-#> Current penalized negative log likelihood: 487.4296 
+#> Current penalized negative log likelihood: 487.5627 
 #> Current MSE: 9.104869 
 #> Beginning iteration 2 
 #> Estimating theta... 
@@ -61,40 +61,32 @@ soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 2 complete 
-#> Current penalized negative log likelihood: 483.5328 
-#> Current MSE: 9.033187 
+#> Current penalized negative log likelihood: 482.4497 
+#> Current MSE: 9.037058 
 #> Beginning iteration 3 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 3 complete 
-#> Current penalized negative log likelihood: 482.8815 
-#> Current MSE: 9.056389 
+#> Current penalized negative log likelihood: 482.0608 
+#> Current MSE: 9.043175 
 #> Beginning iteration 4 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 4 complete 
-#> Current penalized negative log likelihood: 482.7846 
-#> Current MSE: 9.044995 
+#> Current penalized negative log likelihood: 482.0553 
+#> Current MSE: 9.044841 
 #> Beginning iteration 5 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 5 complete 
-#> Current penalized negative log likelihood: 482.3403 
-#> Current MSE: 9.058457 
-#> Beginning iteration 6 
-#> Estimating theta... 
-#> Estimation of theta complete 
-#> Estimating beta... 
-#> Estimation of beta complete 
-#> Iteration 6 complete 
-#> Current penalized negative log likelihood: 482.3403 
-#> Current MSE: 9.048252 
+#> Current penalized negative log likelihood: 482.0553 
+#> Current MSE: 9.04002 
 get_scaling(soil.vm)
 #> [1] 1 1
 ```

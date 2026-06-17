@@ -91,31 +91,31 @@ soil.vm2 <- prestogp_fit(soil.vm2, y2, X2, locs2, scaling = c(1, 1, 2))
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 1 complete 
-#> Current penalized negative log likelihood: -258.9123 
-#> Current MSE: 0.008209381 
+#> Current penalized negative log likelihood: -259.1528 
+#> Current MSE: 0.008211436 
 #> Beginning iteration 2 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 2 complete 
-#> Current penalized negative log likelihood: -258.9123 
-#> Current MSE: 0.009980023 
+#> Current penalized negative log likelihood: -259.1528 
+#> Current MSE: 0.009062582 
 
 pseq <- create_param_sequence(1, 2)
 soil2.params <- soil.vm2@covparams
 # sigma
 soil2.params[pseq[1,1]:pseq[1,2]]
-#> [1] 0.004592186
+#> [1] 0.005046449
 # scale parameters
 soil2.params[pseq[2,1]:pseq[2,2]]
-#> [1] 4.09758059 0.03708606
+#> [1] 3.14302152 0.02809024
 # smoothness parameter
 soil2.params[pseq[3,1]:pseq[3,2]]
-#> [1] 1.320382
+#> [1] 1.580789
 # nugget
 soil2.params[pseq[4,1]:pseq[4,2]]
-#> [1] 0.003849531
+#> [1] 0.003012928
 
 # Multivariate model
 ym <- list()
