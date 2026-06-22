@@ -51,7 +51,8 @@ arma::sp_mat createU_helper_mat(const arma::mat &olocs, const arma::vec &ondx,
                                 const arma::mat &aijs,
                                 const arma::mat &full_const,
                                 const arma::vec &nugget, const arma::vec &sig2,
-                                const arma::vec &U_beginning) {
+                                const arma::vec &U_beginning,
+				const int n_cores) {
   int n = arma::as_scalar(ondx.n_elem);
   int m = arma::as_scalar(curqys.n_rows);
   int n_inds = 2 * n * (m + 3);
@@ -69,6 +70,9 @@ arma::sp_mat createU_helper_mat(const arma::mat &olocs, const arma::vec &ondx,
   // feeder(2, arma::span(0,6)) = U_beginning.t();
   int ind = 7;
   // int ind = 0;
+  if (n_cores > -1) {
+    omp_set_num_threads(n_cores);
+  }
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif

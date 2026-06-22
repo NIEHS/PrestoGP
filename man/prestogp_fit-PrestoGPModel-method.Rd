@@ -34,6 +34,7 @@
   family = c("gaussian", "binomial"),
   nfolds = 10,
   foldid = NULL,
+  omp.cores = -1,
   parallel = FALSE,
   cluster = NULL,
   adaptive = FALSE
@@ -145,13 +146,20 @@ what fold each observation should be assigned to in the cv.glmnet
 cross-validation. See \code{\link[glmnet]{cv.glmnet}} and
 \code{\link[ncvreg]{cv.ncvreg}}.}
 
+\item{omp.cores}{Number of parallel cores to be used by OMP when computing
+the U matrix in the Vecchia approximation. Defaults to -1 (which causes
+all available cores to be used).}
+
 \item{parallel}{Should parallel "foreach" be used to speed up the model
 fitting procedure where possible? Defaults to FALSE. Specifically,
 parallelization will be used for imputation and fitting the cv.glmnet
 object. See \code{\link[glmnet]{cv.glmnet}}. Note that this
 only applies to glmnet models (where penalty="lasso" or
 penalty="relaxed"). Models using ncvreg (where penalty="MCP" or
-penalty="SCAD") require a cluster argument for parallelization (see below).}
+penalty="SCAD") require a cluster argument for parallelization (see below).
+Note that parallelization will be used to compute the Vecchia
+approximation even if this parameter is set to FALSE (assuming that OMP is
+available on the system). To disable this, set omp.cores=1.}
 
 \item{cluster}{A cluster for running cv.ncvreg in parallel. See
 \code{\link[ncvreg]{cv.ncvreg}} and \code{\link[parallel]{makeCluster}}.

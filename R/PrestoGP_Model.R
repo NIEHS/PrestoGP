@@ -49,6 +49,8 @@
 #' @slot nscale The number of scale parameters in the model.
 #' @slot common_scale Do all columns of locs have the same scale parameter?
 #' @slot param_sequence Records the indices of the various Matern parameters.
+#' @slot omp_cores Number of cores used by OMP to compute the U matrix.
+#' @slot logparams Transformed version of the Matern parameters.
 #' See \code{\link{create_param_sequence}}.
 #'
 #' @seealso \code{\link{VecchiaModel-class}}, \code{\link{FullModel-class}},
@@ -97,6 +99,7 @@ PrestoGPModel <- setClass("PrestoGPModel",
     nscale = "numeric", # the number of scale parameters
     common_scale = "logical", # is there a common scale parameter?
     param_sequence = "matrix", # maps the indices of the various Matern parameters
+    omp_cores = "numeric", # Number of cores used by OMP to compute the U matrix
     logparams = "numeric" # transformed version of the Matern parameters
   )
 )
@@ -171,7 +174,7 @@ setGeneric(
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     penalty = c("lasso", "relaxed", "MCP", "SCAD"), alpha = 1,
     family = c("gaussian", "binomial"), nfolds = 10, foldid = NULL,
-    parallel = FALSE, cluster = NULL, adaptive = FALSE) {
+    omp.cores = -1, parallel = FALSE, cluster = NULL, adaptive = FALSE) {
     standardGeneric("prestogp_fit")
   }
 )
@@ -827,6 +830,9 @@ setMethod(
 #' what fold each observation should be assigned to in the cv.glmnet
 #' cross-validation. See \code{\link[glmnet]{cv.glmnet}} and
 #' \code{\link[ncvreg]{cv.ncvreg}}.
+#' @param omp.cores Number of parallel cores to be used by OMP when computing
+#' the U matrix in the Vecchia approximation. Defaults to -1 (which causes
+#' all available cores to be used).
 #' @param parallel Should parallel "foreach" be used to speed up the model
 #' fitting procedure where possible? Defaults to FALSE. Specifically,
 #' parallelization will be used for imputation and fitting the cv.glmnet
@@ -834,6 +840,9 @@ setMethod(
 #' only applies to glmnet models (where penalty="lasso" or
 #' penalty="relaxed"). Models using ncvreg (where penalty="MCP" or
 #' penalty="SCAD") require a cluster argument for parallelization (see below).
+#' Note that parallelization will be used to compute the Vecchia
+#' approximation even if this parameter is set to FALSE (assuming that OMP is
+#' available on the system). To disable this, set omp.cores=1.
 #' @param cluster A cluster for running cv.ncvreg in parallel. See
 #' \code{\link[ncvreg]{cv.ncvreg}} and \code{\link[parallel]{makeCluster}}.
 #' This must be specified to run cv.ncvreg in parallel. It is ignored for
@@ -947,9 +956,19 @@ setMethod(
     quiet = FALSE, verbose = FALSE, optim.method = "Nelder-Mead",
     optim.control = list(trace = 0, reltol = 1e-3, maxit = 5000),
     penalty = c("lasso", "relaxed", "MCP", "SCAD"), alpha = 1,
-    family = c("gaussian", "binomial"),
-    nfolds = 10, foldid = NULL, parallel = FALSE, cluster = NULL,
+    family = c("gaussian", "binomial"), nfolds = 10, foldid = NULL,
+    omp.cores = -1, parallel = FALSE, cluster = NULL,
     adaptive = FALSE) {
+    if (!is.numeric(omp.cores)) {
+      stop("omp.cores must be a positive integer >= 1")
+    }
+    if (length(omp.cores) != 1) {
+      stop("omp.cores must be a positive integer >= 1")
+    }
+    if (omp.cores < -1 | omp.cores == 0 | omp.cores %% 1 != 0) {
+      stop("omp.cores must be a positive integer >= 1")
+    }
+    model@omp_cores <- omp.cores
     penalty <- match.arg(penalty)
     model@penalty <- penalty
     family <- match.arg(family)
@@ -994,8 +1013,7 @@ setMethod(
       if (!is.vector(beta.hat) | !is.numeric(beta.hat)) {
         stop("beta.hat parameter must be a numeric vector")
       }
-      if (length(beta.hat) != (ncol(model@X_train) +
-            length(model@locs_train))) {
+      if (length(beta.hat) != (ncol(model@X_train) + 1)) {
         stop("Length of beta.hat must match the number of predictors")
       }
       beta.hat <- as.matrix(beta.hat)
