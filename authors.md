@@ -19,13 +19,13 @@ Source:
 
 Bair E, Kidd B, Wimberley E, Mav D, Messier K (2026). *PrestoGP:
 Penalized Regression for Spatio-Temporal Outcomes via Gaussian
-Processes*. R package version 0.2.0.9050,
+Processes*. R package version 0.2.0.9053,
 <https://niehs.github.io/PrestoGP/>.
 
     @Manual{,
       title = {PrestoGP: Penalized Regression for Spatio-Temporal Outcomes via Gaussian Processes},
       author = {Eric Bair and Brian Kidd and Eric Wimberley and Deepak Mav and Kyle Messier},
       year = {2026},
-      note = {R package version 0.2.0.9050},
+      note = {R package version 0.2.0.9053},
       url = {https://niehs.github.io/PrestoGP/},
     }

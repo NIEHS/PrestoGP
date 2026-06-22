@@ -15,7 +15,7 @@ the appropriate inherited class for the type of model they are fitting."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9050</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9053</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -167,7 +167,15 @@ approximation. Ignored for full models.</p></dd>
 
 
 <dt><code>param_sequence</code></dt>
-<dd><p>Records the indices of the various Matern parameters.
+<dd><p>Records the indices of the various Matern parameters.</p></dd>
+
+
+<dt><code>omp_cores</code></dt>
+<dd><p>Number of cores used by OMP to compute the U matrix.</p></dd>
+
+
+<dt><code>logparams</code></dt>
+<dd><p>Transformed version of the Matern parameters.
 See <code><a href="create_param_sequence.html">create_param_sequence</a></code>.</p></dd>
 
 

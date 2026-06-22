@@ -9,7 +9,7 @@ and outcome variables."><meta property="og:image" content="https://niehs.github.
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9050</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9053</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,6 +70,7 @@ and outcome variables.</p>
 <span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gaussian"</span>, <span class="st">"binomial"</span><span class="op">)</span>,</span>
 <span>  nfolds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  foldid <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  omp.cores <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  cluster <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  adaptive <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -241,6 +242,12 @@ cross-validation. See <code><a href="https://glmnet.stanford.edu/reference/cv.gl
 <code><a href="https://pbreheny.github.io/ncvreg/reference/cv.ncvreg.html" class="external-link">cv.ncvreg</a></code>.</p></dd>
 
 
+<dt id="arg-omp-cores">omp.cores<a class="anchor" aria-label="anchor" href="#arg-omp-cores"></a></dt>
+<dd><p>Number of parallel cores to be used by OMP when computing
+the U matrix in the Vecchia approximation. Defaults to -1 (which causes
+all available cores to be used).</p></dd>
+
+
 <dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
 <dd><p>Should parallel "foreach" be used to speed up the model
 fitting procedure where possible? Defaults to FALSE. Specifically,
@@ -248,7 +255,10 @@ parallelization will be used for imputation and fitting the cv.glmnet
 object. See <code><a href="https://glmnet.stanford.edu/reference/cv.glmnet.html" class="external-link">cv.glmnet</a></code>. Note that this
 only applies to glmnet models (where penalty="lasso" or
 penalty="relaxed"). Models using ncvreg (where penalty="MCP" or
-penalty="SCAD") require a cluster argument for parallelization (see below).</p></dd>
+penalty="SCAD") require a cluster argument for parallelization (see below).
+Note that parallelization will be used to compute the Vecchia
+approximation even if this parameter is set to FALSE (assuming that OMP is
+available on the system). To disable this, set omp.cores=1.</p></dd>
 
 
 <dt id="arg-cluster">cluster<a class="anchor" aria-label="anchor" href="#arg-cluster"></a></dt>

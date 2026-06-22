@@ -130,7 +130,15 @@ for the type of model they are fitting.
 
 - `param_sequence`:
 
-  Records the indices of the various Matern parameters. See
+  Records the indices of the various Matern parameters.
+
+- `omp_cores`:
+
+  Number of cores used by OMP to compute the U matrix.
+
+- `logparams`:
+
+  Transformed version of the Matern parameters. See
   [`create_param_sequence`](https://niehs.github.io/PrestoGP/reference/create_param_sequence.md).
 
 ## References

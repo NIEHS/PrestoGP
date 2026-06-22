@@ -17,6 +17,8 @@ Useful links:
 
 Authors:
 
+- Eric Bair <eric.bair@sciome.com>
+
 - Brian Kidd
 
 - Eric Wimberley

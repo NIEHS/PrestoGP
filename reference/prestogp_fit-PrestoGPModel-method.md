@@ -36,6 +36,7 @@ prestogp_fit(
   family = c("gaussian", "binomial"),
   nfolds = 10,
   foldid = NULL,
+  omp.cores = -1,
   parallel = FALSE,
   cluster = NULL,
   adaptive = FALSE
@@ -211,6 +212,12 @@ prestogp_fit(
   and
   [`cv.ncvreg`](https://pbreheny.github.io/ncvreg/reference/cv.ncvreg.html).
 
+- omp.cores:
+
+  Number of parallel cores to be used by OMP when computing the U matrix
+  in the Vecchia approximation. Defaults to -1 (which causes all
+  available cores to be used).
+
 - parallel:
 
   Should parallel "foreach" be used to speed up the model fitting
@@ -221,7 +228,9 @@ prestogp_fit(
   Note that this only applies to glmnet models (where penalty="lasso" or
   penalty="relaxed"). Models using ncvreg (where penalty="MCP" or
   penalty="SCAD") require a cluster argument for parallelization (see
-  below).
+  below). Note that parallelization will be used to compute the Vecchia
+  approximation even if this parameter is set to FALSE (assuming that
+  OMP is available on the system). To disable this, set omp.cores=1.
 
 - cluster:
 

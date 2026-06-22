@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9050</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9053</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,6 +30,28 @@
       <small>Source: <a href="https://github.com/NIEHS/PrestoGP/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0.9053" id="prestogp-0209053-2026-5-26">PrestoGP 0.2.0.9053 (2026-5-26)<a class="anchor" aria-label="anchor" href="#prestogp-0209053-2026-5-26"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-2-0-9053">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0-9053"></a></h3>
+<ul><li>Fixed a bug where specifying the beta.hat parameter to <code>prestogp_fit</code> caused an error due to a faulty length check.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0.9052" id="prestogp-0209052-2026-1-20">PrestoGP 0.2.0.9052 (2026-1-20)<a class="anchor" aria-label="anchor" href="#prestogp-0209052-2026-1-20"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-2-0-9052">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0-9052"></a></h3>
+<ul><li><p>Created local versions of several GPvecchia utility functions (e.g., <code>vecchia_likelihood</code>, <code>vecchia_prediction</code>) that are robust to numerically singular U/V matrices.</p></li>
+<li><p>Modified <code>vecchia_prediction</code> and <code>vecchia_Mprediction</code> to avoid crashes when the estimated V matrix is numerically singular.</p></li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0.9051" id="prestogp-0209051-2026-1-14">PrestoGP 0.2.0.9051 (2026-1-14)<a class="anchor" aria-label="anchor" href="#prestogp-0209051-2026-1-14"></a></h2>
+<div class="section level3">
+<h3 id="new-features-0-2-0-9051">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-0-2-0-9051"></a></h3>
+<ul><li>Added a parameter <code>omp.cores</code> to <code>prestogp_fit</code> to specify the number of cores used by OMP when computing the U matrix.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0.9050" id="prestogp-0209050-2025-11-13">PrestoGP 0.2.0.9050 (2025-11-13)<a class="anchor" aria-label="anchor" href="#prestogp-0209050-2025-11-13"></a></h2>
 <div class="section level3">
