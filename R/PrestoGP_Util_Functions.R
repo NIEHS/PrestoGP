@@ -124,7 +124,7 @@ MCP_penalty <- function(x, lambda, gamma) {
 transform_iid <- function(data, vecchia.approx, covparms, nuggets) {
   # compute required matrices
   U.obj <- createU(vecchia.approx, covparms, nuggets)
-  V.ord <- U2V(U.obj)
+  V.ord <- U2V_cpp(U.obj)
   U.z <- U.obj$U[!U.obj$latent, ]
   U.y <- U.obj$U[U.obj$latent, ]
 
@@ -149,7 +149,7 @@ transform_iid <- function(data, vecchia.approx, covparms, nuggets) {
 transform_miid <- function(data, vecchia.approx, params) {
   # compute required matrices
   U.obj <- createUMultivariate(vecchia.approx, params)
-  V.ord <- U2V(U.obj)
+  V.ord <- U2V_cpp(U.obj)
   U.z <- U.obj$U[!U.obj$latent, ]
   U.y <- U.obj$U[U.obj$latent, ]
 
@@ -170,68 +170,68 @@ transform_miid <- function(data, vecchia.approx, params) {
 
 ######  GPvecchia local function
 ###### compute V for posterior inference - needed for transform.iid   #######
-U2V <- function(U.obj) {
-  U.y <- U.obj$U[U.obj$latent, ]
+#U2V <- function(U.obj) {
+#  U.y <- U.obj$U[U.obj$latent, ]
 
-  if (U.obj$cond.yz == "zy") {
-    V.ord <- revMat(U.y[, U.obj$latent, drop = FALSE])
-  } else if (U.obj$ord.pred != "obspred") {
-    W <- Matrix::tcrossprod(U.y)
-    W.rev <- revMat(W)
-    res <- try(V.ord <- Matrix::t(Matrix::chol(W.rev)), silent = TRUE)
-    if (inherits(res, "try-error")) {
-      W.rev <- Matrix::nearPD(W.rev)$mat
-      V.ord <- Matrix::t(Matrix::chol(W.rev))
-    }
-  } else { # for obspred ordering
+#  if (U.obj$cond.yz == "zy") {
+#    V.ord <- revMat(U.y[, U.obj$latent, drop = FALSE])
+#  } else if (U.obj$ord.pred != "obspred") {
+#    W <- Matrix::tcrossprod(U.y)
+#    W.rev <- revMat(W)
+#    res <- try(V.ord <- Matrix::t(Matrix::chol(W.rev)), silent = TRUE)
+#    if (inherits(res, "try-error")) {
+#      W.rev <- nearPD_cpp(W.rev)$mat
+#      V.ord <- Matrix::t(Matrix::chol(W.rev))
+#    }
+#  } else { # for obspred ordering
 
-    last.obs <- max(which(!U.obj$latent))
-    latents.before <- sum(U.obj$latent[1:last.obs])
-    latents.after <- sum(U.obj$latent[-(1:last.obs)])
+#    last.obs <- max(which(!U.obj$latent))
+#    latents.before <- sum(U.obj$latent[1:last.obs])
+#    latents.after <- sum(U.obj$latent[-(1:last.obs)])
 
-    # pred columns are unchanged
-    V.pr <- revMat(U.y[, (last.obs + 1):ncol(U.y), drop = FALSE])
+#    # pred columns are unchanged
+#    V.pr <- revMat(U.y[, (last.obs + 1):ncol(U.y), drop = FALSE])
 
-    # have to compute cholesky for obs block
-    U.oo <- U.y[1:latents.before, 1:last.obs]
-    A <- Matrix::tcrossprod(U.oo)
-    A.rev <- revMat(A)
-    res <- try(V.oor <- Matrix::t(Matrix::chol(A.rev)), silent = TRUE)
-    if (inherits(res, "try-error")) {
-      A.rev <- Matrix::nearPD(A.rev)$mat
-      V.oor <- Matrix::t(Matrix::chol(A.rev))
-    }
+#    # have to compute cholesky for obs block
+#    U.oo <- U.y[1:latents.before, 1:last.obs]
+#    A <- Matrix::tcrossprod(U.oo)
+#    A.rev <- revMat(A)
+#    res <- try(V.oor <- Matrix::t(Matrix::chol(A.rev)), silent = TRUE)
+#    if (inherits(res, "try-error")) {
+#      A.rev <- nearPD_cpp(A.rev)$mat
+#      V.oor <- Matrix::t(Matrix::chol(A.rev))
+#    }
 
-    # combine the blocks into one matrix
-    zeromat.sparse <- Matrix::sparseMatrix(c(), c(),
-      dims = c(latents.after, latents.before))
-    V.or <- rbind(zeromat.sparse, V.oor)
+#    # combine the blocks into one matrix
+#    zeromat.sparse <- Matrix::sparseMatrix(c(), c(),
+#      dims = c(latents.after, latents.before))
+#    V.or <- rbind(zeromat.sparse, V.oor)
 
-    V.ord <- methods::as(cbind(V.pr, V.or), "triangularMatrix")
-  }
-
-  V.ord
-}
+#    V.ord <- methods::as(cbind(V.pr, V.or), "triangularMatrix")
+#  }
+#
+#  V.ord
+#}
 
 ###########################################################
 ## Reverse order of matrix rows,cols
-revMat <- function(mat) {
-  if (nrow(mat) == 0 || ncol(mat) == 0) {
-    mat.out <- mat
-  } else {
-    row_seq <- rev(seq_len(nrow(mat)))
-    col_seq <- rev(seq_len(ncol(mat)))
-    mat.out <- mat[row_seq, col_seq, drop = FALSE]
-  }
-  mat.out
-}
+#revMat <- function(mat) {
+#  if (nrow(mat) == 0 || ncol(mat) == 0) {
+#    mat.out <- mat
+#  } else {
+#    row_seq <- rev(seq_len(nrow(mat)))
+#    col_seq <- rev(seq_len(ncol(mat)))
+#    mat.out <- mat[row_seq, col_seq, drop = FALSE]
+#  }
+#  mat.out
+#}
 
 vecchia_prediction <- function(z, vecchia.approx, covparms, nuggets,
   var.exact, covmodel = "matern", return.values = "all") {
   removeNAs <- getFromNamespace("removeNAs", "GPvecchia")
   removeNAs()
   U.obj <- createU(vecchia.approx, covparms, nuggets, covmodel)
-  V.ord <- U2V(U.obj)
+  V.ord <- U2V_cpp(U.obj)
   if (length(U.obj$zero.nugg) > 0)
     warning("Rows/cols of V have been removed for data with zero noise")
   vecchia_mean <- getFromNamespace("vecchia_mean", "GPvecchia")
@@ -239,7 +239,7 @@ vecchia_prediction <- function(z, vecchia.approx, covparms, nuggets,
   res <- try(vecchia.mean <- vecchia_mean(z, U.obj, V.ord), silent = TRUE)
   if (inherits(res, "try-error")) {
     warning("V is numerically singular. Predicted means are unreliable.")
-    V.ord.pd <- Matrix::nearPD(V.ord)$mat
+    V.ord.pd <- nearPD_cpp(V.ord)$mat
     V.singular <- TRUE
     vecchia.mean <- vecchia_mean(z, U.obj, V.ord.pd)
   }
@@ -330,7 +330,7 @@ vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL, r
   removeNAs <- getFromNamespace("removeNAs", "GPvecchia")
   removeNAs()
   U.obj <- createUMultivariate(vecchia.approx, covparms)
-  V.ord <- U2V(U.obj)
+  V.ord <- U2V_cpp(U.obj)
   #    if (length(U.obj$zero.nugg) > 0)
   #        warning("Rows/cols of V have been removed for data with zero noise")
   vecchia_mean <- getFromNamespace("vecchia_mean", "GPvecchia")
@@ -338,7 +338,7 @@ vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL, r
   res <- try(vecchia.mean <- vecchia_mean(z, U.obj, V.ord), silent = TRUE)
   if (inherits(res, "try-error")) {
     warning("V is numerically singular. Predicted means are unreliable.")
-    V.ord.pd <- Matrix::nearPD(V.ord)$mat
+    V.ord.pd <- nearPD_cpp(V.ord)$mat
     V.singular <- TRUE
     vecchia.mean <- vecchia_mean(z, U.obj, V.ord.pd)
   }
@@ -461,49 +461,49 @@ lod_reg_mi <- function(y, X, lodu, lodl, miss, n.mi = 10, eps = 0.01,
   list(coef = cur.coef, y.impute = y.impute)
 }
 
-MMatern_cov <- function(locs, y_ndx, covparams, P) {
-  param.seq <- create_param_sequence(P)
-  sigma <- covparams[param.seq[1, 1]:param.seq[1, 2]]
-  rangep <- covparams[param.seq[2, 1]:param.seq[2, 2]]
-  smoothness <- covparams[param.seq[3, 1]:param.seq[3, 2]]
-  nuggets <- covparams[param.seq[4, 1]:param.seq[4, 2]]
+#MMatern_cov <- function(locs, y_ndx, covparams, P) {
+#  param.seq <- create_param_sequence(P)
+#  sigma <- covparams[param.seq[1, 1]:param.seq[1, 2]]
+#  rangep <- covparams[param.seq[2, 1]:param.seq[2, 2]]
+#  smoothness <- covparams[param.seq[3, 1]:param.seq[3, 2]]
+#  nuggets <- covparams[param.seq[4, 1]:param.seq[4, 2]]
 
-  rho <- covparams[param.seq[5, 1]:param.seq[5, 2]]
-  rho.mat <- matrix(0, nrow = P, ncol = P)
-  rho.mat[upper.tri(rho.mat, diag = FALSE)] <- rho
-  rho.mat <- rho.mat + t(rho.mat)
-  diag(rho.mat) <- 1
+#  rho <- covparams[param.seq[5, 1]:param.seq[5, 2]]
+#  rho.mat <- matrix(0, nrow = P, ncol = P)
+#  rho.mat[upper.tri(rho.mat, diag = FALSE)] <- rho
+#  rho.mat <- rho.mat + t(rho.mat)
+#  diag(rho.mat) <- 1
 
-  Sigma.hat <- matrix(nrow = nrow(locs), ncol = nrow(locs))
-  for (i in seq_len(P)) {
-    for (j in i:P) {
-      which.i <- which(y_ndx == i)
-      which.j <- which(y_ndx == j)
-      if (sum(which.i) > 0 && sum(which.j) > 0) {
-        smooth.ii <- smoothness[i]
-        smooth.jj <- smoothness[j]
-        smooth.ij <- (smooth.ii + smooth.jj) / 2
-        alpha.ii <- 1 / rangep[i]
-        alpha.jj <- 1 / rangep[j]
-        alpha.ij <- sqrt((alpha.ii^2 + alpha.jj^2) / 2)
-        Sigma.hat[which.i, which.j] <- rho.mat[i, j] * sqrt(sigma[i]) *
-          sqrt(sigma[j]) * alpha.ii^smooth.ii * alpha.jj^smooth.jj *
-          gamma(smooth.ij) / (alpha.ij^(2 * smooth.ij) *
-            sqrt(gamma(smooth.ii) * gamma(smooth.jj))) *
-          Matern(rdist(locs[which.i, , drop = FALSE],
-              locs[which.j, , drop = FALSE]), alpha = alpha.ij,
-            smoothness = smooth.ij)
-        if (i != j) {
-          Sigma.hat[which.j, which.i] <- t(Sigma.hat[which.i, which.j])
-        } else {
-          Sigma.hat[which.i, which.i] <- Sigma.hat[which.i, which.i] +
-            nuggets[i] * diag(nrow = length(which.i))
-        }
-      }
-    }
-  }
-  Sigma.hat
-}
+#  Sigma.hat <- matrix(nrow = nrow(locs), ncol = nrow(locs))
+#  for (i in seq_len(P)) {
+#    for (j in i:P) {
+#      which.i <- which(y_ndx == i)
+#      which.j <- which(y_ndx == j)
+#      if (sum(which.i) > 0 && sum(which.j) > 0) {
+#        smooth.ii <- smoothness[i]
+#        smooth.jj <- smoothness[j]
+#        smooth.ij <- (smooth.ii + smooth.jj) / 2
+#        alpha.ii <- 1 / rangep[i]
+#        alpha.jj <- 1 / rangep[j]
+#        alpha.ij <- sqrt((alpha.ii^2 + alpha.jj^2) / 2)
+#        Sigma.hat[which.i, which.j] <- rho.mat[i, j] * sqrt(sigma[i]) *
+#          sqrt(sigma[j]) * alpha.ii^smooth.ii * alpha.jj^smooth.jj *
+#          gamma(smooth.ij) / (alpha.ij^(2 * smooth.ij) *
+#            sqrt(gamma(smooth.ii) * gamma(smooth.jj))) *
+#          Matern(rdist(locs[which.i, , drop = FALSE],
+#              locs[which.j, , drop = FALSE]), alpha = alpha.ij,
+#            smoothness = smooth.ij)
+#        if (i != j) {
+#          Sigma.hat[which.j, which.i] <- t(Sigma.hat[which.i, which.j])
+#        } else {
+#          Sigma.hat[which.i, which.i] <- Sigma.hat[which.i, which.i] +
+#            nuggets[i] * diag(nrow = length(which.i))
+#        }
+#      }
+#    }
+#  }
+#  Sigma.hat
+#}
 
 rtmvn_snn2 <- function(y, cens_lb, cens_ub, mask_cens, NN, cov_array) {
   ind_cens <- which(mask_cens)

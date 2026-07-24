@@ -572,10 +572,10 @@ setMethod("estimate_theta", "MultivariateVecchiaModel", function(model, locs, op
     vecchia.result <- optim(
       par = model@logparams,
       fn = mvnegloglik,
-      vecchia.approx = model@vecchia_approx,
+      vecchia_approx = model@vecchia_approx,
       y = model@res,
       P = P,
-      param.seq = model@param_sequence,
+      param_seq = model@param_sequence,
       method = method,
       control = optim.control
     )
@@ -583,10 +583,10 @@ setMethod("estimate_theta", "MultivariateVecchiaModel", function(model, locs, op
     vecchia.result <- optim(
       par = model@logparams,
       fn = mvnegloglik_ST,
-      vecchia.approx = model@vecchia_approx,
+      vecchia_approx = model@vecchia_approx,
       y = model@res,
       P = P,
-      param.seq = model@param_sequence,
+      param_seq = model@param_sequence,
       scaling = model@scaling,
       nscale = model@nscale,
       method = method,

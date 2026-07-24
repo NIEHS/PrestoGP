@@ -2,6 +2,7 @@
 // Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #include <RcppArmadillo.h>
+#include <RcppEigen.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -11,42 +12,159 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// na_omit_c
-arma::vec na_omit_c(arma::vec x);
-RcppExport SEXP _PrestoGP_na_omit_c(SEXP xSEXP) {
+// createUMultivariate
+Rcpp::List createUMultivariate(Rcpp::List vec_approx, arma::vec params);
+RcppExport SEXP _PrestoGP_createUMultivariate(SEXP vec_approxSEXP, SEXP paramsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(na_omit_c(x));
+    Rcpp::traits::input_parameter< Rcpp::List >::type vec_approx(vec_approxSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type params(paramsSEXP);
+    rcpp_result_gen = Rcpp::wrap(createUMultivariate(vec_approx, params));
     return rcpp_result_gen;
 END_RCPP
 }
-// createU_helper_mat
-arma::sp_mat createU_helper_mat(const arma::mat& olocs, const arma::vec& ondx, const arma::mat& curqys, const arma::mat& curqzs, const arma::mat& vijs, const arma::mat& aijs, const arma::mat& full_const, const arma::vec& nugget, const arma::vec& sig2, const arma::vec& U_beginning, const int n_cores);
-RcppExport SEXP _PrestoGP_createU_helper_mat(SEXP olocsSEXP, SEXP ondxSEXP, SEXP curqysSEXP, SEXP curqzsSEXP, SEXP vijsSEXP, SEXP aijsSEXP, SEXP full_constSEXP, SEXP nuggetSEXP, SEXP sig2SEXP, SEXP U_beginningSEXP, SEXP n_coresSEXP) {
+// MMatern_cov
+arma::mat MMatern_cov(const arma::mat& locs, const arma::ivec& y_ndx, const arma::vec& covparams, const double P);
+RcppExport SEXP _PrestoGP_MMatern_cov(SEXP locsSEXP, SEXP y_ndxSEXP, SEXP covparamsSEXP, SEXP PSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type olocs(olocsSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type ondx(ondxSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type curqys(curqysSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type curqzs(curqzsSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type vijs(vijsSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type aijs(aijsSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type full_const(full_constSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type nugget(nuggetSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type sig2(sig2SEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type U_beginning(U_beginningSEXP);
-    Rcpp::traits::input_parameter< const int >::type n_cores(n_coresSEXP);
-    rcpp_result_gen = Rcpp::wrap(createU_helper_mat(olocs, ondx, curqys, curqzs, vijs, aijs, full_const, nugget, sig2, U_beginning, n_cores));
+    Rcpp::traits::input_parameter< const arma::mat& >::type locs(locsSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type y_ndx(y_ndxSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type covparams(covparamsSEXP);
+    Rcpp::traits::input_parameter< const double >::type P(PSEXP);
+    rcpp_result_gen = Rcpp::wrap(MMatern_cov(locs, y_ndx, covparams, P));
+    return rcpp_result_gen;
+END_RCPP
+}
+// unlog_params
+arma::vec unlog_params(const arma::vec& logparams, const arma::mat& param_seq, int P);
+RcppExport SEXP _PrestoGP_unlog_params(SEXP logparamsSEXP, SEXP param_seqSEXP, SEXP PSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type logparams(logparamsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type param_seq(param_seqSEXP);
+    Rcpp::traits::input_parameter< int >::type P(PSEXP);
+    rcpp_result_gen = Rcpp::wrap(unlog_params(logparams, param_seq, P));
+    return rcpp_result_gen;
+END_RCPP
+}
+// vecchia_likelihood_U_cpp
+double vecchia_likelihood_U_cpp(const arma::vec& z, List U_obj);
+RcppExport SEXP _PrestoGP_vecchia_likelihood_U_cpp(SEXP zSEXP, SEXP U_objSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type z(zSEXP);
+    Rcpp::traits::input_parameter< List >::type U_obj(U_objSEXP);
+    rcpp_result_gen = Rcpp::wrap(vecchia_likelihood_U_cpp(z, U_obj));
+    return rcpp_result_gen;
+END_RCPP
+}
+// vecchia_Mlikelihood
+double vecchia_Mlikelihood(arma::vec z, Rcpp::List vecchia_approx, arma::vec covparams);
+RcppExport SEXP _PrestoGP_vecchia_Mlikelihood(SEXP zSEXP, SEXP vecchia_approxSEXP, SEXP covparamsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type z(zSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type vecchia_approx(vecchia_approxSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type covparams(covparamsSEXP);
+    rcpp_result_gen = Rcpp::wrap(vecchia_Mlikelihood(z, vecchia_approx, covparams));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mvnegloglik
+double mvnegloglik(arma::vec logparams, Rcpp::List vecchia_approx, arma::vec y, arma::mat param_seq, int P);
+RcppExport SEXP _PrestoGP_mvnegloglik(SEXP logparamsSEXP, SEXP vecchia_approxSEXP, SEXP ySEXP, SEXP param_seqSEXP, SEXP PSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type logparams(logparamsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type vecchia_approx(vecchia_approxSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type param_seq(param_seqSEXP);
+    Rcpp::traits::input_parameter< int >::type P(PSEXP);
+    rcpp_result_gen = Rcpp::wrap(mvnegloglik(logparams, vecchia_approx, y, param_seq, P));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mvnegloglik_ST
+double mvnegloglik_ST(arma::vec logparams, List vecchia_approx, arma::vec y, arma::mat param_seq, int P, arma::ivec scaling, int nscale);
+RcppExport SEXP _PrestoGP_mvnegloglik_ST(SEXP logparamsSEXP, SEXP vecchia_approxSEXP, SEXP ySEXP, SEXP param_seqSEXP, SEXP PSEXP, SEXP scalingSEXP, SEXP nscaleSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type logparams(logparamsSEXP);
+    Rcpp::traits::input_parameter< List >::type vecchia_approx(vecchia_approxSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type param_seq(param_seqSEXP);
+    Rcpp::traits::input_parameter< int >::type P(PSEXP);
+    Rcpp::traits::input_parameter< arma::ivec >::type scaling(scalingSEXP);
+    Rcpp::traits::input_parameter< int >::type nscale(nscaleSEXP);
+    rcpp_result_gen = Rcpp::wrap(mvnegloglik_ST(logparams, vecchia_approx, y, param_seq, P, scaling, nscale));
+    return rcpp_result_gen;
+END_RCPP
+}
+// create_param_sequence
+arma::mat create_param_sequence(const double P, const double ns);
+RcppExport SEXP _PrestoGP_create_param_sequence(SEXP PSEXP, SEXP nsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const double >::type P(PSEXP);
+    Rcpp::traits::input_parameter< const double >::type ns(nsSEXP);
+    rcpp_result_gen = Rcpp::wrap(create_param_sequence(P, ns));
+    return rcpp_result_gen;
+END_RCPP
+}
+// nearPD_cpp
+List nearPD_cpp(arma::mat x, bool corr, bool keepDiag, bool do2eigen, bool doSym, bool doDykstra, bool only_values, double eig_tol, double conv_tol, double posd_tol, int maxit, bool trace);
+RcppExport SEXP _PrestoGP_nearPD_cpp(SEXP xSEXP, SEXP corrSEXP, SEXP keepDiagSEXP, SEXP do2eigenSEXP, SEXP doSymSEXP, SEXP doDykstraSEXP, SEXP only_valuesSEXP, SEXP eig_tolSEXP, SEXP conv_tolSEXP, SEXP posd_tolSEXP, SEXP maxitSEXP, SEXP traceSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    Rcpp::traits::input_parameter< bool >::type corr(corrSEXP);
+    Rcpp::traits::input_parameter< bool >::type keepDiag(keepDiagSEXP);
+    Rcpp::traits::input_parameter< bool >::type do2eigen(do2eigenSEXP);
+    Rcpp::traits::input_parameter< bool >::type doSym(doSymSEXP);
+    Rcpp::traits::input_parameter< bool >::type doDykstra(doDykstraSEXP);
+    Rcpp::traits::input_parameter< bool >::type only_values(only_valuesSEXP);
+    Rcpp::traits::input_parameter< double >::type eig_tol(eig_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type conv_tol(conv_tolSEXP);
+    Rcpp::traits::input_parameter< double >::type posd_tol(posd_tolSEXP);
+    Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
+    Rcpp::traits::input_parameter< bool >::type trace(traceSEXP);
+    rcpp_result_gen = Rcpp::wrap(nearPD_cpp(x, corr, keepDiag, do2eigen, doSym, doDykstra, only_values, eig_tol, conv_tol, posd_tol, maxit, trace));
+    return rcpp_result_gen;
+END_RCPP
+}
+// U2V_cpp
+arma::sp_mat U2V_cpp(List U_obj);
+RcppExport SEXP _PrestoGP_U2V_cpp(SEXP U_objSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type U_obj(U_objSEXP);
+    rcpp_result_gen = Rcpp::wrap(U2V_cpp(U_obj));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_PrestoGP_na_omit_c", (DL_FUNC) &_PrestoGP_na_omit_c, 1},
-    {"_PrestoGP_createU_helper_mat", (DL_FUNC) &_PrestoGP_createU_helper_mat, 11},
+    {"_PrestoGP_createUMultivariate", (DL_FUNC) &_PrestoGP_createUMultivariate, 2},
+    {"_PrestoGP_MMatern_cov", (DL_FUNC) &_PrestoGP_MMatern_cov, 4},
+    {"_PrestoGP_unlog_params", (DL_FUNC) &_PrestoGP_unlog_params, 3},
+    {"_PrestoGP_vecchia_likelihood_U_cpp", (DL_FUNC) &_PrestoGP_vecchia_likelihood_U_cpp, 2},
+    {"_PrestoGP_vecchia_Mlikelihood", (DL_FUNC) &_PrestoGP_vecchia_Mlikelihood, 3},
+    {"_PrestoGP_mvnegloglik", (DL_FUNC) &_PrestoGP_mvnegloglik, 5},
+    {"_PrestoGP_mvnegloglik_ST", (DL_FUNC) &_PrestoGP_mvnegloglik_ST, 7},
+    {"_PrestoGP_create_param_sequence", (DL_FUNC) &_PrestoGP_create_param_sequence, 2},
+    {"_PrestoGP_nearPD_cpp", (DL_FUNC) &_PrestoGP_nearPD_cpp, 12},
+    {"_PrestoGP_U2V_cpp", (DL_FUNC) &_PrestoGP_U2V_cpp, 1},
     {NULL, NULL, 0}
 };
 
