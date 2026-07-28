@@ -1,113 +1,15 @@
-#' Extract specific Matern parameters from a parameter sequence
-#'
-#' This function is used to obtain specific Matern parameters (e.g.,
-#' range or smoothness) from the covparams slot of a PrestoGPModel object.
-#'
-#' @param P Number of outcome variables
-#' @param ns Number of scale parameters
-#'
-#' @details This function is intended for advanced users who want to specify
-#' the input Matern parameters for functions such as
-#' \code{\link{vecchia_Mlikelihood}} or \code{\link{createUMultivariate}}.
-#' To extract the Matern parameters from a fitted PrestoGP model, it is
-#' strongly recommended to use \code{link{get_theta}} instead.
-#'
-#' @return A matrix with five rows and two columns as described below:
-#' \describe{
-#' \item{Row 1:}{Starting and ending indices for the sigma parameter(s)}
-#' \item{Row 2:}{Starting and ending indices for the scale parameter(s)}
-#' \item{Row 3:}{Starting and ending indices for the smoothness parameter(s)}
-#' \item{Row 4:}{Starting and ending indices for the nugget(s)}
-#' \item{Row 5:}{Starting and ending indices for the correlation parameter(s)}
-#' }
-#'
-#' @seealso \code{\link{PrestoGPModel-class}}
-#'
-#' @references
-#' \itemize{
-#' \item Apanasovich, T.V., Genton, M.G. and Sun, Y. "A valid Matérn class of
-#' cross-covariance functions for multivariate random fields with any number
-#' of components", Journal of the American Statistical Association (2012)
-#' 107(497):180-193.
-#' \item Genton, M.G. "Classes of kernels for machine learning: a statistics
-#' perspective", The Journal of Machine Learning Research (2001) 2:299-312.
-#' }
-#'
-#' @export
-#' @examples
-#' # Space/elevation model
-#' data(soil250, package="geoR")
-#' y2 <- soil250[,7]               # predict pH level
-#' X2 <- as.matrix(soil250[,c(4:6,8:22)])
-#' # columns 1+2 are location coordinates; column 3 is elevation
-#' locs2 <- as.matrix(soil250[,1:3])
-#'
-#' soil.vm2 <- new("VecchiaModel", n_neighbors = 10)
-#' # fit separate scale parameters for location and elevation
-#' soil.vm2 <- prestogp_fit(soil.vm2, y2, X2, locs2, scaling = c(1, 1, 2))
-#'
-#' pseq <- create_param_sequence(1, 2)
-#' soil2.params <- soil.vm2@covparams
-#' # sigma
-#' soil2.params[pseq[1,1]:pseq[1,2]]
-#' # scale parameters
-#' soil2.params[pseq[2,1]:pseq[2,2]]
-#' # smoothness parameter
-#' soil2.params[pseq[3,1]:pseq[3,2]]
-#' # nugget
-#' soil2.params[pseq[4,1]:pseq[4,2]]
-#'
-#' # Multivariate model
-#' ym <- list()
-#' ym[[1]] <- soil250[,4] # predict sand/silt portion of the sample
-#' ym[[2]] <- soil250[,5]
-#' ym[[3]] <- soil250[,6]
-#' Xm <- list()
-#' Xm[[1]] <- Xm[[2]] <- Xm[[3]] <- as.matrix(soil250[,7:22])
-#' locsm <- list()
-#' locsm[[1]] <- locsm[[2]] <- locsm[[3]] <- as.matrix(soil250[,1:3])
-#'
-#' soil.mvm <-  new("MultivariateVecchiaModel", n_neighbors = 10)
-#' soil.mvm <- prestogp_fit(soil.mvm, ym, Xm, locsm)
-#'
-#' pseq <- create_param_sequence(3, 2)
-#' soil.params <- soil.mvm@covparams
-#' # sigmas
-#' soil.params[pseq[1,1]:pseq[1,2]]
-#' # scale parameters
-#' scale.seq <- pseq[2,1]:pseq[2,2]
-#' # scale parameter for location, outcome 1
-#' soil.params[scale.seq[1]]
-#' # scale parameter for elevation, outcome 1
-#' soil.params[scale.seq[2]]
-#' # scale parameter for location, outcome 2
-#' soil.params[scale.seq[3]]
-#' # scale parameter for elevation, outcome 2
-#' soil.params[scale.seq[4]]
-#' # scale parameter for location, outcome 3
-#' soil.params[scale.seq[5]]
-#' # scale parameter for elevation, outcome 3
-#' soil.params[scale.seq[6]]
-#' # smoothness parameters
-#' soil.params[pseq[3,1]:pseq[3,2]]
-#' # nuggets
-#' soil.params[pseq[4,1]:pseq[4,2]]
-#' # correlation
-#' soil.corr <- diag(2) / 2
-#' soil.corr[upper.tri(soil.corr)] <- soil.params[pseq[5,1]:pseq[5,2]]
-#' soil.corr <- soil.corr + t(soil.corr)
-create_param_sequence <- function(P, ns = 1) {
-  nk <- choose(P, 2)
-  if (nk == 0) {
-    nk <- 1 # univariate case
-  }
+#create_param_sequence <- function(P, ns = 1) {
+#  nk <- choose(P, 2)
+#  if (nk == 0) {
+#    nk <- 1 # univariate case
+#  }
 
-  param.sequence.begin <- c(1, P + 1, seq(P * (ns + 1) + 1, length = 3, by = P))
-  param.sequence.end <- c(P, ns * P, P, P, nk) |> cumsum()
-  param.sequence <- cbind(param.sequence.begin, param.sequence.end)
+#  param.sequence.begin <- c(1, P + 1, seq(P * (ns + 1) + 1, length = 3, by = P))
+#  param.sequence.end <- c(P, ns * P, P, P, nk) |> cumsum()
+#  param.sequence <- cbind(param.sequence.begin, param.sequence.end)
 
-  param.sequence
-}
+#  param.sequence
+#}
 
 #' Maximum minimum distance ordering
 #'
@@ -463,302 +365,343 @@ vecchia_Mspecify <- function(locs.list, m, locs.list.pred = NULL,
     )
   }
   last.obs <- max(which(obs))
+
   q.list <- calc.q(nn.mat$indices, last.obs + 1)
+  m <- length(q.list$q.y[[n]]) + length(q.list$q.z[[n]])
+  q.list$q.y <- lapply(q.list$q.y, function(x) c(x, rep(NA, m - length(x))))
+  q.list$q.z <- lapply(q.list$q.z, function(x) c(x, rep(NA, m - length(x))))
+  qy.mat <- do.call(cbind, q.list$q.y)
+  qz.mat <- do.call(cbind, q.list$q.z)
 
   list(
     locsord = olocs, obs = obs, ord = ord, ord.z = ord.z,
     ord.pred = ordering.pred, cond.yz = "SGV", conditioning = "NN",
     P = P, ondx = ondx, dist.func = dist.func,
-    dist.func.code = dist.func.code, q.list = q.list,
-    n.neighbors = m, n.cores = -1
+    dist.func.code = dist.func.code, q.list = q.list, qy.mat = qy.mat,
+    qz.mat = qz.mat, n.neighbors = m, n.cores = -1
   )
 }
 
-#' Create the sparse triangular matrix U for multivariate Vecchia models
-#'
-#' This creates the sparse triangular matrix U for multivariate Vecchia
-#' models. This matrix can be used to estimate the likelihood or transform
-#' the data to be iid. This function is a multivariate version of
-#' \code{\link[GPvecchia]{createU}}.
-#'
-#' @param vec.approx Object returned by \code{\link{vecchia_Mspecify}}.
-#' @param params Vector of covariance parameters. See
-#' \code{\link{create_param_sequence}} or the examples below for details
-#' about the format of this vector.
-#' @param cov_func The function used to compute the covariance between two
-#' observations. Defaults to a Matern model.
-#'
-#' @details This function will be much slower if a non-default cov_func is
-#' specified. More importantly, there is no guarantee that the resulting
-#' covariance matrices will be positive definite. We recommend using the
-#' default (Matern) covariance function unless you know exactly what you are
-#' doing. See Apanasovich et al. (2012) for a description of how the
-#' cross-covariances are computed.
-#'
-#' @return A list containing the sparse upper trianguler U, plus additional
-#' objects required for other functions.
-#'
-#' @seealso \code{\link[GPvecchia]{createU}}, \code{\link{vecchia_Mspecify}},
-#' \code{\link{create_param_sequence}}
-#'
-#' @references
-#' \itemize{
-#' \item Apanasovich, T.V., Genton, M.G. and Sun, Y. "A valid Matérn class of
-#' cross-covariance functions for multivariate random fields with any number
-#' of components", Journal of the American Statistical Association (2012)
-#' 107(497):180-193.
-#' \item Katzfuss, M., and Guinness, J. "A general framework for Vecchia
-#' approximations of Gaussian processes", Statistical Science (2021)
-#' 36(1):124-141.
-#' }
-#'
-#' @useDynLib PrestoGP
-#' @export
-#' @examples
-#' data(soil)
-#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
-#' locs <- as.matrix(soil[,1:2])
-#' locsm <- list()
-#' locsm[[1]] <- locsm[[2]] <- locs
-#' soil.va <- vecchia_Mspecify(locsm, m=10)
-#'
-#' pseq <- create_param_sequence(2)
-#' # Initialize the vector of covariance parameters
-#' params <- rep(NA, pseq[5,2])
-#' # Sigma parameters:
-#' params[pseq[1,1]:pseq[1,2]] <- c(100, 80)
-#' # Scale parameters:
-#' params[pseq[2,1]:pseq[2,2]] <- c(60, 50)
-#' # Smoothness parameters:
-#' params[pseq[3,1]:pseq[3,2]] <- c(0.5, 0.5)
-#' # Nuggets:
-#' params[pseq[4,1]:pseq[4,2]] <- c(30, 30)
-#' # Correlation:
-#' params[pseq[5,1]:pseq[5,2]] <- -0.9
-#'
-#' soil.u <- createUMultivariate(soil.va, params)
-createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
-  if (is.null(cov_func)) {
-    cov_func <- fields::Matern
-  }
+#createUMultivariate <- function(vec.approx, params) {
+#  P <- vec.approx$P
+#  q.list <- vec.approx$q.list
+#  olocs <- vec.approx$locsord
+#  n <- nrow(olocs)
+#  ondx <- vec.approx$ondx
 
-  dist_func <- vec.approx$dist.func
-  P <- vec.approx$P
-  q.list <- vec.approx$q.list
-  olocs <- vec.approx$locsord
-  n <- nrow(olocs)
-  ondx <- vec.approx$ondx
+#  param.seq <- create_param_sequence(P)
+#  param.sequence.begin <- param.seq[, 1]
+#  param.sequence.end <- param.seq[, 2]
 
-  param.seq <- create_param_sequence(P)
-  param.sequence.begin <- param.seq[, 1]
-  param.sequence.end <- param.seq[, 2]
+#  sig2 <- params[param.sequence.begin[1]:param.sequence.end[1]]
+#  rangep <- params[param.sequence.begin[2]:param.sequence.end[2]]
+#  smoothness <- params[param.sequence.begin[3]:param.sequence.end[3]]
+#  nugget <- params[param.sequence.begin[4]:param.sequence.end[4]]
 
-  sig2 <- params[param.sequence.begin[1]:param.sequence.end[1]]
-  rangep <- params[param.sequence.begin[2]:param.sequence.end[2]]
-  smoothness <- params[param.sequence.begin[3]:param.sequence.end[3]]
-  nugget <- params[param.sequence.begin[4]:param.sequence.end[4]]
+#  rho <- params[param.sequence.begin[5]:param.sequence.end[5]]
+#  rho.mat <- matrix(0, nrow = P, ncol = P)
+#  rho.mat[upper.tri(rho.mat, diag = FALSE)] <- rho
+#  rho.mat <- rho.mat + t(rho.mat)
+#  diag(rho.mat) <- 1
 
-  rho <- params[param.sequence.begin[5]:param.sequence.end[5]]
-  rho.mat <- matrix(0, nrow = P, ncol = P)
-  rho.mat[upper.tri(rho.mat, diag = FALSE)] <- rho
-  rho.mat <- rho.mat + t(rho.mat)
-  diag(rho.mat) <- 1
+#  uvec <- rep(NA, 7)
 
-  if (vec.approx$dist.func.code == "rdist") {
-    uvec <- rep(NA, 7)
+#  uvec[1] <- sig2[ondx[1]]^(-1 / 2)
+#  uvec[3] <- nugget[ondx[1]]^(-1 / 2)
+#  uvec[2] <- -1 * uvec[3]
+#  uvec[7] <- nugget[ondx[2]]^(-1 / 2)
+#  uvec[6] <- -1 * uvec[7]
 
-    uvec[1] <- sig2[ondx[1]]^(-1 / 2)
-    uvec[3] <- nugget[ondx[1]]^(-1 / 2)
-    uvec[2] <- -1 * uvec[3]
-    uvec[7] <- nugget[ondx[2]]^(-1 / 2)
-    uvec[6] <- -1 * uvec[7]
+#  vii <- smoothness[ondx[1]]
+#  vjj <- smoothness[ondx[2]]
+#  vij <- (vii + vjj) / 2
+#  aii <- 1 / rangep[ondx[1]]
+#  ajj <- 1 / rangep[ondx[2]]
+#  aij <- sqrt((aii^2 + ajj^2) / 2)
+#  K1 <- rho.mat[ondx[1], ondx[2]] * sqrt(sig2[ondx[1]]) * sqrt(sig2[ondx[2]]) *
+#    aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
+#    Matern(rdist(olocs[1, , drop = FALSE], olocs[2, , drop = FALSE], ),
+#      smoothness = vij, alpha = aij
+#    )
+#  K2 <- sig2[ondx[1]]
+#  bi <- K1 / K2
+#  ri <- sig2[ondx[2]] - bi * K1
 
-    vii <- smoothness[ondx[1]]
-    vjj <- smoothness[ondx[2]]
-    vij <- (vii + vjj) / 2
-    aii <- 1 / rangep[ondx[1]]
-    ajj <- 1 / rangep[ondx[2]]
-    aij <- sqrt((aii^2 + ajj^2) / 2)
-    K1 <- rho.mat[ondx[1], ondx[2]] * sqrt(sig2[ondx[1]]) * sqrt(sig2[ondx[2]]) *
-      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
-      cov_func(dist_func(olocs[1, , drop = FALSE], olocs[2, , drop = FALSE], ),
-        smoothness = vij, alpha = aij
-      )
-    K2 <- sig2[ondx[1]]
-    bi <- K1 / K2
-    ri <- sig2[ondx[2]] - bi * K1
+#  uvec[5] <- ri^(-1 / 2)
+#  uvec[4] <- -1 * bi * ri^(-1 / 2)
 
-    uvec[5] <- ri^(-1 / 2)
-    uvec[4] <- -1 * bi * ri^(-1 / 2)
+#  vijs <- outer(smoothness, smoothness, "+") / 2
+#  aijs <- outer(rangep, rangep, function(x, y) sqrt((1 / x^2 + 1 / y^2) / 2))
+#  gammas <- outer(smoothness, smoothness, function(x, y) gamma((x + y) / 2) / sqrt(gamma(x) * gamma(y)))
+#  expprod <- outer(rangep^(-smoothness), rangep^(-smoothness), "*")
+#  sigs <- outer(sig2, sig2, function(x, y) sqrt(x) * sqrt(y))
 
-    vijs <- outer(smoothness, smoothness, "+") / 2
-    aijs <- outer(rangep, rangep, function(x, y) sqrt((1 / x^2 + 1 / y^2) / 2))
-    gammas <- outer(smoothness, smoothness, function(x, y) gamma((x + y) / 2) / sqrt(gamma(x) * gamma(y)))
-    expprod <- outer(rangep^(-smoothness), rangep^(-smoothness), "*")
-    sigs <- outer(sig2, sig2, function(x, y) sqrt(x) * sqrt(y))
+#  full_const <- sigs * gammas * expprod * rho.mat / (aijs^(2 * vijs))
 
-    full_const <- sigs * gammas * expprod * rho.mat / (aijs^(2 * vijs))
+#  #if (sum(is.na(full_const)) > 0) {
+#  #  browser()
+#  #}
 
-    #if (sum(is.na(full_const)) > 0) {
-    #  browser()
-    #}
+#  m <- length(q.list$q.y[[n]]) + length(q.list$q.z[[n]])
+#  q.list$q.y <- lapply(q.list$q.y, function(x) c(x, rep(NA, m - length(x))))
+#  q.list$q.z <- lapply(q.list$q.z, function(x) c(x, rep(NA, m - length(x))))
+#  cur.qys <- do.call(cbind, q.list$q.y)
+#  cur.qzs <- do.call(cbind, q.list$q.z)
+#  # browser()
+#  UL <- createU_helper_mat(olocs, ondx, cur.qys, cur.qzs, vijs, aijs,
+#    full_const, nugget, sig2, uvec, vec.approx$n.cores)
+#  # U <- sparseMatrix(i=U1[1,], j=U1[2,], x = U1[3,], triangular = TRUE)
 
-    m <- length(q.list$q.y[[n]]) + length(q.list$q.z[[n]])
-    q.list$q.y <- lapply(q.list$q.y, function(x) c(x, rep(NA, m - length(x))))
-    q.list$q.z <- lapply(q.list$q.z, function(x) c(x, rep(NA, m - length(x))))
-    cur.qys <- do.call(cbind, q.list$q.y)
-    cur.qzs <- do.call(cbind, q.list$q.z)
-    # browser()
-    U <- createU_helper_mat(olocs, ondx, cur.qys, cur.qzs, vijs, aijs,
-      full_const, nugget, sig2, uvec, vec.approx$n.cores)
-    # U <- sparseMatrix(i=U1[1,], j=U1[2,], x = U1[3,], triangular = TRUE)
-  }
+#  # I think the code below only works for obspred ordering. This probably
+#  # needs to be fixed when (if) we support other orderings.
+#  if (sum(!vec.approx$obs) > 0) {
+#    if (vec.approx$ord.pred != "obspred") {
+#      stop("Currently only obspred ordering is supported")
+#    } else {
+#      drop.seq <- seq(from = (2 * sum(vec.approx$obs) + 2), to = ncol(UL$U), by = 2)
+#      UL$U <- UL$U[-drop.seq, -drop.seq]
+#    }
+#  }
+#  latent <- rep(TRUE, nrow(UL$U))
+#  latent[seq(from = 2, to = (2 * sum(vec.approx$obs)), by = 2)] <- FALSE
+#  list(
+#    U = UL$U, latent = latent, ord = vec.approx$ord, obs = vec.approx$obs,
+#    ord.pred = vec.approx$ord.pred, ord.z = vec.approx$ord.z,
+#    cond.yz = vec.approx$cond.yz, ic0 = FALSE, stable = UL$stable
+#  )
+#}
 
-  if (vec.approx$dist.func.code == "custom") {
-    # U <- matrix(0, nrow=2*n, ncol=2*n)
-    # U <- sparseMatrix(i = 1, j = 1, x = sig2[ondx[1]]^(-1/2), dims = c(2*n, 2*n), triangular = T)
-    U1 <- matrix(ncol = 3, nrow = 7)
-    U1[1, ] <- c(1, 1, sig2[ondx[1]]^(-1 / 2))
-    U1[2, ] <- c(2, 2, nugget[ondx[1]]^(-1 / 2))
-    U1[3, ] <- c(1, 2, -U1[2, 3])
-    U1[4, ] <- c(4, 4, nugget[ondx[2]]^(-1 / 2))
-    U1[5, ] <- c(3, 4, -U1[4, 3])
+# @param cov_func The function used to compute the covariance between two
+# observations. Defaults to a Matern model. Currently ignored.
+#
+# @details This function will be much slower if a non-default cov_func is
+# specified. More importantly, there is no guarantee that the resulting
+# covariance matrices will be positive definite. We recommend using the
+# default (Matern) covariance function unless you know exactly what you are
+# doing. See Apanasovich et al. (2012) for a description of how the
+# cross-covariances are computed.
+#createUMultivariate <- function(vec.approx, params, cov_func = NULL) {
+#  if (is.null(cov_func)) {
+#    cov_func <- fields::Matern
+#  }
 
-    # U[1,1] <- sig2[ondx[1]]^(-1/2)
-    # U[2,2] <- nugget[ondx[1]]^(-1/2)
-    # U[1,2] <- -1*U[2,2]
-    # U[4,4] <- nugget[ondx[2]]^(-1/2)
-    # U[3,4] <- -1*U[4,4]
-    vii <- smoothness[ondx[1]]
-    vjj <- smoothness[ondx[2]]
-    vij <- (vii + vjj) / 2
-    aii <- 1 / rangep[ondx[1]]
-    ajj <- 1 / rangep[ondx[2]]
-    aij <- sqrt((aii^2 + ajj^2) / 2)
-    K1 <- rho.mat[ondx[1], ondx[2]] * sqrt(sig2[ondx[1]]) * sqrt(sig2[ondx[2]]) *
-      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
-      cov_func(dist_func(olocs[1, , drop = FALSE], olocs[2, , drop = FALSE], ),
-        smoothness = vij, alpha = aij
-      )
-    K2 <- sig2[ondx[1]]
-    bi <- K1 / K2
-    ri <- sig2[ondx[2]] - bi * K1
-    U1[6, ] <- c(3, 3, ri^(-1 / 2))
-    U1[7, ] <- c(1, 3, -1 * bi * ri^(-1 / 2))
-    # U[3,3] <- ri^(-1/2)
-    # U[1,3] <- -1*bi*ri^(-1/2)
-    i <- NULL # lintr requirement
-    U2 <- foreach(i = 3:n, .combine = rbind) %dopar% {
-      # U[2*i,2*i] <- nugget[ondx[i]]^(-1/2)
-      # U[2*i-1,2*i] <- -1*U[2*i,2*i]
-      cur.qy <- q.list$q.y[[i]]
-      cur.qz <- q.list$q.z[[i]]
-      cur.q <- c(cur.qy, cur.qz)
-      nq <- length(cur.q)
-      cur.U <- matrix(nrow = 3 + nq, ncol = 3)
-      # Computing K1 and K2 will be slow because I don't think I can
-      # vectorize these calculations unless there is a common smoothness
-      # parameter, which generally will not be true in the multivariate
-      # case. Rewriting these calculations in C++ is probably going
-      # to be the simplest way to speed this up. Currently it is going
-      # to be too slow for large data sets.
-      K1 <- rep(NA, nq)
-      for (j in 1:nq) {
-        vii <- smoothness[ondx[i]]
-        vjj <- smoothness[ondx[cur.q[j]]]
-        vij <- (vii + vjj) / 2
-        aii <- 1 / rangep[ondx[i]]
-        ajj <- 1 / rangep[ondx[cur.q[j]]]
-        aij <- sqrt((aii^2 + ajj^2) / 2)
-        # The funky multiplier before the covariance function is necessary
-        # is necessary to ensure that the final covariance matrix is
-        # positive definite. See equation (9) in Apanasovich (2011).
-        K1[j] <- rho.mat[ondx[i], ondx[cur.q[j]]] *
-          sqrt(sig2[ondx[i]]) * sqrt(sig2[ondx[cur.q[j]]]) *
-          aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
-          cov_func(
-            dist_func(
-              olocs[i, , drop = FALSE],
-              olocs[cur.q[j], , drop = FALSE]
-            ),
-            smoothness = vij, alpha = aij
-          )
-      }
-      K2 <- matrix(nrow = nq, ncol = nq)
-      for (j in 1:nq) {
-        for (k in j:nq) {
-          vii <- smoothness[ondx[cur.q[j]]]
-          vjj <- smoothness[ondx[cur.q[k]]]
-          vij <- (vii + vjj) / 2
-          aii <- 1 / rangep[ondx[cur.q[j]]]
-          ajj <- 1 / rangep[ondx[cur.q[k]]]
-          aij <- sqrt((aii^2 + ajj^2) / 2)
-          K2[j, k] <- rho.mat[ondx[cur.q[j]], ondx[cur.q[k]]] *
-            sqrt(sig2[ondx[cur.q[j]]]) * sqrt(sig2[ondx[cur.q[k]]]) *
-            aii^vii * ajj^vjj * gamma(vij) /
-            (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
-            cov_func(
-              dist_func(
-                olocs[cur.q[j], , drop = FALSE],
-                olocs[cur.q[k], , drop = FALSE]
-              ),
-              smoothness = vij, alpha = aij
-            )
-          if (j != k) {
-            K2[k, j] <- K2[j, k]
-          }
-        }
-      }
-      K2 <- K2 + diag(c(rep(0, length(cur.qy)), nugget[ondx[cur.qz]]),
-        nrow = nq, ncol = nq
-      )
-      bi <- t(solve(K2, K1))
-      ri <- sig2[ondx[i]] - bi %*% K1
-      cur.br <- -1 * as.vector(bi) * c(ri^(-1 / 2))
-      cur.U[1, ] <- c(2 * i - 1, 2 * i - 1, ri^(-1 / 2))
-      cur.U[2, ] <- c(2 * i, 2 * i, nugget[ondx[i]]^(-1 / 2))
-      cur.U[3, ] <- c(2 * i - 1, 2 * i, -cur.U[2, 3])
-      temp_len.y <- length(cur.qy)
-      # U[(ind+3), ] <- c(2*cur.qy-1,2*i-1, cur.br[1:length(cur.qy)])
-      # ind <- ind + 4
-      cur.U[4:(4 + temp_len.y - 1), 1] <- 2 * cur.qy - 1
-      # show("NO")
-      cur.U[4:(4 + temp_len.y - 1), 2] <- 2 * i - 1
-      cur.U[4:(4 + temp_len.y - 1), 3] <- cur.br[1:temp_len.y]
-      # show("YES")
-      # U[2*i-1,2*i-1] <- ri^(-1/2)
-      # U[2*cur.qy-1,2*i-1] <- cur.br[1:length(cur.qy)]
-      temp_len.z <- length(cur.qz)
-      if (temp_len.z > 0) {
-        # U[2*cur.qz,2*i-1] <- cur.br[-(1:length(cur.qy))]
-        cur.U[(4 + temp_len.y):(3 + nq), 2] <- 2 * i - 1
-        cur.U[(4 + temp_len.y):(3 + nq), 1] <- 2 * cur.qz
-        cur.U[(4 + temp_len.y):(3 + nq), 3] <- cur.br[-(1:temp_len.y)]
-      }
-      cur.U
-    }
-    U <- rbind(U1, U2)
-    # browser()
-    U <- sparseMatrix(
-      i = U[, 1], j = U[, 2], x = U[, 3], dims = c(2 * n, 2 * n),
-      triangular = TRUE
-    )
-  }
-  # I think the code below only works for obspred ordering. This probably
-  # needs to be fixed when (if) we support other orderings.
-  if (sum(!vec.approx$obs) > 0) {
-    if (vec.approx$ord.pred != "obspred") {
-      stop("Currently only obspred ordering is supported")
-    } else {
-      drop.seq <- seq(from = (2 * sum(vec.approx$obs) + 2), to = ncol(U), by = 2)
-      U <- U[-drop.seq, -drop.seq]
-    }
-  }
-  latent <- rep(TRUE, nrow(U))
-  latent[seq(from = 2, to = (2 * sum(vec.approx$obs)), by = 2)] <- FALSE
-  list(
-    U = U, latent = latent, ord = vec.approx$ord, obs = vec.approx$obs,
-    ord.pred = vec.approx$ord.pred, ord.z = vec.approx$ord.z,
-    cond.yz = vec.approx$cond.yz, ic0 = FALSE
-  )
-}
+#  dist_func <- vec.approx$dist.func
+#  P <- vec.approx$P
+#  q.list <- vec.approx$q.list
+#  olocs <- vec.approx$locsord
+#  n <- nrow(olocs)
+#  ondx <- vec.approx$ondx
+
+#  param.seq <- create_param_sequence(P)
+#  param.sequence.begin <- param.seq[, 1]
+#  param.sequence.end <- param.seq[, 2]
+
+#  sig2 <- params[param.sequence.begin[1]:param.sequence.end[1]]
+#  rangep <- params[param.sequence.begin[2]:param.sequence.end[2]]
+#  smoothness <- params[param.sequence.begin[3]:param.sequence.end[3]]
+#  nugget <- params[param.sequence.begin[4]:param.sequence.end[4]]
+
+#  rho <- params[param.sequence.begin[5]:param.sequence.end[5]]
+#  rho.mat <- matrix(0, nrow = P, ncol = P)
+#  rho.mat[upper.tri(rho.mat, diag = FALSE)] <- rho
+#  rho.mat <- rho.mat + t(rho.mat)
+#  diag(rho.mat) <- 1
+
+#  if (vec.approx$dist.func.code == "rdist") {
+#    uvec <- rep(NA, 7)
+
+#    uvec[1] <- sig2[ondx[1]]^(-1 / 2)
+#    uvec[3] <- nugget[ondx[1]]^(-1 / 2)
+#    uvec[2] <- -1 * uvec[3]
+#    uvec[7] <- nugget[ondx[2]]^(-1 / 2)
+#    uvec[6] <- -1 * uvec[7]
+
+#    vii <- smoothness[ondx[1]]
+#    vjj <- smoothness[ondx[2]]
+#    vij <- (vii + vjj) / 2
+#    aii <- 1 / rangep[ondx[1]]
+#    ajj <- 1 / rangep[ondx[2]]
+#    aij <- sqrt((aii^2 + ajj^2) / 2)
+#    K1 <- rho.mat[ondx[1], ondx[2]] * sqrt(sig2[ondx[1]]) * sqrt(sig2[ondx[2]]) *
+#      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
+#      cov_func(dist_func(olocs[1, , drop = FALSE], olocs[2, , drop = FALSE], ),
+#        smoothness = vij, alpha = aij
+#      )
+#    K2 <- sig2[ondx[1]]
+#    bi <- K1 / K2
+#    ri <- sig2[ondx[2]] - bi * K1
+
+#    uvec[5] <- ri^(-1 / 2)
+#    uvec[4] <- -1 * bi * ri^(-1 / 2)
+
+#    vijs <- outer(smoothness, smoothness, "+") / 2
+#    aijs <- outer(rangep, rangep, function(x, y) sqrt((1 / x^2 + 1 / y^2) / 2))
+#    gammas <- outer(smoothness, smoothness, function(x, y) gamma((x + y) / 2) / sqrt(gamma(x) * gamma(y)))
+#    expprod <- outer(rangep^(-smoothness), rangep^(-smoothness), "*")
+#    sigs <- outer(sig2, sig2, function(x, y) sqrt(x) * sqrt(y))
+
+#    full_const <- sigs * gammas * expprod * rho.mat / (aijs^(2 * vijs))
+
+#    #if (sum(is.na(full_const)) > 0) {
+#    #  browser()
+#    #}
+
+#    m <- length(q.list$q.y[[n]]) + length(q.list$q.z[[n]])
+#    q.list$q.y <- lapply(q.list$q.y, function(x) c(x, rep(NA, m - length(x))))
+#    q.list$q.z <- lapply(q.list$q.z, function(x) c(x, rep(NA, m - length(x))))
+#    cur.qys <- do.call(cbind, q.list$q.y)
+#    cur.qzs <- do.call(cbind, q.list$q.z)
+#    # browser()
+#    UL <- createU_helper_mat(olocs, ondx, cur.qys, cur.qzs, vijs, aijs,
+#      full_const, nugget, sig2, uvec, vec.approx$n.cores)
+#    # U <- sparseMatrix(i=U1[1,], j=U1[2,], x = U1[3,], triangular = TRUE)
+#  }
+
+#  if (vec.approx$dist.func.code == "custom") {
+#    # U <- matrix(0, nrow=2*n, ncol=2*n)
+#    # U <- sparseMatrix(i = 1, j = 1, x = sig2[ondx[1]]^(-1/2), dims = c(2*n, 2*n), triangular = T)
+#    U1 <- matrix(ncol = 3, nrow = 7)
+#    U1[1, ] <- c(1, 1, sig2[ondx[1]]^(-1 / 2))
+#    U1[2, ] <- c(2, 2, nugget[ondx[1]]^(-1 / 2))
+#    U1[3, ] <- c(1, 2, -U1[2, 3])
+#    U1[4, ] <- c(4, 4, nugget[ondx[2]]^(-1 / 2))
+#    U1[5, ] <- c(3, 4, -U1[4, 3])
+
+#    # U[1,1] <- sig2[ondx[1]]^(-1/2)
+#    # U[2,2] <- nugget[ondx[1]]^(-1/2)
+#    # U[1,2] <- -1*U[2,2]
+#    # U[4,4] <- nugget[ondx[2]]^(-1/2)
+#    # U[3,4] <- -1*U[4,4]
+#    vii <- smoothness[ondx[1]]
+#    vjj <- smoothness[ondx[2]]
+#    vij <- (vii + vjj) / 2
+#    aii <- 1 / rangep[ondx[1]]
+#    ajj <- 1 / rangep[ondx[2]]
+#    aij <- sqrt((aii^2 + ajj^2) / 2)
+#    K1 <- rho.mat[ondx[1], ondx[2]] * sqrt(sig2[ondx[1]]) * sqrt(sig2[ondx[2]]) *
+#      aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
+#      cov_func(dist_func(olocs[1, , drop = FALSE], olocs[2, , drop = FALSE], ),
+#        smoothness = vij, alpha = aij
+#      )
+#    K2 <- sig2[ondx[1]]
+#    bi <- K1 / K2
+#    ri <- sig2[ondx[2]] - bi * K1
+#    U1[6, ] <- c(3, 3, ri^(-1 / 2))
+#    U1[7, ] <- c(1, 3, -1 * bi * ri^(-1 / 2))
+#    # U[3,3] <- ri^(-1/2)
+#    # U[1,3] <- -1*bi*ri^(-1/2)
+#    i <- NULL # lintr requirement
+#    U2 <- foreach(i = 3:n, .combine = rbind) %dopar% {
+#      # U[2*i,2*i] <- nugget[ondx[i]]^(-1/2)
+#      # U[2*i-1,2*i] <- -1*U[2*i,2*i]
+#      cur.qy <- q.list$q.y[[i]]
+#      cur.qz <- q.list$q.z[[i]]
+#      cur.q <- c(cur.qy, cur.qz)
+#      nq <- length(cur.q)
+#      cur.U <- matrix(nrow = 3 + nq, ncol = 3)
+#      # Computing K1 and K2 will be slow because I don't think I can
+#      # vectorize these calculations unless there is a common smoothness
+#      # parameter, which generally will not be true in the multivariate
+#      # case. Rewriting these calculations in C++ is probably going
+#      # to be the simplest way to speed this up. Currently it is going
+#      # to be too slow for large data sets.
+#      K1 <- rep(NA, nq)
+#      for (j in 1:nq) {
+#        vii <- smoothness[ondx[i]]
+#        vjj <- smoothness[ondx[cur.q[j]]]
+#        vij <- (vii + vjj) / 2
+#        aii <- 1 / rangep[ondx[i]]
+#        ajj <- 1 / rangep[ondx[cur.q[j]]]
+#        aij <- sqrt((aii^2 + ajj^2) / 2)
+#        # The funky multiplier before the covariance function is necessary
+#        # is necessary to ensure that the final covariance matrix is
+#        # positive definite. See equation (9) in Apanasovich (2011).
+#        K1[j] <- rho.mat[ondx[i], ondx[cur.q[j]]] *
+#          sqrt(sig2[ondx[i]]) * sqrt(sig2[ondx[cur.q[j]]]) *
+#          aii^vii * ajj^vjj * gamma(vij) / (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
+#          cov_func(
+#            dist_func(
+#              olocs[i, , drop = FALSE],
+#              olocs[cur.q[j], , drop = FALSE]
+#            ),
+#            smoothness = vij, alpha = aij
+#          )
+#      }
+#      K2 <- matrix(nrow = nq, ncol = nq)
+#      for (j in 1:nq) {
+#        for (k in j:nq) {
+#          vii <- smoothness[ondx[cur.q[j]]]
+#          vjj <- smoothness[ondx[cur.q[k]]]
+#          vij <- (vii + vjj) / 2
+#          aii <- 1 / rangep[ondx[cur.q[j]]]
+#          ajj <- 1 / rangep[ondx[cur.q[k]]]
+#          aij <- sqrt((aii^2 + ajj^2) / 2)
+#          K2[j, k] <- rho.mat[ondx[cur.q[j]], ondx[cur.q[k]]] *
+#            sqrt(sig2[ondx[cur.q[j]]]) * sqrt(sig2[ondx[cur.q[k]]]) *
+#            aii^vii * ajj^vjj * gamma(vij) /
+#            (aij^(2 * vij) * sqrt(gamma(vii) * gamma(vjj))) *
+#            cov_func(
+#              dist_func(
+#                olocs[cur.q[j], , drop = FALSE],
+#                olocs[cur.q[k], , drop = FALSE]
+#              ),
+#              smoothness = vij, alpha = aij
+#            )
+#          if (j != k) {
+#            K2[k, j] <- K2[j, k]
+#          }
+#        }
+#      }
+#      K2 <- K2 + diag(c(rep(0, length(cur.qy)), nugget[ondx[cur.qz]]),
+#        nrow = nq, ncol = nq
+#      )
+#      bi <- t(solve(K2, K1))
+#      ri <- sig2[ondx[i]] - bi %*% K1
+#      cur.br <- -1 * as.vector(bi) * c(ri^(-1 / 2))
+#      cur.U[1, ] <- c(2 * i - 1, 2 * i - 1, ri^(-1 / 2))
+#      cur.U[2, ] <- c(2 * i, 2 * i, nugget[ondx[i]]^(-1 / 2))
+#      cur.U[3, ] <- c(2 * i - 1, 2 * i, -cur.U[2, 3])
+#      temp_len.y <- length(cur.qy)
+#      # U[(ind+3), ] <- c(2*cur.qy-1,2*i-1, cur.br[1:length(cur.qy)])
+#      # ind <- ind + 4
+#      cur.U[4:(4 + temp_len.y - 1), 1] <- 2 * cur.qy - 1
+#      # show("NO")
+#      cur.U[4:(4 + temp_len.y - 1), 2] <- 2 * i - 1
+#      cur.U[4:(4 + temp_len.y - 1), 3] <- cur.br[1:temp_len.y]
+#      # show("YES")
+#      # U[2*i-1,2*i-1] <- ri^(-1/2)
+#      # U[2*cur.qy-1,2*i-1] <- cur.br[1:length(cur.qy)]
+#      temp_len.z <- length(cur.qz)
+#      if (temp_len.z > 0) {
+#        # U[2*cur.qz,2*i-1] <- cur.br[-(1:length(cur.qy))]
+#        cur.U[(4 + temp_len.y):(3 + nq), 2] <- 2 * i - 1
+#        cur.U[(4 + temp_len.y):(3 + nq), 1] <- 2 * cur.qz
+#        cur.U[(4 + temp_len.y):(3 + nq), 3] <- cur.br[-(1:temp_len.y)]
+#      }
+#      cur.U
+#    }
+#    U <- rbind(U1, U2)
+#    # browser()
+#    U <- sparseMatrix(
+#      i = U[, 1], j = U[, 2], x = U[, 3], dims = c(2 * n, 2 * n),
+#      triangular = TRUE
+#    )
+#  }
+#  # I think the code below only works for obspred ordering. This probably
+#  # needs to be fixed when (if) we support other orderings.
+#  if (sum(!vec.approx$obs) > 0) {
+#    if (vec.approx$ord.pred != "obspred") {
+#      stop("Currently only obspred ordering is supported")
+#    } else {
+#      drop.seq <- seq(from = (2 * sum(vec.approx$obs) + 2), to = ncol(UL$U), by = 2)
+#      UL$U <- UL$U[-drop.seq, -drop.seq]
+#    }
+#  }
+#  latent <- rep(TRUE, nrow(UL$U))
+#  latent[seq(from = 2, to = (2 * sum(vec.approx$obs)), by = 2)] <- FALSE
+#  list(
+#    U = UL$U, latent = latent, ord = vec.approx$ord, obs = vec.approx$obs,
+#    ord.pred = vec.approx$ord.pred, ord.z = vec.approx$ord.z,
+#    cond.yz = vec.approx$cond.yz, ic0 = FALSE, stable = UL$stable
+#  )
+#}

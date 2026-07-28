@@ -2,6 +2,7 @@
 "_PACKAGE"
 
 ## usethis namespace: start
+#' @useDynLib PrestoGP
 #' @import GPvecchia Matrix fields MASS glmnet ncvreg
 #' @importFrom foreach %dopar%
 #' @importFrom foreach foreach
