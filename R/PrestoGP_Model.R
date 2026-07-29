@@ -965,7 +965,7 @@ setMethod(
     if (length(omp.cores) != 1) {
       stop("omp.cores must be a positive integer >= 1")
     }
-    if (omp.cores < -1 | omp.cores == 0 | omp.cores %% 1 != 0) {
+    if (omp.cores < -1 || omp.cores == 0 || omp.cores %% 1 != 0) {
       stop("omp.cores must be a positive integer >= 1")
     }
     model@omp_cores <- omp.cores
@@ -1010,7 +1010,7 @@ setMethod(
       }
     }
     if (!is.null(beta.hat)) {
-      if (!is.vector(beta.hat) | !is.numeric(beta.hat)) {
+      if (!is.vector(beta.hat) || !is.numeric(beta.hat)) {
         stop("beta.hat parameter must be a numeric vector")
       }
       if (length(beta.hat) != (ncol(model@X_train) + 1)) {
@@ -1031,7 +1031,7 @@ setMethod(
       stop("alpha must be positive for SCAD/MCP penalties")
     }
     model@alpha <- alpha
-    if (quiet & verbose) {
+    if (quiet && verbose) {
       verbose <- FALSE
     }
     if (!is.numeric(tol)) {
@@ -1040,7 +1040,7 @@ setMethod(
     if (length(tol) != 1) {
       stop("tol must be a scalar")
     }
-    if (tol <= 0 | tol > 1) {
+    if (tol <= 0 || tol > 1) {
       stop("tol must satisfy 0<tol<=1")
     }
     if (is.null(scaling)) {
@@ -1062,17 +1062,17 @@ setMethod(
         common_scale <- FALSE
       }
     }
-    if (common_scale & nscale > 1) {
+    if (common_scale && nscale > 1) {
       stop("common_scale must be FALSE if there are multiple scale parameters")
     }
     model@scaling <- scaling
     model@nscale <- nscale
     model@common_scale <- common_scale
-    if (model@common_scale & (length(model@locs_train) > 1)) {
+    if (model@common_scale && (length(model@locs_train) > 1)) {
       model@locs_train <- eliminate_dupes(model@locs_train)$locs
     }
     if (!is.null(covparams)) {
-      if (!is.vector(covparams) | !is.numeric(covparams)) {
+      if (!is.vector(covparams) || !is.numeric(covparams)) {
         stop("covparams must be a numeric vector")
       }
     }
@@ -1091,7 +1091,7 @@ setMethod(
       if (!quiet) {
         cat("\n")
       }
-      if (sum(!model@Y_obs) > 0 & ((min(lodvu) < Inf) | (max(lodvl) > -Inf))) {
+      if (sum(!model@Y_obs) > 0 && ((min(lodvu) < Inf) || (max(lodvl) > -Inf))) {
         if (!quiet) {
           cat("Imputing missing y's and estimating initial beta...", "\n")
         }
@@ -1157,7 +1157,7 @@ setMethod(
         model <- specify(model)
       }
 
-      if (sum(!model@Y_obs) > 0 & ((min(lodvu) < Inf) | (max(lodvl) > -Inf))) {
+      if (sum(!model@Y_obs) > 0 && ((min(lodvu) < Inf) || (max(lodvl) > -Inf))) {
         if (!quiet) {
           cat("Imputing missing y's...", "\n")
         }
@@ -1200,7 +1200,7 @@ setMethod(
           Y.hat <- as.matrix(predict(model@linear_model, model@X_train))
         }
         model@beta <- beta.hat
-        if (sum(!model@Y_obs) > 0 & sum(lodvu < Inf) == 0 &
+        if (sum(!model@Y_obs) > 0 && sum(lodvu < Inf) == 0 &&
             sum(lodvl > -Inf) == 0) {
           if (!quiet) {
             cat("Imputing missing y's...", "\n")
@@ -1405,10 +1405,10 @@ setMethod("calc_covparams", "PrestoGPModel", function(model, locs, Y, covparams)
     if (sum(init.nugget <= 0) > 0) {
       stop("Initial nugget estimates must be positive")
     }
-    if (sum(init.smooth <= 0) > 0 | sum(init.smooth >= 2.5) > 0) {
+    if (sum(init.smooth <= 0) > 0 || sum(init.smooth >= 2.5) > 0) {
       stop("Initial smoothness estimates must be between 0 and 2.5")
     }
-    if (sum(init.corr < -1) > 0 | sum(init.corr > 1) > 0) {
+    if (sum(init.corr < -1) > 0 || sum(init.corr > 1) > 0) {
       stop("Initial correlation estimates must be between -1 and 1")
     }
     model@logparams <- create.initial.values.flex(
