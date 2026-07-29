@@ -113,7 +113,7 @@ setMethod("check_input", "VecchiaModel", function(model, Y, X, locs, Y.names, X.
   if (!is.matrix(locs)) {
     stop("locs must be a matrix")
   }
-  if (!is.matrix(Y) & !is.numeric(Y)) {
+  if (!is.matrix(Y) && !is.numeric(Y)) {
     stop("Y must be a numeric vector or matrix")
   }
   if (!is.matrix(X)) {
@@ -137,14 +137,14 @@ setMethod("check_input", "VecchiaModel", function(model, Y, X, locs, Y.names, X.
   if (sum(is.na(locs)) > 0) {
     stop("locs must not contain NA's")
   }
-  if (sum(is.na(Y)) > 0 & !impute.y) {
+  if (sum(is.na(Y)) > 0 && !impute.y) {
     stop("Y contains NA's and impute.y is FALSE. Set impute.y=TRUE to impute missing Y's.")
   }
   if (!is.null(lod.upper)) {
     if (!is.numeric(lod.upper)) {
       stop("lod.upper must be numeric")
     }
-    if (length(lod.upper) != nrow(X) & length(lod.upper) != 1) {
+    if (length(lod.upper) != nrow(X) && length(lod.upper) != 1) {
       stop("Length of lod.upper must equal the number of observations")
     }
   }
@@ -152,7 +152,7 @@ setMethod("check_input", "VecchiaModel", function(model, Y, X, locs, Y.names, X.
     if (!is.numeric(lod.lower)) {
       stop("lod.lower must be numeric")
     }
-    if (length(lod.lower) != nrow(X) & length(lod.lower) != 1) {
+    if (length(lod.lower) != nrow(X) && length(lod.lower) != 1) {
       stop("Length of lod.lower must equal the number of observations")
     }
   }
@@ -298,7 +298,7 @@ setMethod("impute_y_lod", "VecchiaModel", function(model, lodu, lodl, n.mi = 10,
   cur.coef <- as.vector(model@beta)
   last.coef <- rep(Inf, ncol(X) + 1)
   itn <- 0
-  while (max(abs(cur.coef - last.coef)) > eps & itn < maxit) {
+  while (max(abs(cur.coef - last.coef)) > eps && itn < maxit) {
     itn <- itn + 1
 
     yhat.ni <- X %*% cur.coef[-1]
