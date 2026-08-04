@@ -85,7 +85,7 @@ setMethod("prestogp_predict", "MultivariateVecchiaModel",
 
     locs.train.scaled <- scale_locs(model, model@locs_train)
     locs.scaled <- scale_locs(model, locs)
-    if (model@common_scale & (length(model@locs_train) > 1)) {
+    if (model@common_scale && (length(model@locs_train) > 1)) {
       locs.nd <- eliminate_dupes(locs.train.scaled, locs.scaled)
       locs.train.scaled <- locs.nd$locs
       locs.scaled <- locs.nd$locs.pred
@@ -196,7 +196,7 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
         stop("All locs must have the same number of columns")
       }
     }
-    if (!is.matrix(Y[[i]]) & !is.numeric(Y[[i]])) {
+    if (!is.matrix(Y[[i]]) && !is.numeric(Y[[i]])) {
       stop("Each Y must be a numeric vector or matrix")
     }
     if (!is.matrix(X[[i]])) {
@@ -220,14 +220,14 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
     if (sum(is.na(locs[[i]])) > 0) {
       stop("locs must not contain NA's")
     }
-    if (sum(is.na(Y[[i]])) > 0 & !impute.y) {
+    if (sum(is.na(Y[[i]])) > 0 && !impute.y) {
       stop("Y contains NA's and impute.y is FALSE. Set impute.y=TRUE to impute missing Y's.")
     }
     if (!is.null(lod.upper[[i]])) {
       if (!is.numeric(lod.upper[[i]])) {
         stop("Each lod.upper must be numeric")
       }
-      if (length(lod.upper[[i]]) != nrow(X[[i]]) &
+      if (length(lod.upper[[i]]) != nrow(X[[i]]) &&
           length(lod.upper[[i]]) != 1) {
         stop("Length of each lod.upper must equal the number of observations")
       }
@@ -236,7 +236,7 @@ setMethod("check_input", "MultivariateVecchiaModel", function(model, Y, X, locs,
       if (!is.numeric(lod.lower[[i]])) {
         stop("Each lod.lower must be numeric")
       }
-      if (length(lod.lower[[i]]) != nrow(X[[i]]) &
+      if (length(lod.lower[[i]]) != nrow(X[[i]]) &&
           length(lod.lower[[i]]) != 1) {
         stop("Length of each lod.lower must equal the number of observations")
       }
@@ -385,7 +385,7 @@ setMethod("impute_y", "MultivariateVecchiaModel", function(model) {
     all.obs <- all.obs[-(1:nl)]
   }
 
-  if (model@common_scale & (length(model@locs_train) > 1)) {
+  if (model@common_scale && (length(model@locs_train) > 1)) {
     locs.nd <- eliminate_dupes(locs.otr, locs.otst)
     locs.otr <- locs.nd$locs
     locs.otst <- locs.nd$locs.pred
@@ -465,7 +465,7 @@ setMethod("impute_y_lod", "MultivariateVecchiaModel", function(model, lodu,
   cur.coef <- as.vector(model@beta)
   last.coef <- rep(Inf, ncol(X) + 1)
   itn <- 0
-  while (max(abs(cur.coef - last.coef)) > eps & itn < maxit) {
+  while (max(abs(cur.coef - last.coef)) > eps && itn < maxit) {
     itn <- itn + 1
 
     yhat.ni <- X %*% cur.coef[-1]
@@ -572,10 +572,10 @@ setMethod("estimate_theta", "MultivariateVecchiaModel", function(model, locs, op
     vecchia.result <- optim(
       par = model@logparams,
       fn = mvnegloglik,
-      vecchia.approx = model@vecchia_approx,
+      vecchia_approx = model@vecchia_approx,
       y = model@res,
       P = P,
-      param.seq = model@param_sequence,
+      param_seq = model@param_sequence,
       method = method,
       control = optim.control
     )
@@ -583,10 +583,10 @@ setMethod("estimate_theta", "MultivariateVecchiaModel", function(model, locs, op
     vecchia.result <- optim(
       par = model@logparams,
       fn = mvnegloglik_ST,
-      vecchia.approx = model@vecchia_approx,
+      vecchia_approx = model@vecchia_approx,
       y = model@res,
       P = P,
-      param.seq = model@param_sequence,
+      param_seq = model@param_sequence,
       scaling = model@scaling,
       nscale = model@nscale,
       method = method,

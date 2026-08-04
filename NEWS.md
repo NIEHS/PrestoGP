@@ -1,3 +1,15 @@
+# PrestoGP 0.2.0.9054 (2026-7-21)
+
+## MINOR IMPROVEMENTS
+
+* The multivariate likelihood functions have been rewritten in C++, which
+  should reduce overhead for large data sets.
+
+* The nearest neighbor matrices are now computed in vecchia_Mspecify.
+  Previously, they were computed in createUMultivariate, which was
+  inefficient because they were recomputed repeatedly. Now, they are
+  computed a single time and saved.
+
 # PrestoGP 0.2.0.9053 (2026-5-26)
 
 ## BUG FIXES

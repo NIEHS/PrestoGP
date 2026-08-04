@@ -133,6 +133,7 @@ test_that("negloglik.full", {
   vec.U.pgp <- createUMultivariate(vec.approx.pgp, c(params.final, 1))
 
   LL.pgp <- -1 * GPvecchia:::vecchia_likelihood_U(y, vec.U.pgp)
+  LL.pgp2 <- -1 * vecchia_likelihood_U_cpp(y, vec.U.pgp)
 
   expect_equal(173.315, LL.full, tolerance = 1e-3)
   # Univariate likelihood should equal the multivariate likelihood
@@ -141,6 +142,7 @@ test_that("negloglik.full", {
   # Vecchia approximations
   expect_equal(LL.full, LL.vecchia, tolerance = 1e-3)
   expect_equal(LL.full, LL.pgp, tolerance = 1e-3)
+  expect_equal(LL.pgp, LL.pgp2, tolerance = 1e-3)
 })
 
 test_that("negloglik_full_ST", {
@@ -338,7 +340,7 @@ test_that("mvnegloglik.full", {
 
   param.seq.begin <- pseq[, 1]
   param.seq.end <- pseq[, 2]
-  params.init.final.t <- unlog.params(res.optim.NM$par, pseq, 3)
+  params.init.final.t <- unlog_params(res.optim.NM$par, pseq, 3)
 
   cov.list <- create.cov.upper.flex(
     3,
@@ -365,9 +367,11 @@ test_that("mvnegloglik.full", {
   U.mobj <- createUMultivariate(vec.mapprox, params.init.final.t)
 
   LL.vecchia.mv <- -1 * GPvecchia:::vecchia_likelihood_U(unlist(y.list), U.mobj)
+  LL.vecchia.mv2 <- -1 * vecchia_likelihood_U_cpp(unlist(y.list), U.mobj)
 
   expect_equal(541.31, LL.full.mv, tolerance = 1e-3)
   expect_equal(LL.full.calc, LL.full.mv, tolerance = 1e-3)
   # Full likelihood should equal the Vecchia likelihood
   expect_equal(LL.full.mv, LL.vecchia.mv, tolerance = 1e-3)
+  expect_equal(LL.vecchia.mv, LL.vecchia.mv2, tolerance = 1e-3)
 })
