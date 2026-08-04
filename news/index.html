@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9053</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9054</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,6 +30,14 @@
       <small>Source: <a href="https://github.com/NIEHS/PrestoGP/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0.9054" id="prestogp-0209054-2026-7-21">PrestoGP 0.2.0.9054 (2026-7-21)<a class="anchor" aria-label="anchor" href="#prestogp-0209054-2026-7-21"></a></h2>
+<div class="section level3">
+<h3 id="minor-improvements-0-2-0-9054">MINOR IMPROVEMENTS<a class="anchor" aria-label="anchor" href="#minor-improvements-0-2-0-9054"></a></h3>
+<ul><li><p>The multivariate likelihood functions have been rewritten in C++, which should reduce overhead for large data sets.</p></li>
+<li><p>The nearest neighbor matrices are now computed in vecchia_Mspecify. Previously, they were computed in createUMultivariate, which was inefficient because they were recomputed repeatedly. Now, they are computed a single time and saved.</p></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0.9053" id="prestogp-0209053-2026-5-26">PrestoGP 0.2.0.9053 (2026-5-26)<a class="anchor" aria-label="anchor" href="#prestogp-0209053-2026-5-26"></a></h2>
 <div class="section level3">
@@ -235,7 +243,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

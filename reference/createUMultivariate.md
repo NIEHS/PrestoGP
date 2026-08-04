@@ -8,12 +8,12 @@ the data to be iid. This function is a multivariate version of
 ## Usage
 
 ``` r
-createUMultivariate(vec.approx, params, cov_func = NULL)
+createUMultivariate(vec_approx, params)
 ```
 
 ## Arguments
 
-- vec.approx:
+- vec_approx:
 
   Object returned by
   [`vecchia_Mspecify`](https://niehs.github.io/PrestoGP/reference/vecchia_Mspecify.md).
@@ -24,24 +24,10 @@ createUMultivariate(vec.approx, params, cov_func = NULL)
   [`create_param_sequence`](https://niehs.github.io/PrestoGP/reference/create_param_sequence.md)
   or the examples below for details about the format of this vector.
 
-- cov_func:
-
-  The function used to compute the covariance between two observations.
-  Defaults to a Matern model.
-
 ## Value
 
 A list containing the sparse upper trianguler U, plus additional objects
 required for other functions.
-
-## Details
-
-This function will be much slower if a non-default cov_func is
-specified. More importantly, there is no guarantee that the resulting
-covariance matrices will be positive definite. We recommend using the
-default (Matern) covariance function unless you know exactly what you
-are doing. See Apanasovich et al. (2012) for a description of how the
-cross-covariances are computed.
 
 ## References
 

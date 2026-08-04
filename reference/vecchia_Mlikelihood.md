@@ -5,7 +5,7 @@ This function is used to evaluate the multivariate Vecchia likelihood.
 ## Usage
 
 ``` r
-vecchia_Mlikelihood(z, vecchia.approx, covparams)
+vecchia_Mlikelihood(z, vecchia_approx, covparams)
 ```
 
 ## Arguments
@@ -14,7 +14,7 @@ vecchia_Mlikelihood(z, vecchia.approx, covparams)
 
   The observed data.
 
-- vecchia.approx:
+- vecchia_approx:
 
   A Vecchia object returned by
   [`vecchia_Mspecify`](https://niehs.github.io/PrestoGP/reference/vecchia_Mspecify.md).
@@ -66,5 +66,5 @@ params[pseq[4,1]:pseq[4,2]] <- c(30, 30)
 params[pseq[5,1]:pseq[5,2]] <- -0.9
 
 vecchia_Mlikelihood(rnorm(nrow(locs)), soil.va, params)
-#> [1] NA
+#> [1] -Inf
 ```
