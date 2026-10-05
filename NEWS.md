@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-
 # PrestoGP 0.2.0.9055 (2026-9-29)
 
 ## BUG FIXES
@@ -20,8 +18,6 @@
 * Updated unit tests for multivariate spatiotemporal models to account for
   the bug fix mentioned above.
 
-=======
->>>>>>> 22605d3 (mvnegloglik_ST bugfix - incorrect model fitting)
 # PrestoGP 0.2.0.9054 (2026-7-21)
 
 ## MINOR IMPROVEMENTS
@@ -30,11 +26,7 @@
   should reduce overhead for large data sets.
 
 * The nearest neighbor matrices are now computed in vecchia_Mspecify.
-<<<<<<< HEAD
   Previously, they were computed in `createUMultivariate`, which was
-=======
-  Previously, they were computed in createUMultivariate, which was
->>>>>>> 22605d3 (mvnegloglik_ST bugfix - incorrect model fitting)
   inefficient because they were recomputed repeatedly. Now, they are
   computed a single time and saved.
 
