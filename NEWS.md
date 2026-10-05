@@ -1,3 +1,24 @@
+
+# PrestoGP 0.2.0.9055 (2026-9-29)
+
+## BUG FIXES
+
+* Fixed a bug in `mvnegloglik_ST` that was causing multivariate spatiotemporal
+  models to be fitted incorrectly.
+
+## DOCUMENTATION FIXES
+
+* Added examples to show how to specify initial Matern parameter estimates
+  in the documentation for `create_param_sequence` and `prestogp_fit`.
+
+## MINOR IMPROVEMENTS
+
+* Added unit tests to check user-specified values of beta.hat and covparams
+  in `prestogp_fit`.
+
+* Updated unit tests for multivariate spatiotemporal models to account for
+  the bug fix mentioned above.
+
 # PrestoGP 0.2.0.9054 (2026-7-21)
 
 ## MINOR IMPROVEMENTS
@@ -6,7 +27,7 @@
   should reduce overhead for large data sets.
 
 * The nearest neighbor matrices are now computed in vecchia_Mspecify.
-  Previously, they were computed in createUMultivariate, which was
+  Previously, they were computed in `createUMultivariate`, which was
   inefficient because they were recomputed repeatedly. Now, they are
   computed a single time and saved.
 

@@ -246,15 +246,20 @@ double vecchia_Mlikelihood(arma::vec z, Rcpp::List vecchia_approx,
     List U_obj = createUMultivariate(vecchia_approx, covparams);
 
     double junk;
+    bool stable = U_obj["stable"];
 
-    // Equivalent to R's try(..., silent = TRUE): if
-    // vecchia_likelihood_U_cpp throws (e.g. because of a numerically
-    // singular matrix), catch it and fall back to -Inf instead of
-    // letting the exception propagate.
-    try {
+    if (!stable) {
+      junk = -std::numeric_limits<double>::infinity();
+    } else {
+      // Equivalent to R's try(..., silent = TRUE): if
+      // vecchia_likelihood_U_cpp throws (e.g. because of a numerically
+      // singular matrix), catch it and fall back to -Inf instead of
+      // letting the exception propagate.
+      try {
         junk = vecchia_likelihood_U_cpp(z, U_obj);
-    } catch (...) {
+      } catch (...) {
         junk = -std::numeric_limits<double>::infinity();
+      }
     }
 
     return junk;
@@ -335,9 +340,8 @@ double mvnegloglik_ST(arma::vec logparams, List vecchia_approx, arma::vec y,
     // params[1:param.seq[1, 2]]  ->  subvec(0, param_seq(0,1) - 1)
     arma::vec part1 = params.subvec(0, param_seq(0, 1) - 1);
 
-    // rep(1, param.seq[2, 2] - param.seq[2, 1] + 1)
-    int ones_len = param_seq(1, 1) - param_seq(1, 0) + 1;
-    arma::vec part2(ones_len, arma::fill::ones);
+    // rep(1, P)
+    arma::vec part2(P, arma::fill::ones);
 
     // params[param.seq[3, 1]:param.seq[5, 2]] -> subvec(param_seq(2,0)-1, param_seq(4,1)-1)
     arma::vec part3 = params.subvec(param_seq(2, 0) - 1, param_seq(4, 1) - 1);
