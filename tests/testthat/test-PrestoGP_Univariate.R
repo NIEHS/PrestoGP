@@ -707,8 +707,8 @@ test_that("Simulated spatial prediction", {
   load("sim_vecchia_pred.RData")
   pgp.model1 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr, locs.otr,
-    scaling = c(1, 1), beta.hat=c(0, rep(1, 4), rep(0, 6)),
-    covparams=c(0.9*sd(y.otr), 0.85, 0.5, 0.1*sd(y.otr)),
+    scaling = c(1, 1), beta.hat = c(0, rep(1, 4), rep(0, 6)),
+    covparams = c(0.9 * sd(y.otr), 0.85, 0.5, 0.1 * sd(y.otr)),
     common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,

@@ -271,7 +271,7 @@ test_that("mvnegloglik_ST", {
   expect_equal(neg_likelihood, neg_likelihood2, tolerance = 1e-3)
 
   logparams3 <- c(logparams[pseq[1, 1]:pseq[1, 2]], rep(0, P),
-                  logparams[pseq[3, 1]:pseq[5, 2]])
+    logparams[pseq[3, 1]:pseq[5, 2]])
   neg_likelihood3 <- mvnegloglik(
     logparams3, vec.approx2,
     unlist(y.list), create_param_sequence(P), P

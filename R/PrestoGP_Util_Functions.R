@@ -227,8 +227,8 @@ transform_miid <- function(data, vecchia.approx, params) {
 # }
 
 vecchia_prediction <- function(
-    z, vecchia.approx, covparms, nuggets,
-    var.exact, covmodel = "matern", return.values = "all") {
+  z, vecchia.approx, covparms, nuggets,
+  var.exact, covmodel = "matern", return.values = "all") {
   removeNAs <- getFromNamespace("removeNAs", "GPvecchia")
   removeNAs()
   U.obj <- createU(vecchia.approx, covparms, nuggets, covmodel)
@@ -413,8 +413,8 @@ eliminate_dupes <- function(locs, locs.pred = NULL) {
 }
 
 lod_reg_mi <- function(
-    y, X, lodu, lodl, miss, n.mi = 10, eps = 0.01,
-    maxit = 10, penalty, alpha, parallel, cluster, foldid, verbose) {
+  y, X, lodu, lodl, miss, n.mi = 10, eps = 0.01,
+  maxit = 10, penalty, alpha, parallel, cluster, foldid, verbose) {
   lodu <- lodu[miss]
   lodl <- lodl[miss]
   last.coef <- rep(Inf, ncol(X) + 1)
@@ -425,9 +425,9 @@ lod_reg_mi <- function(
       alpha = alpha, relax = relax
     )
     cur.coef <- as.matrix(predict(cur.glmnet,
-      type = "coefficients",
-      s = "lambda.min", gamma = "gamma.min"
-    ))
+        type = "coefficients",
+        s = "lambda.min", gamma = "gamma.min"
+      ))
   } else {
     cur.ncvreg <- cv.ncvreg.wrap(X, y,
       cluster = cluster, foldid = foldid,
@@ -455,9 +455,9 @@ lod_reg_mi <- function(
           alpha = alpha, relax = relax
         )
         coef.mat[i, ] <- as.matrix(predict(cur.glmnet,
-          type = "coefficients",
-          s = "lambda.min", gamma = "gamma.min"
-        ))
+            type = "coefficients",
+            s = "lambda.min", gamma = "gamma.min"
+          ))
       } else {
         cur.ncvreg <- cv.ncvreg.wrap(X, y,
           cluster = cluster, foldid = foldid,
