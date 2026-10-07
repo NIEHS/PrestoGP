@@ -9,7 +9,7 @@ range or smoothness) from the covparams slot of a PrestoGPModel object."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9054</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9055</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,11 +103,11 @@ perspective", The Journal of Machine Learning Research (2001) 2:299-312.</p></li
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">soil250</span>, package<span class="op">=</span><span class="st">"geoR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">y2</span> <span class="op">&lt;-</span> <span class="va">soil250</span><span class="op">[</span>,<span class="fl">7</span><span class="op">]</span>               <span class="co"># predict pH level</span></span></span>
 <span class="r-in"><span><span class="va">X2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">soil250</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span><span class="op">:</span><span class="fl">6</span>,<span class="fl">8</span><span class="op">:</span><span class="fl">22</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># columns 1+2 are location coordinates; column 3 is elevation</span></span></span>
+<span class="r-in"><span><span class="co"># Columns 1+2 are location coordinates; column 3 is elevation</span></span></span>
 <span class="r-in"><span><span class="va">locs2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">soil250</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">soil.vm2</span> <span class="op">&lt;-</span> <span class="fu">new</span><span class="op">(</span><span class="st">"VecchiaModel"</span>, n_neighbors <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># fit separate scale parameters for location and elevation</span></span></span>
+<span class="r-in"><span><span class="co"># Fit separate scale parameters for location and elevation</span></span></span>
 <span class="r-in"><span><span class="va">soil.vm2</span> <span class="op">&lt;-</span> <span class="fu"><a href="prestogp_fit-PrestoGPModel-method.html">prestogp_fit</a></span><span class="op">(</span><span class="va">soil.vm2</span>, <span class="va">y2</span>, <span class="va">X2</span>, <span class="va">locs2</span>, scaling <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating initial beta... </span>
@@ -132,20 +132,21 @@ perspective", The Journal of Machine Learning Research (2001) 2:299-312.</p></li
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">pseq</span> <span class="op">&lt;-</span> <span class="fu">create_param_sequence</span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">soil2.params</span> <span class="op">&lt;-</span> <span class="va">soil.vm2</span><span class="op">@</span><span class="va">covparams</span></span></span>
-<span class="r-in"><span><span class="co"># sigma</span></span></span>
+<span class="r-in"><span><span class="co"># Extract the sigmas</span></span></span>
 <span class="r-in"><span><span class="va">soil2.params</span><span class="op">[</span><span class="va">pseq</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.005046449</span>
-<span class="r-in"><span><span class="co"># scale parameters</span></span></span>
+<span class="r-in"><span><span class="co"># Extract the scale parameters</span></span></span>
 <span class="r-in"><span><span class="va">soil2.params</span><span class="op">[</span><span class="va">pseq</span><span class="op">[</span><span class="fl">2</span>,<span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq</span><span class="op">[</span><span class="fl">2</span>,<span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3.14302152 0.02809024</span>
-<span class="r-in"><span><span class="co"># smoothness parameter</span></span></span>
+<span class="r-in"><span><span class="co"># Extract the smoothness parameters</span></span></span>
 <span class="r-in"><span><span class="va">soil2.params</span><span class="op">[</span><span class="va">pseq</span><span class="op">[</span><span class="fl">3</span>,<span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq</span><span class="op">[</span><span class="fl">3</span>,<span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.580789</span>
-<span class="r-in"><span><span class="co"># nugget</span></span></span>
+<span class="r-in"><span><span class="co"># Extract the nuggets</span></span></span>
 <span class="r-in"><span><span class="va">soil2.params</span><span class="op">[</span><span class="va">pseq</span><span class="op">[</span><span class="fl">4</span>,<span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq</span><span class="op">[</span><span class="fl">4</span>,<span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.003012928</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Multivariate model</span></span></span>
+<span class="r-in"><span><span class="co"># Multivariate model with user-specified initial Matern parameter</span></span></span>
+<span class="r-in"><span><span class="co"># estimates</span></span></span>
 <span class="r-in"><span><span class="va">ym</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ym</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">soil250</span><span class="op">[</span>,<span class="fl">4</span><span class="op">]</span> <span class="co"># predict sand/silt portion of the sample</span></span></span>
 <span class="r-in"><span><span class="va">ym</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">soil250</span><span class="op">[</span>,<span class="fl">5</span><span class="op">]</span></span></span>
@@ -155,8 +156,36 @@ perspective", The Journal of Machine Learning Research (2001) 2:299-312.</p></li
 <span class="r-in"><span><span class="va">locsm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">locsm</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">locsm</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">locsm</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">soil250</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">soil.mvm</span> <span class="op">&lt;-</span>  <span class="fu">new</span><span class="op">(</span><span class="st">"MultivariateVecchiaModel"</span>, n_neighbors <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">soil.mvm</span> <span class="op">&lt;-</span> <span class="fu"><a href="prestogp_fit-PrestoGPModel-method.html">prestogp_fit</a></span><span class="op">(</span><span class="va">soil.mvm</span>, <span class="va">ym</span>, <span class="va">Xm</span>, <span class="va">locsm</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Initialize the vector of initial Matern parameters estimates</span></span></span>
+<span class="r-in"><span><span class="va">pseq2</span> <span class="op">&lt;-</span> <span class="fu">create_param_sequence</span><span class="op">(</span><span class="fl">3</span>, <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">soil.params0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="va">pseq2</span><span class="op">[</span><span class="fl">5</span>, <span class="fl">2</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Specify the initial sigma estimates</span></span></span>
+<span class="r-in"><span><span class="va">soil.params0</span><span class="op">[</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">5</span>, <span class="fl">8</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Scale parameters</span></span></span>
+<span class="r-in"><span><span class="va">scale.seq</span> <span class="op">&lt;-</span> <span class="va">pseq2</span><span class="op">[</span><span class="fl">2</span>,<span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">2</span>,<span class="fl">2</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="co"># Specify the scale parameter for location, outcome 1</span></span></span>
+<span class="r-in"><span><span class="va">soil.params0</span><span class="op">[</span><span class="va">scale.seq</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">12.8</span></span></span>
+<span class="r-in"><span><span class="co"># Specify the scale parameter for elevation, outcome 1</span></span></span>
+<span class="r-in"><span><span class="va">soil.params0</span><span class="op">[</span><span class="va">scale.seq</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">12.8</span></span></span>
+<span class="r-in"><span><span class="co"># Specify the scale parameter for location, outcome 2</span></span></span>
+<span class="r-in"><span><span class="va">soil.params0</span><span class="op">[</span><span class="va">scale.seq</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">21.5</span></span></span>
+<span class="r-in"><span><span class="co"># Specify the scale parameter for elevation, outcome 2</span></span></span>
+<span class="r-in"><span><span class="va">soil.params0</span><span class="op">[</span><span class="va">scale.seq</span><span class="op">[</span><span class="fl">4</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">21.5</span></span></span>
+<span class="r-in"><span><span class="co"># Specify the scale parameter for location, outcome 3</span></span></span>
+<span class="r-in"><span><span class="va">soil.params0</span><span class="op">[</span><span class="va">scale.seq</span><span class="op">[</span><span class="fl">5</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">17.8</span></span></span>
+<span class="r-in"><span><span class="co"># Specify the scale parameter for elevation, outcome 3</span></span></span>
+<span class="r-in"><span><span class="va">soil.params0</span><span class="op">[</span><span class="va">scale.seq</span><span class="op">[</span><span class="fl">6</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">17.8</span></span></span>
+<span class="r-in"><span><span class="co"># Specify the initial smoothness parameter estimates</span></span></span>
+<span class="r-in"><span><span class="va">soil.params0</span><span class="op">[</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">3</span>, <span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">3</span>, <span class="fl">2</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Specify the initial nugget estimates</span></span></span>
+<span class="r-in"><span><span class="va">soil.params0</span><span class="op">[</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">4</span>, <span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">4</span>, <span class="fl">2</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Specify the initial correlation estimates</span></span></span>
+<span class="r-in"><span><span class="va">soil.params0</span><span class="op">[</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">5</span>, <span class="fl">2</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">soil.mvm</span> <span class="op">&lt;-</span>  <span class="fu">new</span><span class="op">(</span><span class="st">"MultivariateVecchiaModel"</span>, n_neighbors <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">soil.mvm</span> <span class="op">&lt;-</span> <span class="fu"><a href="prestogp_fit-PrestoGPModel-method.html">prestogp_fit</a></span><span class="op">(</span><span class="va">soil.mvm</span>, <span class="va">ym</span>, <span class="va">Xm</span>, <span class="va">locsm</span>, scaling<span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>covparams <span class="op">=</span> <span class="va">soil.params0</span>, Y.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">soil250</span><span class="op">)</span><span class="op">[</span><span class="fl">4</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating initial beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of initial beta complete </span>
@@ -167,67 +196,89 @@ perspective", The Journal of Machine Learning Research (2001) 2:299-312.</p></li
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 1 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1052.6 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 2.033446 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1174.223 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 2.020575 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 2 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 2 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1006.342 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 3.285929 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1137.111 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 2.767673 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 3 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 3 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1004.776 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 3.333343 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1136.835 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 2.829191 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 4 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 4 complete </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1004.776 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 3.966228 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1136.452 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 2.882692 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 5 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 5 complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1135.68 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 2.870947 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 6 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 6 complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1135.045 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 2.867495 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Beginning iteration 7 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating theta... </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of theta complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimating beta... </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Estimation of beta complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration 7 complete </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current penalized negative log likelihood: 1135.045 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Current MSE: 2.870512 </span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">pseq</span> <span class="op">&lt;-</span> <span class="fu">create_param_sequence</span><span class="op">(</span><span class="fl">3</span>, <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Extract the estimated Matern paramaters</span></span></span>
 <span class="r-in"><span><span class="va">soil.params</span> <span class="op">&lt;-</span> <span class="va">soil.mvm</span><span class="op">@</span><span class="va">covparams</span></span></span>
-<span class="r-in"><span><span class="co"># sigmas</span></span></span>
-<span class="r-in"><span><span class="va">soil.params</span><span class="op">[</span><span class="va">pseq</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.8121059 4.4694598 7.6915030</span>
-<span class="r-in"><span><span class="co"># scale parameters</span></span></span>
-<span class="r-in"><span><span class="va">scale.seq</span> <span class="op">&lt;-</span> <span class="va">pseq</span><span class="op">[</span><span class="fl">2</span>,<span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq</span><span class="op">[</span><span class="fl">2</span>,<span class="fl">2</span><span class="op">]</span></span></span>
-<span class="r-in"><span><span class="co"># scale parameter for location, outcome 1</span></span></span>
+<span class="r-in"><span><span class="co"># Extract the sigmas</span></span></span>
+<span class="r-in"><span><span class="va">soil.params</span><span class="op">[</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.4038428 1.9177732 4.7231172</span>
+<span class="r-in"><span><span class="co"># Extract the scale parameter for location, outcome 1</span></span></span>
 <span class="r-in"><span><span class="va">soil.params</span><span class="op">[</span><span class="va">scale.seq</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 17.07644</span>
-<span class="r-in"><span><span class="co"># scale parameter for elevation, outcome 1</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 34.20424</span>
+<span class="r-in"><span><span class="co"># Extract the scale parameter for elevation, outcome 1</span></span></span>
 <span class="r-in"><span><span class="va">soil.params</span><span class="op">[</span><span class="va">scale.seq</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 19.80937</span>
-<span class="r-in"><span><span class="co"># scale parameter for location, outcome 2</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 18.93287</span>
+<span class="r-in"><span><span class="co"># Extract the scale parameter for location, outcome 2</span></span></span>
 <span class="r-in"><span><span class="va">soil.params</span><span class="op">[</span><span class="va">scale.seq</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 9.165145</span>
-<span class="r-in"><span><span class="co"># scale parameter for elevation, outcome 2</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 44.7757</span>
+<span class="r-in"><span><span class="co"># Extract the scale parameter for elevation, outcome 2</span></span></span>
 <span class="r-in"><span><span class="va">soil.params</span><span class="op">[</span><span class="va">scale.seq</span><span class="op">[</span><span class="fl">4</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.5874919</span>
-<span class="r-in"><span><span class="co"># scale parameter for location, outcome 3</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 140.7954</span>
+<span class="r-in"><span><span class="co"># Extract the scale parameter for location, outcome 3</span></span></span>
 <span class="r-in"><span><span class="va">soil.params</span><span class="op">[</span><span class="va">scale.seq</span><span class="op">[</span><span class="fl">5</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.3783888</span>
-<span class="r-in"><span><span class="co"># scale parameter for elevation, outcome 3</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 21.36912</span>
+<span class="r-in"><span><span class="co"># Extract the scale parameter for elevation, outcome 3</span></span></span>
 <span class="r-in"><span><span class="va">soil.params</span><span class="op">[</span><span class="va">scale.seq</span><span class="op">[</span><span class="fl">6</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.935525</span>
-<span class="r-in"><span><span class="co"># smoothness parameters</span></span></span>
-<span class="r-in"><span><span class="va">soil.params</span><span class="op">[</span><span class="va">pseq</span><span class="op">[</span><span class="fl">3</span>,<span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq</span><span class="op">[</span><span class="fl">3</span>,<span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1433850 0.1598858 0.5561018</span>
-<span class="r-in"><span><span class="co"># nuggets</span></span></span>
-<span class="r-in"><span><span class="va">soil.params</span><span class="op">[</span><span class="va">pseq</span><span class="op">[</span><span class="fl">4</span>,<span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq</span><span class="op">[</span><span class="fl">4</span>,<span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -0.2868219 -0.3519231 -0.8842306</span>
-<span class="r-in"><span><span class="co"># correlation</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 15.78034</span>
+<span class="r-in"><span><span class="co"># Extract the smoothness parameters</span></span></span>
+<span class="r-in"><span><span class="va">soil.params</span><span class="op">[</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">3</span>,<span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">3</span>,<span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.3725119 0.5690135 0.5023576</span>
+<span class="r-in"><span><span class="co"># Extract the nuggets</span></span></span>
+<span class="r-in"><span><span class="va">soil.params</span><span class="op">[</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">4</span>,<span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">4</span>,<span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.2432345 1.3513640 0.9633006</span>
+<span class="r-in"><span><span class="co"># Extract the correlation parameters</span></span></span>
 <span class="r-in"><span><span class="va">soil.corr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span> <span class="op">/</span> <span class="fl">2</span></span></span>
-<span class="r-in"><span><span class="va">soil.corr</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/lower.tri.html" class="external-link">upper.tri</a></span><span class="op">(</span><span class="va">soil.corr</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">soil.params</span><span class="op">[</span><span class="va">pseq</span><span class="op">[</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq</span><span class="op">[</span><span class="fl">5</span>,<span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">soil.corr</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/lower.tri.html" class="external-link">upper.tri</a></span><span class="op">(</span><span class="va">soil.corr</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">soil.params</span><span class="op">[</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">]</span><span class="op">:</span><span class="va">pseq2</span><span class="op">[</span><span class="fl">5</span>,<span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>number of items to replace is not a multiple of replacement length</span>
 <span class="r-in"><span><span class="va">soil.corr</span> <span class="op">&lt;-</span> <span class="va">soil.corr</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">soil.corr</span><span class="op">)</span></span></span>
 </code></pre></div>

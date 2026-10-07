@@ -26,12 +26,13 @@ R](https://adv-r.hadley.nz) may also be useful for a deeper dive.
           summarise(mean = mean({{ var }}))
       }
 
-- `enquo()` and `enquos()` delay the execution of one or several
-  function arguments. The former returns a single expression, the latter
-  returns a list of expressions. Once defused, expressions will no
-  longer evaluate on their own. They must be injected back into an
-  evaluation context with `!!` (for a single expression) and `!!!` (for
-  a list of expressions).
+- [`enquo()`](https://rlang.r-lib.org/reference/enquo.html) and
+  [`enquos()`](https://rlang.r-lib.org/reference/enquo.html) delay the
+  execution of one or several function arguments. The former returns a
+  single expression, the latter returns a list of expressions. Once
+  defused, expressions will no longer evaluate on their own. They must
+  be injected back into an evaluation context with `!!` (for a single
+  expression) and `!!!` (for a list of expressions).
 
       my_function <- function(data, var, ...) {
         # Defuse

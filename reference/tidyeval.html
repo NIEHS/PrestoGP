@@ -157,7 +157,7 @@ because it throws an error if the input is not a name as expected.
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9054</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9055</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -199,7 +199,7 @@ arguments contained in dots, use <code>...</code> in the normal way.</p>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>    <span class="fu">group_by</span>(...) <span class="sc">%&gt;%</span></span>
 <span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">mean =</span> <span class="fu">mean</span>({{ var }}))</span>
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>}</span></code></pre><p></p></div></li>
-<li><p><code>enquo()</code> and <code>enquos()</code> delay the execution of one or several
+<li><p><code><a href="https://rlang.r-lib.org/reference/enquo.html" class="external-link">enquo()</a></code> and <code><a href="https://rlang.r-lib.org/reference/enquo.html" class="external-link">enquos()</a></code> delay the execution of one or several
 function arguments. The former returns a single expression, the
 latter returns a list of expressions. Once defused, expressions
 will no longer evaluate on their own. They must be injected back

@@ -61,7 +61,7 @@ soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 1 complete 
-#> Current penalized negative log likelihood: 487.4032 
+#> Current penalized negative log likelihood: 487.8125 
 #> Current MSE: 9.104869 
 #> Beginning iteration 2 
 #> Estimating theta... 
@@ -69,16 +69,24 @@ soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 2 complete 
-#> Current penalized negative log likelihood: 482.2568 
-#> Current MSE: 9.042321 
+#> Current penalized negative log likelihood: 483.2969 
+#> Current MSE: 9.026515 
 #> Beginning iteration 3 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 3 complete 
-#> Current penalized negative log likelihood: 482.2568 
-#> Current MSE: 9.021846 
+#> Current penalized negative log likelihood: 482.8962 
+#> Current MSE: 9.054909 
+#> Beginning iteration 4 
+#> Estimating theta... 
+#> Estimation of theta complete 
+#> Estimating beta... 
+#> Estimation of beta complete 
+#> Iteration 4 complete 
+#> Current penalized negative log likelihood: 482.8962 
+#> Current MSE: 9.057119 
 get_linear_model(soil.vm)
 #> 
 #> Call:  cv.glmnet(x = as.matrix(model@X_tilde), y = as.matrix(model@y_tilde),      nfolds = nfolds, foldid = foldid, parallel = parallel, relax = penalty ==          "relaxed", alpha = model@alpha, family = family, penalty.factor = pen.factor) 
@@ -86,6 +94,6 @@ get_linear_model(soil.vm)
 #> Measure: Mean-Squared Error 
 #> 
 #>      Lambda Index Measure      SE Nonzero
-#> min 0.01399    18  0.4915 0.03910       4
-#> 1se 0.06801     1  0.5003 0.03899       0
+#> min 0.00611    27  0.5314 0.05827       4
+#> 1se 0.06867     1  0.5393 0.05624       0
 ```

@@ -85,7 +85,7 @@ prestogp_fit(
 
 - common_scale:
 
-  Do all columsn of locs have a common scales parameter? See Details for
+  Do all columns of locs have a common scales parameter? See Details for
   the effects of this parameter. Defaults to TRUE if there is only one
   scale parameter for each outcome and FALSE otherwise.
 
@@ -317,7 +317,7 @@ soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 1 complete 
-#> Current penalized negative log likelihood: 487.5252 
+#> Current penalized negative log likelihood: 487.6222 
 #> Current MSE: 9.104869 
 #> Beginning iteration 2 
 #> Estimating theta... 
@@ -325,16 +325,32 @@ soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 2 complete 
-#> Current penalized negative log likelihood: 482.1769 
-#> Current MSE: 9.055295 
+#> Current penalized negative log likelihood: 482.5078 
+#> Current MSE: 9.037747 
 #> Beginning iteration 3 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 3 complete 
-#> Current penalized negative log likelihood: 482.1769 
-#> Current MSE: 9.041136 
+#> Current penalized negative log likelihood: 482.1084 
+#> Current MSE: 9.036218 
+#> Beginning iteration 4 
+#> Estimating theta... 
+#> Estimation of theta complete 
+#> Estimating beta... 
+#> Estimation of beta complete 
+#> Iteration 4 complete 
+#> Current penalized negative log likelihood: 481.986 
+#> Current MSE: 9.050206 
+#> Beginning iteration 5 
+#> Estimating theta... 
+#> Estimation of theta complete 
+#> Estimating beta... 
+#> Estimation of beta complete 
+#> Iteration 5 complete 
+#> Current penalized negative log likelihood: 481.986 
+#> Current MSE: 9.048394 
 
 # Impute missing y's
 miss <- sample(1:nrow(soil), 20)
@@ -352,7 +368,7 @@ soil.vm2 <- prestogp_fit(soil.vm, y, X, locs, impute.y = TRUE)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 1 complete 
-#> Current penalized negative log likelihood: 487.6658 
+#> Current penalized negative log likelihood: 487.4073 
 #> Current MSE: 9.104869 
 #> Beginning iteration 2 
 #> Estimating theta... 
@@ -360,48 +376,40 @@ soil.vm2 <- prestogp_fit(soil.vm, y, X, locs, impute.y = TRUE)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 2 complete 
-#> Current penalized negative log likelihood: 482.6621 
-#> Current MSE: 9.029404 
+#> Current penalized negative log likelihood: 483.1834 
+#> Current MSE: 9.053621 
 #> Beginning iteration 3 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 3 complete 
-#> Current penalized negative log likelihood: 482.1692 
-#> Current MSE: 9.044989 
+#> Current penalized negative log likelihood: 482.9334 
+#> Current MSE: 9.052298 
 #> Beginning iteration 4 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 4 complete 
-#> Current penalized negative log likelihood: 482.165 
-#> Current MSE: 9.044745 
+#> Current penalized negative log likelihood: 482.6546 
+#> Current MSE: 9.059122 
 #> Beginning iteration 5 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 5 complete 
-#> Current penalized negative log likelihood: 482.1016 
-#> Current MSE: 9.044745 
+#> Current penalized negative log likelihood: 482.6152 
+#> Current MSE: 9.06472 
 #> Beginning iteration 6 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 6 complete 
-#> Current penalized negative log likelihood: 482.0659 
-#> Current MSE: 9.053662 
-#> Beginning iteration 7 
-#> Estimating theta... 
-#> Estimation of theta complete 
-#> Estimating beta... 
-#> Estimation of beta complete 
-#> Iteration 7 complete 
-#> Current penalized negative log likelihood: 482.0659 
-#> Current MSE: 9.049476 
+#> Current penalized negative log likelihood: 482.6152 
+#> Current MSE: 9.06472 
 
 # Impute y's missing due to limit of detection
 soil.lod <- quantile(y, 0.1)
@@ -420,7 +428,7 @@ lod.upper = soil.lod)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 1 complete 
-#> Current penalized negative log likelihood: 487.5586 
+#> Current penalized negative log likelihood: 487.5075 
 #> Current MSE: 9.104869 
 #> Beginning iteration 2 
 #> Estimating theta... 
@@ -428,32 +436,32 @@ lod.upper = soil.lod)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 2 complete 
-#> Current penalized negative log likelihood: 482.6584 
-#> Current MSE: 9.022852 
+#> Current penalized negative log likelihood: 482.1134 
+#> Current MSE: 9.057822 
 #> Beginning iteration 3 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 3 complete 
-#> Current penalized negative log likelihood: 481.8686 
-#> Current MSE: 9.046847 
+#> Current penalized negative log likelihood: 482.0353 
+#> Current MSE: 9.043299 
 #> Beginning iteration 4 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 4 complete 
-#> Current penalized negative log likelihood: 481.8494 
-#> Current MSE: 9.053363 
+#> Current penalized negative log likelihood: 482.0285 
+#> Current MSE: 9.046708 
 #> Beginning iteration 5 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 5 complete 
-#> Current penalized negative log likelihood: 481.8494 
-#> Current MSE: 9.049118 
+#> Current penalized negative log likelihood: 482.0285 
+#> Current MSE: 9.04214 
 
 # Full model
 soil.fm <- new("FullModel")
@@ -468,7 +476,7 @@ soil.fm <- prestogp_fit(soil.fm, y, X, locs)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 1 complete 
-#> Current penalized negative log likelihood: 487.4412 
+#> Current penalized negative log likelihood: 487.4422 
 #> Current MSE: 9.104869 
 #> Beginning iteration 2 
 #> Estimating theta... 
@@ -476,32 +484,24 @@ soil.fm <- prestogp_fit(soil.fm, y, X, locs)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 2 complete 
-#> Current penalized negative log likelihood: 482.7296 
-#> Current MSE: 9.057879 
+#> Current penalized negative log likelihood: 486.8132 
+#> Current MSE: 9.105443 
 #> Beginning iteration 3 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 3 complete 
-#> Current penalized negative log likelihood: 482.1796 
-#> Current MSE: 9.09242 
+#> Current penalized negative log likelihood: 482.0207 
+#> Current MSE: 9.088259 
 #> Beginning iteration 4 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 4 complete 
-#> Current penalized negative log likelihood: 482.0125 
-#> Current MSE: 9.10027 
-#> Beginning iteration 5 
-#> Estimating theta... 
-#> Estimation of theta complete 
-#> Estimating beta... 
-#> Estimation of beta complete 
-#> Iteration 5 complete 
-#> Current penalized negative log likelihood: 482.0125 
-#> Current MSE: 9.058927 
+#> Current penalized negative log likelihood: 482.0207 
+#> Current MSE: 9.057658 
 
 # Multivariate model
 ym <- list()
@@ -513,7 +513,8 @@ locsm <- list()
 locsm[[1]] <- locsm[[2]] <- locs
 
 soil.mvm <-  new("MultivariateVecchiaModel", n_neighbors = 10)
-soil.mvm <- prestogp_fit(soil.mvm, ym, Xm, locsm)
+soil.mvm <- prestogp_fit(soil.mvm, ym, Xm, locsm,
+Y.names = names(soil)[c(5, 7)])
 #> 
 #> Estimating initial beta... 
 #> Estimation of initial beta complete 
@@ -524,32 +525,24 @@ soil.mvm <- prestogp_fit(soil.mvm, ym, Xm, locsm)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 1 complete 
-#> Current penalized negative log likelihood: 1297.617 
-#> Current MSE: 46.80159 
+#> Current penalized negative log likelihood: 1295.498 
+#> Current MSE: 45.73893 
 #> Beginning iteration 2 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 2 complete 
-#> Current penalized negative log likelihood: 1294.372 
-#> Current MSE: 183.4131 
+#> Current penalized negative log likelihood: 1291.263 
+#> Current MSE: 140.6016 
 #> Beginning iteration 3 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 3 complete 
-#> Current penalized negative log likelihood: 1289.514 
-#> Current MSE: 199.728 
-#> Beginning iteration 4 
-#> Estimating theta... 
-#> Estimation of theta complete 
-#> Estimating beta... 
-#> Estimation of beta complete 
-#> Iteration 4 complete 
-#> Current penalized negative log likelihood: 1289.514 
-#> Current MSE: 182.0266 
+#> Current penalized negative log likelihood: 1291.263 
+#> Current MSE: 151.4401 
 
 # Space/elevation model
 data(soil250, package="geoR")
@@ -571,14 +564,100 @@ soil.vm2 <- prestogp_fit(soil.vm2, y2, X2, locs2, scaling = c(1, 1, 2))
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 1 complete 
-#> Current penalized negative log likelihood: -258.6365 
-#> Current MSE: 0.008202367 
+#> Current penalized negative log likelihood: -258.6895 
+#> Current MSE: 0.008204926 
 #> Beginning iteration 2 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 2 complete 
-#> Current penalized negative log likelihood: -258.6365 
-#> Current MSE: 0.009974706 
+#> Current penalized negative log likelihood: -258.6895 
+#> Current MSE: 0.009277282 
+
+# Multivariate model with user-specified initial Matern parameter
+# estimates
+ym2 <- list()
+ym2[[1]] <- soil250[,4] # predict sand/silt portion of the sample
+ym2[[2]] <- soil250[,5]
+ym2[[3]] <- soil250[,6]
+Xm2 <- list()
+Xm2[[1]] <- Xm2[[2]] <- Xm2[[3]] <- as.matrix(soil250[,7:22])
+locsm2 <- list()
+locsm2[[1]] <- locsm2[[2]] <- locsm2[[3]] <- as.matrix(soil250[,1:3])
+
+# Initialize the vector of initial Matern parameters estimates
+pseq <- create_param_sequence(3, 2)
+soil.params0 <- rep(NA, pseq[5, 2])
+
+# Specify the initial sigma estimates
+soil.params0[pseq[1, 1]:pseq[1, 2]] <- c(1, 5, 8)
+# Scale parameters
+scale.seq <- pseq[2,1]:pseq[2,2]
+# Specify the scale parameter for location, outcome 1
+soil.params0[scale.seq[1]] <- 12.8
+# Specify the scale parameter for elevation, outcome 1
+soil.params0[scale.seq[2]] <- 12.8
+# Specify the scale parameter for location, outcome 2
+soil.params0[scale.seq[3]] <- 21.5
+# Specify the scale parameter for elevation, outcome 2
+soil.params0[scale.seq[4]] <- 21.5
+# Specify the scale parameter for location, outcome 3
+soil.params0[scale.seq[5]] <- 17.8
+# Specify the scale parameter for elevation, outcome 3
+soil.params0[scale.seq[6]] <- 17.8
+# Specify the initial smoothness parameter estimates
+soil.params0[pseq[3, 1]:pseq[3, 2]] <- c(0.5, 0.5, 0.5)
+# Specify the initial nugget estimates
+soil.params0[pseq[4, 1]:pseq[4, 2]] <- c(0.25, 0.5, 0.5)
+# Specify the initial correlation estimates
+soil.params0[pseq[5, 1]:pseq[5, 2]] <- c(0, 0, 0)
+
+soil.mvm2 <-  new("MultivariateVecchiaModel", n_neighbors = 25)
+soil.mvm2 <- prestogp_fit(soil.mvm, ym2, Xm2, locsm2, scaling= c(1, 1, 2),
+covparams = soil.params0, Y.names = names(soil250)[4:6])
+#> 
+#> Estimating initial beta... 
+#> Estimation of initial beta complete 
+#> 
+#> Beginning iteration 1 
+#> Estimating theta... 
+#> Estimation of theta complete 
+#> Estimating beta... 
+#> Estimation of beta complete 
+#> Iteration 1 complete 
+#> Current penalized negative log likelihood: 1172.376 
+#> Current MSE: 2.033446 
+#> Beginning iteration 2 
+#> Estimating theta... 
+#> Estimation of theta complete 
+#> Estimating beta... 
+#> Estimation of beta complete 
+#> Iteration 2 complete 
+#> Current penalized negative log likelihood: 1135.115 
+#> Current MSE: 2.743259 
+#> Beginning iteration 3 
+#> Estimating theta... 
+#> Estimation of theta complete 
+#> Estimating beta... 
+#> Estimation of beta complete 
+#> Iteration 3 complete 
+#> Current penalized negative log likelihood: 1134.004 
+#> Current MSE: 2.843881 
+#> Beginning iteration 4 
+#> Estimating theta... 
+#> Estimation of theta complete 
+#> Estimating beta... 
+#> Estimation of beta complete 
+#> Iteration 4 complete 
+#> Current penalized negative log likelihood: 1133.627 
+#> Current MSE: 2.817536 
+#> Beginning iteration 5 
+#> Estimating theta... 
+#> Estimation of theta complete 
+#> Estimating beta... 
+#> Estimation of beta complete 
+#> Iteration 5 complete 
+#> Current penalized negative log likelihood: 1133.627 
+#> Current MSE: 2.829682 
 ```

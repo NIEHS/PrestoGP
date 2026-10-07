@@ -41,7 +41,7 @@ soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 1 complete 
-#> Current penalized negative log likelihood: 487.6106 
+#> Current penalized negative log likelihood: 487.6794 
 #> Current MSE: 9.104869 
 #> Beginning iteration 2 
 #> Estimating theta... 
@@ -49,42 +49,58 @@ soil.vm <- prestogp_fit(soil.vm, y, X, locs)
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 2 complete 
-#> Current penalized negative log likelihood: 482.1937 
-#> Current MSE: 9.057586 
+#> Current penalized negative log likelihood: 482.4042 
+#> Current MSE: 9.041971 
 #> Beginning iteration 3 
 #> Estimating theta... 
 #> Estimation of theta complete 
 #> Estimating beta... 
 #> Estimation of beta complete 
 #> Iteration 3 complete 
-#> Current penalized negative log likelihood: 482.1937 
-#> Current MSE: 9.046636 
+#> Current penalized negative log likelihood: 481.9999 
+#> Current MSE: 9.034115 
+#> Beginning iteration 4 
+#> Estimating theta... 
+#> Estimation of theta complete 
+#> Estimating beta... 
+#> Estimation of beta complete 
+#> Iteration 4 complete 
+#> Current penalized negative log likelihood: 481.8401 
+#> Current MSE: 9.047439 
+#> Beginning iteration 5 
+#> Estimating theta... 
+#> Estimation of theta complete 
+#> Estimating beta... 
+#> Estimation of beta complete 
+#> Iteration 5 complete 
+#> Current penalized negative log likelihood: 481.8401 
+#> Current MSE: 9.049394 
 show(soil.vm)
 #> Matern covariance parameters (theta): 
 #> $sigma
-#> [1] 10.63738
+#> [1] 10.28376
 #> 
 #> $scale
-#> [1] 14.44042
+#> [1] 13.52572
 #> 
 #> $smoothness
-#> [1] 0.796426
+#> [1] 0.9088149
 #> 
 #> $nuggets
-#> [1] 0.7330837
+#> [1] 0.7629514
 #> 
 #> Regression coefficients (beta): 
 #> $Y
 #>        NO3.N        NH4.N          DOC         N20N 
-#> -0.037611577  0.028946406  0.002497739 34.120803768 
+#> -0.039404924  0.030027624  0.002530095 35.497666810 
 #> 
 #> $`(Intercept)`
 #> (Intercept) 
-#>    11.39514 
+#>    11.39525 
 #> 
 #> Model type: VecchiaModel 
 #> Nearest neighbors: 10 
 #> Scaling: 1 1 
-#> Penalized likelihood: 482.1937 
-#> MSE: 9.046636 
+#> Penalized likelihood: 481.8401 
+#> MSE: 9.049394 
 ```

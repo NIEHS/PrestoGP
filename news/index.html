@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">PrestoGP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9054</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9055</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,11 +31,27 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0.9055" id="prestogp-0209055-2026-9-29">PrestoGP 0.2.0.9055 (2026-9-29)<a class="anchor" aria-label="anchor" href="#prestogp-0209055-2026-9-29"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-0-2-0-9055">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0-9055"></a></h3>
+<ul><li>Fixed a bug in <code>mvnegloglik_ST</code> that was causing multivariate spatiotemporal models to be fitted incorrectly.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-fixes-0-2-0-9055">DOCUMENTATION FIXES<a class="anchor" aria-label="anchor" href="#documentation-fixes-0-2-0-9055"></a></h3>
+<ul><li>Added examples to show how to specify initial Matern parameter estimates in the documentation for <code>create_param_sequence</code> and <code>prestogp_fit</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="minor-improvements-0-2-0-9055">MINOR IMPROVEMENTS<a class="anchor" aria-label="anchor" href="#minor-improvements-0-2-0-9055"></a></h3>
+<ul><li><p>Added unit tests to check user-specified values of beta.hat and covparams in <code>prestogp_fit</code>.</p></li>
+<li><p>Updated unit tests for multivariate spatiotemporal models to account for the bug fix mentioned above.</p></li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0.9054" id="prestogp-0209054-2026-7-21">PrestoGP 0.2.0.9054 (2026-7-21)<a class="anchor" aria-label="anchor" href="#prestogp-0209054-2026-7-21"></a></h2>
 <div class="section level3">
 <h3 id="minor-improvements-0-2-0-9054">MINOR IMPROVEMENTS<a class="anchor" aria-label="anchor" href="#minor-improvements-0-2-0-9054"></a></h3>
 <ul><li><p>The multivariate likelihood functions have been rewritten in C++, which should reduce overhead for large data sets.</p></li>
-<li><p>The nearest neighbor matrices are now computed in vecchia_Mspecify. Previously, they were computed in createUMultivariate, which was inefficient because they were recomputed repeatedly. Now, they are computed a single time and saved.</p></li>
+<li><p>The nearest neighbor matrices are now computed in vecchia_Mspecify. Previously, they were computed in <code>createUMultivariate</code>, which was inefficient because they were recomputed repeatedly. Now, they are computed a single time and saved.</p></li>
 </ul></div>
 </div>
     <div class="section level2">
