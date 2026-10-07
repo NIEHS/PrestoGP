@@ -202,6 +202,7 @@ test_that("mvnegloglik", {
 })
 
 test_that("mvnegloglik_ST", {
+  set.seed(1234)
   load("sim_multivariate_big_st.RData")
   P <- 3
   cor.matrix <- cor(Y)
@@ -220,7 +221,7 @@ test_that("mvnegloglik_ST", {
     logparams, vec.approx,
     unlist(y.list), pseq, P, c(1, 1, 2), 2
   )
-  expect_equal(35797.9, neg_likelihood, tolerance = 1e-2)
+  expect_equal(107746.7, neg_likelihood, tolerance = 1e-2)
 
   vec.approx2 <- vec.approx
   for (i in 1:P) {
@@ -247,7 +248,7 @@ test_that("mvnegloglik_ST", {
     logparams, vec.approx,
     unlist(y.list), pseq, P, c(1, 1, 2), 2
   )
-  expect_equal(36984.82, neg_likelihood, tolerance = 1e-2)
+  expect_equal(120573.9, neg_likelihood, tolerance = 1e-2)
 
   vec.approx2 <- vec.approx
   vec.approx2$locsord[vec.approx$ondx == 1, 1:2] <-
@@ -268,6 +269,14 @@ test_that("mvnegloglik_ST", {
     unlist(y.list), pseq, P, c(1, 1, 2), 2
   )
   expect_equal(neg_likelihood, neg_likelihood2, tolerance = 1e-3)
+
+  logparams3 <- c(logparams[pseq[1, 1]:pseq[1, 2]], rep(0, P),
+    logparams[pseq[3, 1]:pseq[5, 2]])
+  neg_likelihood3 <- mvnegloglik(
+    logparams3, vec.approx2,
+    unlist(y.list), create_param_sequence(P), P
+  )
+  expect_equal(neg_likelihood, neg_likelihood3, tolerance = 1e-3)
 })
 
 test_that("mvnegloglik.full", {

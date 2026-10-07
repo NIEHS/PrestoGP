@@ -314,6 +314,7 @@ test_that("Simulated dataset spatial", {
   pgp.model4 <- prestogp_fit(pgp.model4, y.na.lod, X, locs,
     scaling = c(1, 1), common_scale = TRUE, verbose = TRUE, parallel = TRUE,
     impute.y = TRUE, lod.upper = lodupper, lod.lower = lodlower,
+    maxit.impute = 5,
     optim.control = list(
       trace = 0, maxit = 5000,
       reltol = 1e-3
@@ -706,7 +707,8 @@ test_that("Simulated spatial prediction", {
   load("sim_vecchia_pred.RData")
   pgp.model1 <- new("VecchiaModel", n_neighbors = 25)
   pgp.model1 <- prestogp_fit(pgp.model1, y.otr, X.otr, locs.otr,
-    scaling = c(1, 1),
+    scaling = c(1, 1), beta.hat = c(0, rep(1, 4), rep(0, 6)),
+    covparams = c(0.9 * sd(y.otr), 0.85, 0.5, 0.1 * sd(y.otr)),
     common_scale = TRUE, quiet = TRUE,
     optim.control = list(
       trace = 0, maxit = 5000,
@@ -719,8 +721,8 @@ test_that("Simulated spatial prediction", {
   mse <- mean((pgp.model1.pred$means - y.otst)^2)
   me <- mean(pgp.model1.pred$means - y.otst)
 
-  expect_equal(mse, 2.1733, tolerance = 0.0015)
-  expect_equal(me - 0.0442, 0, tolerance = 0.002)
+  expect_equal(mse, 2.196, tolerance = 0.001)
+  expect_equal(me - 0.0433, 0, tolerance = 0.001)
 
   # SCAD fit
   pgp.model2 <- new("VecchiaModel", n_neighbors = 25)

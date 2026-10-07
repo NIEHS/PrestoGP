@@ -251,6 +251,9 @@ Rcpp::List createUMultivariate(Rcpp::List vec_approx, arma::vec params) {
   // -------------------- parameter unpacking --------------------
   // 1-indexed [begin,end] rows: 1=sig2, 2=rangep, 3=smoothness, 4=nugget, 5=rho
   arma::mat param_seq = create_param_sequence(P);
+  if (params.size() != param_seq(4, 1)) {
+    Rcpp::stop("Length of params is incorrect");
+  }
 
   arma::vec sig2       = params.subvec(param_seq(0, 0) - 1, param_seq(0, 1) - 1);
   arma::vec rangep     = params.subvec(param_seq(1, 0) - 1, param_seq(1, 1) - 1);

@@ -41,28 +41,28 @@ models. It is a multivariate version of
 }
 \examples{
 data(soil)
-soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
-locs <- as.matrix(soil[,1:2])
+soil <- soil[!is.na(soil[, 5]), ] # remove rows with NA's
+locs <- as.matrix(soil[, 1:2])
 locsm <- list()
 locsm[[1]] <- locsm[[2]] <- locs
 locsp <- locsm
 locsp[[1]] <- locsp[[1]] + 0.5
 locsp[[2]] <- locsp[[2]] - 0.5
-soil.vap <- vecchia_Mspecify(locsm, m=10, locs.list.pred=locsp)
+soil.vap <- vecchia_Mspecify(locsm, m = 10, locs.list.pred = locsp)
 
 pseq <- create_param_sequence(2)
 # Initialize the vector of covariance parameters
-params <- rep(NA, pseq[5,2])
+params <- rep(NA, pseq[5, 2])
 # Sigma parameters:
-params[pseq[1,1]:pseq[1,2]] <- c(100, 80)
+params[pseq[1, 1]:pseq[1, 2]] <- c(100, 80)
 # Scale parameters:
-params[pseq[2,1]:pseq[2,2]] <- c(60, 50)
+params[pseq[2, 1]:pseq[2, 2]] <- c(60, 50)
 # Smoothness parameters:
-params[pseq[3,1]:pseq[3,2]] <- c(0.5, 0.5)
+params[pseq[3, 1]:pseq[3, 2]] <- c(0.5, 0.5)
 # Nuggets:
-params[pseq[4,1]:pseq[4,2]] <- c(30, 30)
+params[pseq[4, 1]:pseq[4, 2]] <- c(30, 30)
 # Correlation:
-params[pseq[5,1]:pseq[5,2]] <- -0.9
+params[pseq[5, 1]:pseq[5, 2]] <- -0.9
 
 soil.yhat <- vecchia_Mprediction(rnorm(nrow(locs)), soil.vap, params)
 }

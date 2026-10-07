@@ -27,9 +27,9 @@ MCP_penalty <- function(x, lambda, gamma) {
 #'
 #' @return a penalty score
 #' @noRd
-#glmnet_penalty <- function(beta, lambda, alpha) {
+# glmnet_penalty <- function(beta, lambda, alpha) {
 #  return(lambda * ((1 - alpha) * sqrt(sum(beta^2)) + alpha * sum(abs(beta))))
-#}
+# }
 
 # Ordinary Spatiotemporal Kriging Prediction with a Local S-T neighborhood.
 #
@@ -40,7 +40,7 @@ MCP_penalty <- function(x, lambda, gamma) {
 # @param NN number of nearest neighbors to use
 #
 # @return A dataframe with predicted means and variances
-#Kr_pred <- function(new_coords, obs_coords, Y_obs, cov.pars, NN) {
+# Kr_pred <- function(new_coords, obs_coords, Y_obs, cov.pars, NN) {
 #  Kr.prediction <- matrix(NA, nrow = nrow(new_coords), ncol = 1)
 #  Kr.Var <- matrix(NA, nrow = nrow(new_coords), ncol = 1)
 #
@@ -71,7 +71,7 @@ MCP_penalty <- function(x, lambda, gamma) {
 #  Kr.Data <- data.frame(Kr.prediction, Kr.Var)
 #
 #  return(Kr.Data)
-#}
+# }
 
 # ST_Krig_Param_Avg
 #
@@ -83,7 +83,7 @@ MCP_penalty <- function(x, lambda, gamma) {
 # @param k The number of optimization iterations.
 #
 # @return a vector containing the covariance parameters
-#ST_Krig_Param_Avg <- function(Y, locs, p, k = 10) {
+# ST_Krig_Param_Avg <- function(Y, locs, p, k = 10) {
 #  n <- length(Y)
 #  mdl.geo.fit.avg <- list()
 #  mdl.geo.fit.avg <- matrix(NA, nrow = k, ncol = 4)
@@ -107,15 +107,15 @@ MCP_penalty <- function(x, lambda, gamma) {
 #  covparam <- exp(apply(mdl.geo.fit.avg, 2, mean))
 #
 #  return(covparam)
-#}
+# }
 
 
 ################################################################################
 ## replicate rows, helps with vector distance
 ################################################################################
-#rep.row <- function(x, n) {
+# rep.row <- function(x, n) {
 #  matrix(rep(x, each = n), nrow = n)
-#}
+# }
 
 
 ################################################################################
@@ -170,7 +170,7 @@ transform_miid <- function(data, vecchia.approx, params) {
 
 ######  GPvecchia local function
 ###### compute V for posterior inference - needed for transform.iid   #######
-#U2V <- function(U.obj) {
+# U2V <- function(U.obj) {
 #  U.y <- U.obj$U[U.obj$latent, ]
 
 #  if (U.obj$cond.yz == "zy") {
@@ -211,11 +211,11 @@ transform_miid <- function(data, vecchia.approx, params) {
 #  }
 #
 #  V.ord
-#}
+# }
 
 ###########################################################
 ## Reverse order of matrix rows,cols
-#revMat <- function(mat) {
+# revMat <- function(mat) {
 #  if (nrow(mat) == 0 || ncol(mat) == 0) {
 #    mat.out <- mat
 #  } else {
@@ -224,16 +224,18 @@ transform_miid <- function(data, vecchia.approx, params) {
 #    mat.out <- mat[row_seq, col_seq, drop = FALSE]
 #  }
 #  mat.out
-#}
+# }
 
-vecchia_prediction <- function(z, vecchia.approx, covparms, nuggets,
+vecchia_prediction <- function(
+  z, vecchia.approx, covparms, nuggets,
   var.exact, covmodel = "matern", return.values = "all") {
   removeNAs <- getFromNamespace("removeNAs", "GPvecchia")
   removeNAs()
   U.obj <- createU(vecchia.approx, covparms, nuggets, covmodel)
   V.ord <- U2V_cpp(U.obj)
-  if (length(U.obj$zero.nugg) > 0)
+  if (length(U.obj$zero.nugg) > 0) {
     warning("Rows/cols of V have been removed for data with zero noise")
+  }
   vecchia_mean <- getFromNamespace("vecchia_mean", "GPvecchia")
   V.singular <- FALSE
   res <- try(vecchia.mean <- vecchia_mean(z, U.obj, V.ord), silent = TRUE)
@@ -243,9 +245,11 @@ vecchia_prediction <- function(z, vecchia.approx, covparms, nuggets,
     V.singular <- TRUE
     vecchia.mean <- vecchia_mean(z, U.obj, V.ord.pd)
   }
-  return.list <- list(mu.pred = vecchia.mean$mu.pred,
+  return.list <- list(
+    mu.pred = vecchia.mean$mu.pred,
     mu.obs = vecchia.mean$mu.obs, var.pred = NULL, var.obs = NULL,
-    V.ord = NULL, U.obj = NULL)
+    V.ord = NULL, U.obj = NULL
+  )
   if (return.values == "meanmat" || return.values == "all") {
     return.list$V.ord <- V.ord
     return.list$U.obj <- U.obj
@@ -254,8 +258,9 @@ vecchia_prediction <- function(z, vecchia.approx, covparms, nuggets,
     if (V.singular) {
       stop("V is numerically singular. Prediction variance cannot be computed.")
     }
-    if (missing(var.exact))
+    if (missing(var.exact)) {
       var.exact <- (sum(!vecchia.approx$obs) < 4 * 10000)
+    }
     vecchia_var <- getFromNamespace("vecchia_var", "GPvecchia")
     vars.vecchia <- vecchia_var(U.obj, V.ord, exact = var.exact)
     return.list$var.pred <- vars.vecchia$vars.pred
@@ -302,28 +307,28 @@ vecchia_prediction <- function(z, vecchia.approx, covparms, nuggets,
 #' @export
 #' @examples
 #' data(soil)
-#' soil <- soil[!is.na(soil[,5]),] # remove rows with NA's
-#' locs <- as.matrix(soil[,1:2])
+#' soil <- soil[!is.na(soil[, 5]), ] # remove rows with NA's
+#' locs <- as.matrix(soil[, 1:2])
 #' locsm <- list()
 #' locsm[[1]] <- locsm[[2]] <- locs
 #' locsp <- locsm
 #' locsp[[1]] <- locsp[[1]] + 0.5
 #' locsp[[2]] <- locsp[[2]] - 0.5
-#' soil.vap <- vecchia_Mspecify(locsm, m=10, locs.list.pred=locsp)
+#' soil.vap <- vecchia_Mspecify(locsm, m = 10, locs.list.pred = locsp)
 #'
 #' pseq <- create_param_sequence(2)
 #' # Initialize the vector of covariance parameters
-#' params <- rep(NA, pseq[5,2])
+#' params <- rep(NA, pseq[5, 2])
 #' # Sigma parameters:
-#' params[pseq[1,1]:pseq[1,2]] <- c(100, 80)
+#' params[pseq[1, 1]:pseq[1, 2]] <- c(100, 80)
 #' # Scale parameters:
-#' params[pseq[2,1]:pseq[2,2]] <- c(60, 50)
+#' params[pseq[2, 1]:pseq[2, 2]] <- c(60, 50)
 #' # Smoothness parameters:
-#' params[pseq[3,1]:pseq[3,2]] <- c(0.5, 0.5)
+#' params[pseq[3, 1]:pseq[3, 2]] <- c(0.5, 0.5)
 #' # Nuggets:
-#' params[pseq[4,1]:pseq[4,2]] <- c(30, 30)
+#' params[pseq[4, 1]:pseq[4, 2]] <- c(30, 30)
 #' # Correlation:
-#' params[pseq[5,1]:pseq[5,2]] <- -0.9
+#' params[pseq[5, 1]:pseq[5, 2]] <- -0.9
 #'
 #' soil.yhat <- vecchia_Mprediction(rnorm(nrow(locs)), soil.vap, params)
 vecchia_Mprediction <- function(z, vecchia.approx, covparms, var.exact = NULL, return.values = "mean") {
@@ -407,20 +412,27 @@ eliminate_dupes <- function(locs, locs.pred = NULL) {
   list(locs = locs, locs.pred = locs.pred)
 }
 
-lod_reg_mi <- function(y, X, lodu, lodl, miss, n.mi = 10, eps = 0.01,
+lod_reg_mi <- function(
+  y, X, lodu, lodl, miss, n.mi = 10, eps = 0.01,
   maxit = 10, penalty, alpha, parallel, cluster, foldid, verbose) {
   lodu <- lodu[miss]
   lodl <- lodl[miss]
   last.coef <- rep(Inf, ncol(X) + 1)
   if (penalty == "lasso" || penalty == "relaxed") {
     relax <- penalty == "relaxed"
-    cur.glmnet <- cv.glmnet(X, y, parallel = parallel, foldid = foldid,
-      alpha = alpha, relax = relax)
-    cur.coef <- as.matrix(predict(cur.glmnet, type = "coefficients",
-        s = "lambda.min", gamma = "gamma.min"))
+    cur.glmnet <- cv.glmnet(X, y,
+      parallel = parallel, foldid = foldid,
+      alpha = alpha, relax = relax
+    )
+    cur.coef <- as.matrix(predict(cur.glmnet,
+        type = "coefficients",
+        s = "lambda.min", gamma = "gamma.min"
+      ))
   } else {
-    cur.ncvreg <- cv.ncvreg.wrap(X, y, cluster = cluster, foldid = foldid,
-      penalty = penalty, alpha = alpha)
+    cur.ncvreg <- cv.ncvreg.wrap(X, y,
+      cluster = cluster, foldid = foldid,
+      penalty = penalty, alpha = alpha
+    )
     cur.coef <- as.matrix(coef(cur.ncvreg))
   }
   itn <- 0
@@ -433,16 +445,24 @@ lod_reg_mi <- function(y, X, lodu, lodl, miss, n.mi = 10, eps = 0.01,
     cur.sd <- sqrt(sum(cur.resid^2) / (sum(!miss) - length(last.coef)))
     coef.mat <- matrix(nrow = n.mi, ncol = length(cur.coef))
     for (i in 1:n.mi) {
-      y[miss] <- rtruncnorm(sum(miss), a = lodl, b = lodu, mean = miss.means,
-        sd = cur.sd)
+      y[miss] <- rtruncnorm(sum(miss),
+        a = lodl, b = lodu, mean = miss.means,
+        sd = cur.sd
+      )
       if (penalty == "lasso" || penalty == "relaxed") {
-        cur.glmnet <- cv.glmnet(X, y, parallel = parallel, foldid = foldid,
-          alpha = alpha, relax = relax)
-        coef.mat[i, ] <- as.matrix(predict(cur.glmnet, type = "coefficients",
-            s = "lambda.min", gamma = "gamma.min"))
+        cur.glmnet <- cv.glmnet(X, y,
+          parallel = parallel, foldid = foldid,
+          alpha = alpha, relax = relax
+        )
+        coef.mat[i, ] <- as.matrix(predict(cur.glmnet,
+            type = "coefficients",
+            s = "lambda.min", gamma = "gamma.min"
+          ))
       } else {
-        cur.ncvreg <- cv.ncvreg.wrap(X, y, cluster = cluster, foldid = foldid,
-          penalty = penalty, alpha = alpha)
+        cur.ncvreg <- cv.ncvreg.wrap(X, y,
+          cluster = cluster, foldid = foldid,
+          penalty = penalty, alpha = alpha
+        )
         coef.mat[i, ] <- as.matrix(coef(cur.ncvreg))
       }
     }
@@ -461,7 +481,7 @@ lod_reg_mi <- function(y, X, lodu, lodl, miss, n.mi = 10, eps = 0.01,
   list(coef = cur.coef, y.impute = y.impute)
 }
 
-#MMatern_cov <- function(locs, y_ndx, covparams, P) {
+# MMatern_cov <- function(locs, y_ndx, covparams, P) {
 #  param.seq <- create_param_sequence(P)
 #  sigma <- covparams[param.seq[1, 1]:param.seq[1, 2]]
 #  rangep <- covparams[param.seq[2, 1]:param.seq[2, 2]]
@@ -503,7 +523,7 @@ lod_reg_mi <- function(y, X, lodu, lodl, miss, n.mi = 10, eps = 0.01,
 #    }
 #  }
 #  Sigma.hat
-#}
+# }
 
 rtmvn_snn2 <- function(y, cens_lb, cens_ub, mask_cens, NN, cov_array) {
   ind_cens <- which(mask_cens)
@@ -543,8 +563,10 @@ rtmvn_snn2 <- function(y, cens_lb, cens_ub, mask_cens, NN, cov_array) {
 cv.ncvreg.wrap <- function(X, y, cluster, foldid, penalty, ...) {
   if (!is.null(cluster)) {
     if (!is.null(foldid)) {
-      junk <- cv.ncvreg(X, y, cluster = cluster, fold = foldid,
-        penalty = penalty, ...)
+      junk <- cv.ncvreg(X, y,
+        cluster = cluster, fold = foldid,
+        penalty = penalty, ...
+      )
     } else {
       junk <- cv.ncvreg(X, y, cluster = cluster, penalty = penalty, ...)
     }

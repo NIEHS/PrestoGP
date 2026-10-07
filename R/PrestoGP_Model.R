@@ -770,7 +770,7 @@ setMethod(
 #' measure, the value of scaling would be c(1, 1, 2). The length of scaling
 #' must match the number of columns of locs. If it is not specified, all
 #' columns of locs will have a common scale parameter.
-#' @param common_scale Do all columsn of locs have a common scales parameter?
+#' @param common_scale Do all columns of locs have a common scales parameter?
 #' See Details for the effects of this parameter. Defaults to TRUE if there
 #' is only one scale parameter for each outcome and FALSE otherwise.
 #' @param covparams The initial covariance parameters estimate (optional).
@@ -934,7 +934,8 @@ setMethod(
 #' locsm[[1]] <- locsm[[2]] <- locs
 #'
 #' soil.mvm <-  new("MultivariateVecchiaModel", n_neighbors = 10)
-#' soil.mvm <- prestogp_fit(soil.mvm, ym, Xm, locsm)
+#' soil.mvm <- prestogp_fit(soil.mvm, ym, Xm, locsm,
+#' Y.names = names(soil)[c(5, 7)])
 #'
 #' # Space/elevation model
 #' data(soil250, package="geoR")
@@ -946,6 +947,48 @@ setMethod(
 #' soil.vm2 <- new("VecchiaModel", n_neighbors = 10)
 #' # fit separate scale parameters for location and elevation
 #' soil.vm2 <- prestogp_fit(soil.vm2, y2, X2, locs2, scaling = c(1, 1, 2))
+#'
+#' # Multivariate model with user-specified initial Matern parameter
+#' # estimates
+#' ym2 <- list()
+#' ym2[[1]] <- soil250[,4] # predict sand/silt portion of the sample
+#' ym2[[2]] <- soil250[,5]
+#' ym2[[3]] <- soil250[,6]
+#' Xm2 <- list()
+#' Xm2[[1]] <- Xm2[[2]] <- Xm2[[3]] <- as.matrix(soil250[,7:22])
+#' locsm2 <- list()
+#' locsm2[[1]] <- locsm2[[2]] <- locsm2[[3]] <- as.matrix(soil250[,1:3])
+#'
+#' # Initialize the vector of initial Matern parameters estimates
+#' pseq <- create_param_sequence(3, 2)
+#' soil.params0 <- rep(NA, pseq[5, 2])
+#'
+#' # Specify the initial sigma estimates
+#' soil.params0[pseq[1, 1]:pseq[1, 2]] <- c(1, 5, 8)
+#' # Scale parameters
+#' scale.seq <- pseq[2,1]:pseq[2,2]
+#' # Specify the scale parameter for location, outcome 1
+#' soil.params0[scale.seq[1]] <- 12.8
+#' # Specify the scale parameter for elevation, outcome 1
+#' soil.params0[scale.seq[2]] <- 12.8
+#' # Specify the scale parameter for location, outcome 2
+#' soil.params0[scale.seq[3]] <- 21.5
+#' # Specify the scale parameter for elevation, outcome 2
+#' soil.params0[scale.seq[4]] <- 21.5
+#' # Specify the scale parameter for location, outcome 3
+#' soil.params0[scale.seq[5]] <- 17.8
+#' # Specify the scale parameter for elevation, outcome 3
+#' soil.params0[scale.seq[6]] <- 17.8
+#' # Specify the initial smoothness parameter estimates
+#' soil.params0[pseq[3, 1]:pseq[3, 2]] <- c(0.5, 0.5, 0.5)
+#' # Specify the initial nugget estimates
+#' soil.params0[pseq[4, 1]:pseq[4, 2]] <- c(0.25, 0.5, 0.5)
+#' # Specify the initial correlation estimates
+#' soil.params0[pseq[5, 1]:pseq[5, 2]] <- c(0, 0, 0)
+#'
+#' soil.mvm2 <-  new("MultivariateVecchiaModel", n_neighbors = 25)
+#' soil.mvm2 <- prestogp_fit(soil.mvm, ym2, Xm2, locsm2, scaling= c(1, 1, 2),
+#' covparams = soil.params0, Y.names = names(soil250)[4:6])
 
 setMethod(
   "prestogp_fit", "PrestoGPModel",
@@ -1342,8 +1385,8 @@ setMethod("compute_error", "PrestoGPModel", function(model) {
 #' Set initial value of covarariance parameters.
 #'
 #' @param model The model to set the covariance parameters of
-#' @param locs the locations matrix
-#' @param Y the dependent variable matrix
+#' @param locs The locations matrix
+#' @param Y A list containing the outcome variable(s)
 #'
 #' @return a model with initial covariance parameters
 #' @noRd

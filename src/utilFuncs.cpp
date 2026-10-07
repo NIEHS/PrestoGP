@@ -94,25 +94,26 @@ static inline mat sym(const mat& X) {
 //' data(soil250, package="geoR")
 //' y2 <- soil250[,7]               # predict pH level
 //' X2 <- as.matrix(soil250[,c(4:6,8:22)])
-//' # columns 1+2 are location coordinates; column 3 is elevation
+//' # Columns 1+2 are location coordinates; column 3 is elevation
 //' locs2 <- as.matrix(soil250[,1:3])
 //'
 //' soil.vm2 <- new("VecchiaModel", n_neighbors = 10)
-//' # fit separate scale parameters for location and elevation
+//' # Fit separate scale parameters for location and elevation
 //' soil.vm2 <- prestogp_fit(soil.vm2, y2, X2, locs2, scaling = c(1, 1, 2))
 //'
 //' pseq <- create_param_sequence(1, 2)
 //' soil2.params <- soil.vm2@covparams
-//' # sigma
+//' # Extract the sigmas
 //' soil2.params[pseq[1,1]:pseq[1,2]]
-//' # scale parameters
+//' # Extract the scale parameters
 //' soil2.params[pseq[2,1]:pseq[2,2]]
-//' # smoothness parameter
+//' # Extract the smoothness parameters
 //' soil2.params[pseq[3,1]:pseq[3,2]]
-//' # nugget
+//' # Extract the nuggets
 //' soil2.params[pseq[4,1]:pseq[4,2]]
 //'
-//' # Multivariate model
+//' # Multivariate model with user-specified initial Matern parameter
+//' # estimates
 //' ym <- list()
 //' ym[[1]] <- soil250[,4] # predict sand/silt portion of the sample
 //' ym[[2]] <- soil250[,5]
@@ -122,34 +123,60 @@ static inline mat sym(const mat& X) {
 //' locsm <- list()
 //' locsm[[1]] <- locsm[[2]] <- locsm[[3]] <- as.matrix(soil250[,1:3])
 //'
-//' soil.mvm <-  new("MultivariateVecchiaModel", n_neighbors = 10)
-//' soil.mvm <- prestogp_fit(soil.mvm, ym, Xm, locsm)
+//' # Initialize the vector of initial Matern parameters estimates
+//' pseq2 <- create_param_sequence(3, 2)
+//' soil.params0 <- rep(NA, pseq2[5, 2])
 //'
-//' pseq <- create_param_sequence(3, 2)
+//' # Specify the initial sigma estimates
+//' soil.params0[pseq2[1, 1]:pseq2[1, 2]] <- c(1, 5, 8)
+//' # Scale parameters
+//' scale.seq <- pseq2[2,1]:pseq2[2,2]
+//' # Specify the scale parameter for location, outcome 1
+//' soil.params0[scale.seq[1]] <- 12.8
+//' # Specify the scale parameter for elevation, outcome 1
+//' soil.params0[scale.seq[2]] <- 12.8
+//' # Specify the scale parameter for location, outcome 2
+//' soil.params0[scale.seq[3]] <- 21.5
+//' # Specify the scale parameter for elevation, outcome 2
+//' soil.params0[scale.seq[4]] <- 21.5
+//' # Specify the scale parameter for location, outcome 3
+//' soil.params0[scale.seq[5]] <- 17.8
+//' # Specify the scale parameter for elevation, outcome 3
+//' soil.params0[scale.seq[6]] <- 17.8
+//' # Specify the initial smoothness parameter estimates
+//' soil.params0[pseq2[3, 1]:pseq2[3, 2]] <- c(0.5, 0.5, 0.5)
+//' # Specify the initial nugget estimates
+//' soil.params0[pseq2[4, 1]:pseq2[4, 2]] <- c(0.25, 0.5, 0.5)
+//' # Specify the initial correlation estimates
+//' soil.params0[pseq2[5, 1]:pseq2[5, 2]] <- c(0, 0, 0)
+//'
+//' soil.mvm <-  new("MultivariateVecchiaModel", n_neighbors = 25)
+//' soil.mvm <- prestogp_fit(soil.mvm, ym, Xm, locsm, scaling= c(1, 1, 2),
+//' covparams = soil.params0, Y.names = names(soil250)[4:6])
+//'
+//' # Extract the estimated Matern paramaters
 //' soil.params <- soil.mvm@covparams
-//' # sigmas
-//' soil.params[pseq[1,1]:pseq[1,2]]
-//' # scale parameters
-//' scale.seq <- pseq[2,1]:pseq[2,2]
-//' # scale parameter for location, outcome 1
+//' # Extract the sigmas
+//' soil.params[pseq2[1,1]:pseq2[1,2]]
+//' # Extract the scale parameter for location, outcome 1
 //' soil.params[scale.seq[1]]
-//' # scale parameter for elevation, outcome 1
+//' # Extract the scale parameter for elevation, outcome 1
 //' soil.params[scale.seq[2]]
-//' # scale parameter for location, outcome 2
+//' # Extract the scale parameter for location, outcome 2
 //' soil.params[scale.seq[3]]
-//' # scale parameter for elevation, outcome 2
+//' # Extract the scale parameter for elevation, outcome 2
 //' soil.params[scale.seq[4]]
-//' # scale parameter for location, outcome 3
+//' # Extract the scale parameter for location, outcome 3
 //' soil.params[scale.seq[5]]
-//' # scale parameter for elevation, outcome 3
+//' # Extract the scale parameter for elevation, outcome 3
 //' soil.params[scale.seq[6]]
-//' # smoothness parameters
-//' soil.params[pseq[3,1]:pseq[3,2]]
-//' # nuggets
-//' soil.params[pseq[4,1]:pseq[4,2]]
-//' # correlation
+//' # Extract the smoothness parameters
+//' soil.params[pseq2[3,1]:pseq2[3,2]]
+//' # Extract the nuggets
+//' soil.params[pseq2[4,1]:pseq2[4,2]]
+//' # Extract the correlation parameters
 //' soil.corr <- diag(2) / 2
-//' soil.corr[upper.tri(soil.corr)] <- soil.params[pseq[5,1]:pseq[5,2]]
+//' soil.corr[upper.tri(soil.corr)] <- soil.params[pseq2[5,1]:pseq2[5,2]]
 //' soil.corr <- soil.corr + t(soil.corr)
 // [[Rcpp::export]]
 arma::mat create_param_sequence(const double P, const double ns = 1) {

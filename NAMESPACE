@@ -36,24 +36,34 @@ import(glmnet)
 import(ncvreg)
 importFrom(RANN,nn2)
 importFrom(dplyr,"%>%")
-importFrom(foreach,"%dopar%")
-importFrom(foreach,foreach)
-importFrom(methods,callNextMethod)
-importFrom(methods,is)
-importFrom(methods,new)
-importFrom(methods,validObject)
-importFrom(rlang,":=")
-importFrom(rlang,.data)
-importFrom(rlang,as_label)
-importFrom(rlang,as_name)
-importFrom(rlang,enquo)
-importFrom(rlang,enquos)
-importFrom(stats,coef)
-importFrom(stats,optim)
-importFrom(stats,predict)
-importFrom(stats,rnorm)
-importFrom(stats,var)
-importFrom(truncnorm,etruncnorm)
-importFrom(truncnorm,rtruncnorm)
+importFrom(foreach,
+  "%dopar%",
+  foreach
+)
+importFrom(methods,
+  callNextMethod,
+  is,
+  new,
+  validObject
+)
+importFrom(rlang,
+  ":=",
+  .data,
+  as_label,
+  as_name,
+  enquo,
+  enquos
+)
+importFrom(stats,
+  coef,
+  optim,
+  predict,
+  rnorm,
+  var
+)
+importFrom(truncnorm,
+  etruncnorm,
+  rtruncnorm
+)
 importFrom(utils,getFromNamespace)
 useDynLib(PrestoGP)

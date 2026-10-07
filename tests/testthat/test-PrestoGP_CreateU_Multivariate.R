@@ -87,6 +87,19 @@ test_that("sparseNN", {
   expect_equal(pgp.nn$distances[-(1:5), ], distances[-(1:5), ], tolerance = 1e-2)
 })
 
+test_that("params has incorrect length", {
+  source("sim_multivariate.R")
+
+  vec.mapprox <- vecchia_Mspecify(locs.list, 25)
+  expect_error(
+    createUMultivariate(vec.mapprox, c(
+      marg.var, ranges,
+      marg.smoothness,
+      nuggets)),
+    "Length of params is incorrect"
+  )
+})
+
 test_that("createUMultivariate", {
   set.seed(1212)
 
